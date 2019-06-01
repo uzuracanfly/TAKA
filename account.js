@@ -1,31 +1,41 @@
 ﻿exports.account = class{
-	constructor(pubkey="",privkey="",address=""){
+	constructor(key=""){
 		this.crypto = require('./crypto.js');
 		this.hashs = require('./hashs.js');
 		this.transaction = require('./transaction.js');
 		this.database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
 
-		if (privkey){
-			this.keys = this.GetKeys(privkey);
-		}else if (pubkey){
-			this.keys = {
-				"pubkey":pubkey,
-				"address":this.GetAddress(pubkey),
-			}
-		}else if (address){
-			this.keys = {
-				"address":address
-			}
+		if (key){
+			this.key = key;
 		}else{
-			privkey = new this.crypto.signature().CreatePrivkey();
-			this.keys = this.GetKeys(privkey);
+			this.key = new this.crypto.signature().CreatePrivkey();
 		}
 	};
 
 
-	GetKeys(privkey=this.keys["privkey"]){
-		let pubkey = new this.crypto.signature().GetPrivkeyToPubkey(privkey);
-		let address = this.GetAddress(pubkey);
+	GetKeys(key=this.key){
+		
+		/* キーの識別 */
+		let address = "";
+		let pubkey = "";
+		let privkey = "";
+		if (key.length == 40){
+			address = key;
+		}else if(key.length == 66){
+			pubkey = key;
+		}else if(key.length == 64){
+			privkey = key;
+		}else{
+			this.key = new this.crypto.signature().CreatePrivkey();
+		}
+
+
+		if (privkey){
+			pubkey = new this.crypto.signature().GetPrivkeyToPubkey(privkey);
+		};
+		if (pubkey){
+			address = this.GetAddress(pubkey);
+		};
 		let keys = {
 			"privkey":privkey,
 			"pubkey":pubkey,
@@ -36,7 +46,7 @@
 	};
 
 
-	GetAddress(pubkey=this.keys["pubkey"]){
+	GetAddress(pubkey=this.GetKeys()["pubkey"]){
 		let hash = new this.hashs.hashs().sha256(pubkey);
 		hash = new this.hashs.hashs().ripemd160(hash);
 
@@ -45,14 +55,22 @@
 
 
 	//アカウントの残高を構成するtxのリスト
-	GetFormTxList(address=this.keys["address"],LessIndex=0){
+	GetFormTxList(address=this.GetKeys()["address"],tag="",LessIndex=0){
 		let TxidListPerAccount = this.database.get("TransactionIdsPerAccount",address);
 
 		let result = [];
 		for (let index in TxidListPerAccount){
 			let txid = TxidListPerAccount[index];
 
-			if (LessIndex && index >= LessIndex){
+			if (tag){
+				let tx = this.transaction.GetTx(txid);
+				let ObjTx = tx.GetObjTx();
+				if (ObjTx["tag"] != tag){
+					continue;
+				};
+			}
+
+			if (LessIndex && result.length-1 >= LessIndex){
 				break;
 			}
 
@@ -64,8 +82,8 @@
 	};
 
 
-	GetBalance(address=this.keys["address"],LessIndex=0){
-		let txlist = this.GetFormTxList(address,LessIndex);
+	GetBalance(address=this.GetKeys()["address"],LessIndex=0){
+		let txlist = this.GetFormTxList(address,"pay",LessIndex);
 
 		let balance = 0;
 		for (let index in txlist){

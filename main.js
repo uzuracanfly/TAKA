@@ -16,3 +16,15 @@ exports.note = function(stat,title,text){
 
 	return result;
 }
+
+
+exports.GetFillZero = function(hex, hexlength){
+	let needzeroffill = hexlength-hex.length;
+	if (needzeroffill > 0){
+		for (var i=needzeroffill;i>0;i--){
+			hex = "0" + hex
+		};
+	};
+
+	return hex;
+};

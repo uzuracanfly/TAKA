@@ -1,5 +1,6 @@
 exports.Transaction = class{
 	constructor(rawtx="",privkey="",objtx={}){
+		this.main = require('./main.js');
 		this.crypto = require('./crypto.js');
 		this.account = require('./account.js');
 		this.hashs = require('./hashs.js');
@@ -8,18 +9,21 @@ exports.Transaction = class{
 
 
 		if (privkey){
-			this.TargetAccount = new this.account.account("",privkey);
+			this.TargetAccount = new this.account.account(privkey);
 		};
 
 
 		if (rawtx){
 			this.rawtx = rawtx;
 			this.objtx = this.GetObjTx();
-			if (!this.TargetAccount){
+			if (!privkey){
 				this.TargetAccount = new this.account.account(this.objtx["pubkey"]);
 			};
 		}else{
 			this.objtx = objtx;
+			if (!privkey){
+				this.TargetAccount = new this.account.account(this.objtx["pubkey"]);
+			};
 			this.rawtx = this.GetRawTx();
 		};
 	};
@@ -60,9 +64,9 @@ exports.Transaction = class{
 
 		let rawtx = "";
 
-		let pubkey_toin = GetFillZero(TargetAccount.keys["pubkey"], 66);
-		let type_toin = GetFillZero(type, 2);
-		let time_toin = GetFillZero(time, 16);
+		let pubkey_toin = this.main.GetFillZero(TargetAccount.GetKeys()["pubkey"], 66);
+		let type_toin = this.main.GetFillZero(type, 2);
+		let time_toin = this.main.GetFillZero(time, 16);
 
 		let tag_toin = "";
 		if (tag.length%2 == 0){
@@ -71,12 +75,12 @@ exports.Transaction = class{
 			tag_toin = "0" + tag;
 		}
 		let taglen_toin = (tag_toin.length).toString(16);
-		taglen_toin = GetFillZero(taglen_toin, 16);
+		taglen_toin = this.main.GetFillZero(taglen_toin, 16);
 
-		let index_toin = GetFillZero(index, 16);
-		let MerkleRoot_toin = GetFillZero(MerkleRoot, 64);
-		let toaddress_toin = GetFillZero(toaddress, 40);
-		let amount_toin = GetFillZero(amount, 64);
+		let index_toin = this.main.GetFillZero(index, 16);
+		let MerkleRoot_toin = this.main.GetFillZero(MerkleRoot, 64);
+		let toaddress_toin = this.main.GetFillZero(toaddress, 40);
+		let amount_toin = this.main.GetFillZero(amount, 64);
 
 		let data_toin = "";
 		if (data.length%2 == 0){
@@ -85,7 +89,7 @@ exports.Transaction = class{
 			data_toin = "0" + data;
 		}
 		let datalen_toin = (data_toin.length).toString(16);
-		datalen_toin = GetFillZero(datalen_toin, 16);
+		datalen_toin = this.main.GetFillZero(datalen_toin, 16);
 
 
 		rawtx = rawtx + pubkey_toin;
@@ -109,15 +113,15 @@ exports.Transaction = class{
 			のsha256d
 			*/
 			let sig = "";
-			if ("privkey" in TargetAccount.keys){
+			if ("privkey" in TargetAccount.GetKeys() && TargetAccount.GetKeys()["privkey"]){
 				let org = new this.hashs.hashs().sha256d(rawtx);
-				sig = new this.crypto.signature().GetSignData(TargetAccount.keys["privkey"],org);
+				sig = new this.crypto.signature().GetSignData(TargetAccount.GetKeys()["privkey"],org);
 			}
 			if ("sig" in objtx && objtx["sig"]){
 				sig = objtx["sig"];
 			}
 			let siglen_toin = (sig.length).toString(16);
-			siglen_toin = GetFillZero(siglen_toin, 16);
+			siglen_toin = this.main.GetFillZero(siglen_toin, 16);
 			rawtx = rawtx + siglen_toin + sig;
 
 
@@ -127,7 +131,7 @@ exports.Transaction = class{
 			if ("nonce" in objtx && objtx["nonce"]){
 				nonce = objtx["nonce"];
 			}
-			let nonce_toin = GetFillZero(nonce, 16);
+			let nonce_toin = this.main.GetFillZero(nonce, 16);
 			rawtx = rawtx + nonce_toin;
 		};
 
@@ -214,9 +218,190 @@ exports.Transaction = class{
 
 
 
-		if (objtx["tag"] == "pay" && objtx["data"].length > 0){
+
+		//割り当て済みの部分は自由に利用できない
+		if (objtx["type"] != 1 && objtx["type"] != 11 && objtx["type"] != 12 && objtx["type"] != 13){
+			if (objtx["type"] <= 100){
+				return 0;
+			};
+		}
+
+
+
+		if (objtx["type"] != 1 && objtx["amount"] > 0){
 			return 0;
 		};
+		
+
+
+
+		if (objtx["type"] == 1 && objtx["tag"] != "pay"){
+			return 0;
+		};
+		if (objtx["type"] != 1 && objtx["tag"] == "pay"){
+			return 0;
+		};
+		if (objtx["type"] == 1 && objtx["data"].length > 0){
+			return 0;
+		};
+		if (objtx["type"] == 1 && objtx["amount"] <= 0){
+			return 0;
+		};
+
+
+
+
+
+
+		/*
+		Nego関連
+		*/
+
+		if (objtx["type"] == 11 && objtx["tag"] != "nego"){
+			return 0;
+		};
+		if (objtx["type"] != 11 && objtx["tag"] == "nego"){
+			return 0;
+		};
+		if (objtx["type"] == 11){
+			try{
+				let nego = require('./TransactionTools/nego.js');
+				let Nego = new nego.NegoData(objtx["data"]);
+				let NegoObjData = Nego.GetObjData();
+				//console.log(NegoObjData);
+				if (!("tag" in NegoObjData) || !NegoObjData["tag"]){
+					return 0;
+				}
+				if (!("EncryptoPrivkey" in NegoObjData) || !NegoObjData["EncryptoPrivkey"]){
+					return 0;
+				}
+			}catch(e){
+				return 0;
+			};
+		};
+
+
+
+
+
+		/*
+		tag order関連
+		> 否定条件
+		・指定tagにすでにtxが存在する
+		・txのtag orderのデータのfeetxidのpubkeyとtxのpubkeyが違うまたは数量が足りない
+		*/
+		if (objtx["type"] == 12){
+			try{
+				let tagorder = require('./TransactionTools/tagorder.js');
+				let Tagorder = new tagorder.TagOrderData(objtx["data"]);
+				let TagorderObjData = Tagorder.GetObjData();
+
+				let tagtxs = exports.GetTagTxids(objtx["tag"]);
+				if (tagtxs.length > 0){
+					return 0;
+				};
+
+				let feetx = exports.GetTx(TagorderObjData["feetxid"]);
+				let feetxobj = feetx.GetObjTx();
+				if (feetxobj["pubkey"] != objtx["pubkey"]){
+					return 0;
+				}
+				if (feetxobj["amount"] < 1){
+					return 0;
+				}
+				if (feetxobj["toaddress"] != this.main.GetFillZero("", 40)){
+					return 0;
+				}
+			}catch(e){
+				return 0;
+			};
+		};
+
+
+
+
+
+		/*
+		タグへの権利者追加
+		> 否定条件
+		・タグの管理者自身が追加していない
+		*/
+		if (objtx["type"] == 13){
+			try{
+				let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
+				let Tagaddpermit = new tagaddpermit.TagAddPermitData(objtx["data"]);
+				let TagaddpermitObjData = Tagaddpermit.GetObjData();
+
+				let TagOrderTx = exports.GetTagOrderTx(objtx["tag"]);
+				if (TagOrderTx.GetObjTx()["pubkey"] != objtx["pubkey"]){
+					return 0;
+				}
+			}catch(e){
+				//console.log(e);
+				return 0;
+			};
+
+		};
+
+
+
+
+
+
+		/*
+		ユーザー定義のデータ関連
+		>否定条件
+		・tag orderが提出されていないtagを利用している場合
+			- tag orderのパーミッションタイプによるdata送信の制限
+			 0、制限なし
+			 1、owner以外すべて制限
+			 2、指定されたアドレスのみ
+		*/
+		if (objtx["type"] > 100){
+			let tagtxids = exports.GetTagTxids(objtx["tag"]);
+			if (tagtxids){
+				let tagordertxid = tagtxids[0];
+
+				let tagordertx = exports.GetTx(tagordertxid);
+				let tagordertxobj = tagordertx.GetObjTx();
+				if (tagordertxobj["type"] != 12){
+					return 0;
+				};
+
+				let tagorder = require('./TransactionTools/tagorder.js');
+				let Tagorder = new tagorder.TagOrderData(tagordertxobj["data"]);
+				let TagorderObjData = Tagorder.GetObjData();
+				if (TagorderObjData["permissiontype"] == 1 && tagordertxobj["pubkey"] != objtx["pubkey"]){
+					return 0;
+				}
+
+
+				if (TagorderObjData["permissiontype"] == 2 && tagordertxobj["pubkey"] != objtx["pubkey"]){
+					//TagAddPermitを探す
+					let PermitAddresss = [];
+					for (let index in tagtxids){
+						let tagtxid = tagtxids[index];
+						let tagtx = exports.GetTx(tagtxid);
+						let tagtxobj = tagtx.GetObjTx();
+						if (tagtxobj["type"] == 13){
+							let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
+							let Tagaddpermit = new tagaddpermit.TagAddPermitData(tagtxobj["data"]);
+							let TagaddpermitObjData = Tagaddpermit.GetObjData();
+							PermitAddresss.push(TagaddpermitObjData["address"]);
+						}
+					};
+
+					if (PermitAddresss.indexOf(TargetAccount.GetKeys()["address"]) == -1){
+						return 0;
+					};
+				};
+			}else{
+				return 0;
+			}
+		};
+
+
+
 
 
 
@@ -224,7 +409,7 @@ exports.Transaction = class{
 		let org = this.GetRawTx(TargetAccount,objtx,true);
 		org = new this.hashs.hashs().sha256d(org);
 		let sig = objtx["sig"];
-		let sigbool = new this.crypto.signature().ConfirmationSign(org,sig,TargetAccount.keys["pubkey"]);
+		let sigbool = new this.crypto.signature().ConfirmationSign(org,sig,TargetAccount.GetKeys()["pubkey"]);
 		if (!sigbool){
 			return 0;
 		};
@@ -240,9 +425,9 @@ exports.Transaction = class{
 
 
 		//MerkleRootとindexsからのMerkleRootの相違
-		let pretxlist = TargetAccount.GetFormTxList(undefined,objtx["index"]);
+		let pretxlist = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
 		let IndexMerkleRoot = new this.hashs.hashs().GetMarkleroot(pretxlist);
-		IndexMerkleRoot = GetFillZero(IndexMerkleRoot, 64);
+		IndexMerkleRoot = this.main.GetFillZero(IndexMerkleRoot, 64);
 		if (IndexMerkleRoot != objtx["MerkleRoot"]){
 			return 0;
 		};
@@ -284,77 +469,100 @@ exports.Transaction = class{
 
 	GetPOWTarget(rawtx=this.rawtx){
 		let objtx = this.GetObjTx(rawtx);
-		let TargetAccount = new this.account.account(objtx["pubkey"]);
 
+		//negoは固定
+		if (objtx["tag"] == "nego"){
+			return BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+		}else if (objtx["tag"] == "pay"){
+			let TargetAccount = new this.account.account(objtx["pubkey"]);
+			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			let time = objtx["time"];
+			let txids = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
+			
+			let lasttx = false;
+			if (txids.length > 0){
+				lasttx  = exports.GetTx(txids.slice(-1)[0]);
+			}
+			let lasttxtime = time - 60*10;
+			if (lasttx){
+				lasttxtime = lasttx.objtx["time"];
+			}
 
-		let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-		let time = objtx["time"];
-		let txids = TargetAccount.GetFormTxList();
-		
-		let lasttx = false;
-		if (txids.length > 0){
-			lasttx  = exports.GetTx(txids.slice(-1)[0]);
+			let needtime = 60*10 - (time - lasttxtime);
+
+			let target = target_upper;
+			if (needtime > 0){
+				if (needtime > 60*3){
+					target = BigInt("0x000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+				}
+				if (needtime > 60*6){
+					target = BigInt("0x0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+				}
+				if (needtime > 60*9){
+					target = BigInt("0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+				}
+			};
+
+			return target;
+		}else{
+			let TagOrderTx = exports.GetTagOrderTx(objtx["tag"]);
+
+			if (TagOrderTx){
+				let TagOrderTxData = TagOrderTx.GetObjTx()["data"];
+
+				let tagorder = require('./TransactionTools/tagorder.js');
+				let Tagorder = new tagorder.TagOrderData(TagOrderTxData);
+				let TagorderObjData = Tagorder.GetObjData();
+
+				let target = BigInt("0x"+TagorderObjData["powtarget"]);
+
+				return target;
+			}else{
+				return BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			}
 		}
-		let lasttxtime = time - 60*10;
-		if (lasttx){
-			lasttxtime = lasttx.objtx["time"];
-		}
-
-		let needtime = 60*10 - (time - lasttxtime);
-
-		let target = target_upper;
-		if (needtime > 0){
-			if (needtime > 60*3){
-				target = BigInt("0x0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-			}
-			if (needtime > 60*6){
-				target = BigInt("0x000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-			}
-			if (needtime > 60*9){
-				target = BigInt("0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-			}
-		};
-
-		return target;
 	}
 
 
 	commit(rawtx=this.rawtx){
-
 		let outthis = this;
-		function pow(rawtx,nonce){
-			let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
+		let target = BigInt("0x0000000000000000000000000000000000000000000000000000000000000000");
+		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
+		return new Promise(function (resolve, reject) {
+			let bPromise = require('bluebird');
+			(function loop(nonce) {
+				let objtx = outthis.GetObjTx(rawtx);
 
-			let objtx = outthis.GetObjTx(rawtx);
-			let TargetAccount = new outthis.account.account(objtx["pubkey"]);
+				if (numtxid <= target){
+					let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
+					database.add("UnconfirmedTransactions",objtx["tag"],rawtx);
 
+					return resolve(txid);
+				}else{
+					return bPromise.delay(1).then(function() {
 
-			/*
-			powのtargetを特定する
-			*/
-			let target = outthis.GetPOWTarget(rawtx);
-			//console.log(GetFillZero(target.toString(16), 64));
+						let TargetAccount = new outthis.account.account(objtx["pubkey"]);
 
+						/*
+						powのtargetを特定する
+						*/
+						target = outthis.GetPOWTarget(rawtx);
 
-			objtx["nonce"] = nonce;
+						objtx["nonce"] = nonce;
 
-			rawtx = outthis.GetRawTx(TargetAccount,objtx);
-			let txid = outthis.GetTxid(rawtx);
-			let numtxid = BigInt("0x"+txid);
-
-
-			if (numtxid <= target){
-				database.add("UnconfirmedTransactions",objtx["tag"],rawtx);
-			}else{
-				nonce = nonce + 1;
-				setTimeout(pow,1,rawtx,nonce);
-			}
-		}
-
-		pow(rawtx,0);
-
-		return true;
+						rawtx = outthis.GetRawTx(TargetAccount,objtx);
+						txid = outthis.GetTxid(rawtx);
+						numtxid = BigInt("0x"+txid);
+						
+						return nonce+1;
+					}).then(loop);
+				};
+			})(0);
+		}).catch(function (error) {
+			console.log(error);
+		});
 	};
 };
 
@@ -364,16 +572,7 @@ exports.Transaction = class{
 
 
 
-function GetFillZero(hex, hexlength){
-	let needzeroffill = hexlength-hex.length;
-	if (needzeroffill > 0){
-		for (var i=needzeroffill;i>0;i--){
-			hex = "0" + hex
-		};
-	};
 
-	return hex;
-};
 
 
 exports.GetAllTxids = function(){
@@ -394,7 +593,74 @@ exports.GetTx = function(txid){
 	return TargetTransaction;
 }
 
+exports.GetTags = function(){
+	let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
 
+	let UnconfirmedTransactionsTags = database.get("UnconfirmedTransactions");
+
+	return UnconfirmedTransactionsTags;
+};
+
+exports.GetTagTxids = function(tag){
+	let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
+
+	let txids = database.get("TransactionIdsPerTag",tag);
+
+	return txids;
+}
+
+exports.GetTagMerkleRoot = function(tag){
+	let Hashs = require('./hashs.js');
+
+	let txids = exports.GetTagTxids(tag);
+
+	let MerkleRoot = new Hashs.hashs().GetMarkleroot(txids);
+	return MerkleRoot;
+};
+
+exports.SendPayTransaction = function(privkey,toaddress,amount){
+	amount = parseInt(amount);
+
+	let TargetAccount = new (require('./account.js')).account(privkey);
+
+	let FormTxList = TargetAccount.GetFormTxList(undefined,"pay");
+	let MerkleRoot = new (require('./hashs.js')).hashs().GetMarkleroot(FormTxList);
+
+	let objtx = {
+		"pubkey":TargetAccount.GetKeys()["pubkey"],
+		"type":1,
+		"time":Math.floor(Date.now()/1000),
+		"tag":"pay",
+		"index":FormTxList.length+1,
+		"MerkleRoot":MerkleRoot,
+		"toaddress":toaddress,
+		"amount":amount,
+		"data":"",
+		"sig":"",
+		"nonce":0
+	};
+	let TargetTransaction = new exports.Transaction("",privkey,objtx);
+	let result = TargetTransaction.commit();
+
+	return result;
+};
+
+exports.GetTagOrderTx = function(tag){
+	let tagtxs = exports.GetTagTxids(tag);
+	if (tagtxs){
+		let tagordertxid = tagtxs[0];
+
+		let tagordertx = exports.GetTx(tagordertxid);
+		let tagordertxobj = tagordertx.GetObjTx();
+		if (tagordertxobj["type"] != 12){
+			return 0;
+		};
+
+		return tagordertx;
+	}else{
+		return 0;
+	}
+}
 
 
 
@@ -416,7 +682,7 @@ exports.RunCommit = function(){
 		database.add("ConfirmedTransactions",TargetTransaction.GetTxid(),TargetTransaction.rawtx);
 
 		database.add("TransactionIdsPerTag",TargetTransaction.objtx["tag"],TargetTransaction.GetTxid());
-		database.add("TransactionIdsPerAccount",TargetTransaction.TargetAccount.keys["address"],TargetTransaction.GetTxid());
+		database.add("TransactionIdsPerAccount",TargetTransaction.TargetAccount.GetKeys()["address"],TargetTransaction.GetTxid());
 		database.add("TransactionIdsPerAccount",TargetTransaction.objtx["toaddress"],TargetTransaction.GetTxid());
 		database.add("TransactionIdsPerAll","live",TargetTransaction.GetTxid());
 
@@ -454,8 +720,34 @@ exports.RunCommit = function(){
 
 				let UnconfirmedTransactions = database.get("UnconfirmedTransactions",tag);
 
+				//timeが古い順並び替え
+				let UnconfirmedTransactionsSort = [];
 				for (let mindex in UnconfirmedTransactions){
-					let rawtx = UnconfirmedTransactions[mindex];
+					let oldtime = 9999999999999999;
+					let oldrawtx = "";
+					for (let mmindex in UnconfirmedTransactions){
+						let rawtx = UnconfirmedTransactions[mmindex];
+
+						if (UnconfirmedTransactionsSort.indexOf(rawtx) >= 0){
+							continue;
+						}
+
+						let TargetTransaction = new exports.Transaction(rawtx);
+
+						let objtx = TargetTransaction.GetObjTx();
+						if (oldtime >= objtx["time"]){
+							oldtime = objtx["time"];
+							oldrawtx = rawtx;
+						}
+					};
+					if (oldrawtx){
+						UnconfirmedTransactionsSort.push(oldrawtx);
+					}
+				};
+
+
+				for (let mindex in UnconfirmedTransactionsSort){
+					let rawtx = UnconfirmedTransactionsSort[mindex];
 
 					let TargetTransaction = new exports.Transaction(rawtx);
 

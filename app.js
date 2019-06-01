@@ -9,21 +9,21 @@ function genesis_transaction(toprivkey,InitialAmount){
 
 	let privkey = new Hashs.hashs().sha256d(Math.floor(Date.now()/1000).toString(16));
 
-	let AccountClass = new Account.account("",privkey);
-	let ToAccountClass = new Account.account("",toprivkey);
+	let AccountClass = new Account.account(privkey);
+	let ToAccountClass = new Account.account(toprivkey);
 	console.log("[Owner]");
-	console.log(AccountClass.keys);
+	console.log(AccountClass.GetKeys());
 
 
 	console.log("[GenesisObjTx]");
 	let objtx = {
-		"pubkey":ToAccountClass.keys["pubkey"],
+		"pubkey":ToAccountClass.GetKeys()["pubkey"],
 		"type":1,
 		"time":Math.floor(Date.now()/1000),
 		"tag":"pay",
 		"index":1,
 		"MerkleRoot":"",
-		"toaddress":ToAccountClass.keys["address"],
+		"toaddress":ToAccountClass.GetKeys()["address"],
 		"amount":InitialAmount,
 		"data":"",
 		"sig":"",
@@ -47,7 +47,8 @@ let FunctionList = [
 	{"name":"BroadcastSetServer","function":function(){let Broadcast = require('./broadcast.js');Broadcast.SetServer()}},
 	{"name":"BroadcastRunScanning","function":function(){let Broadcast = require('./broadcast.js');Broadcast.RunScanning()}},
 	{"name":"APISetServer","function":function(){let API = require('./api.js');API.SetServer()}},
-	{"name":"TEST","function":function(){}},
+	{"name":"NegoRunMining","function":function(){let Nego = require('./TransactionTools/nego.js');Nego.RunMining()}},
+	{"name":"console","function":function(){let Console = require('./console.js');Console.RunConsole()}},
 ];
 
 

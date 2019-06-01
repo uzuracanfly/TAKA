@@ -33,6 +33,20 @@ exports.SetServer = function(){
 						response.write(JSON.stringify(txs[0]));
 						response.end();
 					};
+					if(postData["function"] == "GetUnConfirmedTransactions"){
+						let txs = [];
+						let tags = database.get("UnconfirmedTransactions");
+						for (let index in tags){
+							let tag = tags[index];
+
+							let rawtx = database.get("UnconfirmedTransactions",tag);
+
+							txs.push(rawtx);
+						};
+
+						response.write(JSON.stringify(txs));
+						response.end();
+					};
 
 
 				});
@@ -79,6 +93,14 @@ exports.RunScanning = function(){
 
 	for (let index in nodelist){
 		let address = nodelist[index];
+		/* 未承認のトランザクション追加 */
+		let rawtxlist = SendPostbyjson("http://"+address+":"+Config.broadcast["port"],{"function":"GetUnConfirmedTransactions"});
+		for (let mindex in rawtxlist){
+			let rawtx = txidlist[mindex];
+
+			new (require('./transaction.js')).Transaction().commit(rawtx);
+		};
+
 
 		/* トランザクションを走査そして追加 */
 		let txidlist = SendPostbyjson("http://"+address+":"+Config.broadcast["port"],{"function":"GetConfirmedTransactionIds"});
