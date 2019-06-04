@@ -1,18 +1,30 @@
+const FS = require('fs');
+
+const ACCOUNT = require('./account.js');
+const TRANSACTION = require('./transaction.js');
+const HASHS = require('./hashs.js');
+const TRANSACTIONTOOLS_NEGO = require('./TransactionTools/nego');
+const TRANSACTIONTOOLS_DATABASE = require('./TransactionTools/database.js');
+const TRANSACTIONTOOLS_TAGORDER = require('./TransactionTools/tagorder.js');
+const TRANSACTIONTOOLS_TAGADDPERMIT = require('./TransactionTools/tagaddpermit.js');
+
+
+
 //API Server
 exports.SetServer = function(){
 	let http = require('http');
 
-	http.createServer(function(request, response) {
-		try{
+	http.createServer(function(request,response) {
 
-			response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8','Access-Control-Allow-Origin': '*'});
+		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8','Access-Control-Allow-Origin': '*'});
 
 
-			if(request.method === 'POST') {
-				let postData = "";
-				request.on('data', function(chunk) {
-					postData += chunk;
-				}).on('end', function() {
+		if(request.method === 'POST') {
+			let postData = "";
+			request.on('data', function(chunk) {
+				postData += chunk;
+			}).on('end', function() {
+				try{
 
 
 					postData = JSON.parse(postData);
@@ -31,17 +43,17 @@ exports.SetServer = function(){
 							LessIndex = postData["args"]["LessIndex"];
 						}
 
-						let TargetAccount = new (require('./account.js')).account(key);
+						let TargetAccount = new ACCOUNT.account(key);
 
 
-						let txstoaccount = {};
-						let tags = (require('./transaction.js')).GetTags();
+						let txids = {};
+						let tags = TRANSACTION.GetTags();
 						for (let index in tags){
 							let tag = tags[index];
 							let tagtxs = TargetAccount.GetFormTxList(undefined,tag,LessIndex);
-							let TagMerkleRoot = new (require('./hashs.js')).hashs().GetMarkleroot(tagtxs);
+							let TagMerkleRoot = new HASHS.hashs().GetMarkleroot(tagtxs);
 
-							txstoaccount[tag] = {
+							txids[tag] = {
 								"txs":tagtxs,
 								"MerkleRoot":TagMerkleRoot,
 							}
@@ -51,8 +63,46 @@ exports.SetServer = function(){
 							"privkey":TargetAccount.GetKeys()["privkey"],
 							"pubkey":TargetAccount.GetKeys()["pubkey"],
 							"address":TargetAccount.GetKeys()["address"],
-							"txstoaccount":txstoaccount,
+							"txids":txids,
 							"balance":TargetAccount.GetBalance(undefined,LessIndex),
+						}
+
+						response.write(JSON.stringify(callback));
+						response.end();
+					};
+
+
+
+
+					if(postData["function"] == "gettag"){
+						let tag = postData["args"]["tag"];
+
+						if (!tag){
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+
+						let TagOrderTx = new TRANSACTION.GetTagOrderTx(tag);
+						let TagOrderObjTx = TagOrderTx.GetObjTx();
+
+						let TagOrderData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]);
+						let TagOrderObjData = TagOrderData.GetObjData();
+
+						let ownerpubkey = TagOrderObjTx["pubkey"];
+						let OwnerAccount = new ACCOUNT.account(ownerpubkey);
+
+						let TagTxids = TRANSACTION.GetTagTxids(tag);
+						let TagPermitAddresss = TRANSACTION.GetTagPermitAddresss(tag);
+
+						let callback = {
+							"owner":{
+								"pubkey":ownerpubkey,
+								"address":OwnerAccount.GetKeys()["address"]
+							},
+							"permissiontype":TagOrderObjData["permissiontype"],
+							"PermitAddresss":TagPermitAddresss,
+							"powtarget":TagOrderObjData["powtarget"],
+							"txids":TagTxids,
 						}
 
 						response.write(JSON.stringify(callback));
@@ -64,7 +114,12 @@ exports.SetServer = function(){
 					if(postData["function"] == "sendtx"){
 						let rawtx = postData["args"]["rawtx"];
 
-						let TargetTransaction = new (require('./transaction.js')).Transaction(rawtx);
+						if (!rawtx){
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+
+						let TargetTransaction = new TRANSACTION.Transaction(rawtx);
 						TargetTransaction.commit();
 
 						response.write(JSON.stringify(true));
@@ -76,12 +131,17 @@ exports.SetServer = function(){
 					if(postData["function"] == "getrawtx"){
 						let objtx = postData["args"]["objtx"];
 
+						if (!objtx){
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+
 						let privkey = "";
 						if ("privkey" in postData["args"] && postData["args"]["privkey"]){
 							privkey = postData["args"]["privkey"];
 						}
 
-						let TargetTransaction = new (require('./transaction.js')).Transaction("",privkey,objtx);
+						let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
 						let result = TargetTransaction.GetRawTx();
 
 
@@ -98,7 +158,13 @@ exports.SetServer = function(){
 						let amount = postData["args"]["amount"];
 
 
-						let result = (require('./transaction.js')).SendPayTransaction(privkey,toaddress,amount);
+						if (!privkey || !toaddress || !amount){
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+
+
+						let result = TRANSACTION.SendPayTransaction(privkey,toaddress,amount);
 
 
 						response.write(JSON.stringify(true));
@@ -112,7 +178,14 @@ exports.SetServer = function(){
 						let tag = postData["args"]["tag"];
 						let amount = postData["args"]["amount"];
 
-						let result = (require('./TransactionTools/nego.js')).SendNegoTransaction(privkey,tag,amount);
+
+						if (!privkey || !tag || !amount){
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+
+
+						let result = TRANSACTIONTOOLS_NEGO.SendNegoTransaction(privkey,tag,amount);
 
 						response.write(JSON.stringify(true));
 						response.end();
@@ -123,9 +196,30 @@ exports.SetServer = function(){
 					if (postData["function"] == "gettx"){
 						let txid = postData["args"]["txid"];
 
-						let result = (require('./transaction.js')).GetTx(txid).GetObjTx();
 
-						response.write(JSON.stringify(result));
+						if (!txid){
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+
+
+						let result = TRANSACTION.GetTx(txid).GetObjTx();
+
+						let callback = {
+							"pubkey":result["pubkey"],
+							"type":result["type"],
+							"time":result["time"],
+							"tag":result["tag"],
+							"index":result["index"],
+							"MerkleRoot":result["MerkleRoot"],
+							"toaddress":result["toaddress"],
+							"amount":result["amount"],
+							"data":result["data"],
+							"sig":result["sig"],
+							"nonce":result["nonce"],
+						}
+
+						response.write(JSON.stringify(callback));
 						response.end();
 					};
 
@@ -135,13 +229,21 @@ exports.SetServer = function(){
 						let privkey = postData["args"]["privkey"];
 						let tag = postData["args"]["tag"];
 						let data = postData["args"]["data"];
-						
+
 						let commonkey = "";
 						if ("commonkey" in postData["args"] && postData["args"]["commonkey"]){
 							commonkey = postData["args"]["commonkey"];
 						};
 
-						let result = (require('./TransactionTools/database.js')).SendDatabaseTransaction(privkey,tag,data,commonkey);
+
+						if (!privkey || !tag || !data){
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+
+
+
+						let result = TRANSACTIONTOOLS_DATABASE.SendDatabaseTransaction(privkey,tag,data,commonkey);
 
 						response.write(JSON.stringify(true));
 						response.end();
@@ -153,9 +255,19 @@ exports.SetServer = function(){
 						let privkey = postData["args"]["privkey"];
 						let tag = postData["args"]["tag"];
 						let permissiontype = postData["args"]["permissiontype"];
-						let powtarget = postData["args"]["powtarget"];
 
-						let result = (require('./TransactionTools/tagorder.js')).SendTagOrderTransaction(privkey,tag,permissiontype,powtarget);
+						let powtarget = "";
+						if ("powtarget" in postData["args"] && postData["args"]["powtarget"]){
+							privkey = postData["args"]["privkey"];
+						}
+
+
+						if (!privkey || !tag || !permissiontype){
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+
+						let result = TRANSACTIONTOOLS_TAGORDER.SendTagOrderTransaction(privkey,tag,permissiontype,powtarget);
 
 						response.write(JSON.stringify(true));
 						response.end();
@@ -168,18 +280,50 @@ exports.SetServer = function(){
 						let tag = postData["args"]["tag"];
 						let addaddress = postData["args"]["addaddress"];
 
-						let result = (require('./TransactionTools/tagaddpermit.js')).SendTagAddPermitTransaction(privkey,tag,addaddress);
+
+						if (!privkey || !tag || !addaddress){
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+
+
+						let result = TRANSACTIONTOOLS_TAGADDPERMIT.SendTagAddPermitTransaction(privkey,tag,addaddress);
 
 						response.write(JSON.stringify(true));
 						response.end();
 					}
+				}catch(e){
+					console.log(e);
+					response.write(JSON.stringify(false));
+					response.end();
+				};
 
-
-				});
+			});
+		}else{
+			let HtmlLib = {
+				"form":FS.readFileSync('UI/lib/MessagerLib/form.js'),
+				"notification":FS.readFileSync('UI/lib/MessagerLib/notification.js'),
+				"basicfunctions":FS.readFileSync('UI/lib/basicfunctions.js'),
+				"TAKAAPIRapper":FS.readFileSync('UI/lib/TAKAAPIRapper.js'),
 			};
-		}catch{
-			response.write(JSON.stringify(true));
-			response.end();
+
+			let ExplorerHtml = FS.readFileSync('UI/explorer.html');
+
+
+			//GETメゾット
+			for (let libname in HtmlLib){
+				if (request.url == "/lib/"+libname){
+					response.writeHead(200, {'Content-Type': 'text/html'});
+					response.end(HtmlLib[libname]);
+					break;
+				};
+			}
+
+
+			if (request.url == "/explorer"){
+				response.writeHead(200, {'Content-Type': 'text/html'});
+				response.end(ExplorerHtml);
+			};
 		}
 
 	}).listen(Config.API["port"], Config.API["address"]);

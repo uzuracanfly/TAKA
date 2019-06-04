@@ -377,21 +377,10 @@ exports.Transaction = class{
 
 
 				if (TagorderObjData["permissiontype"] == 2 && tagordertxobj["pubkey"] != objtx["pubkey"]){
-					//TagAddPermitを探す
-					let PermitAddresss = [];
-					for (let index in tagtxids){
-						let tagtxid = tagtxids[index];
-						let tagtx = exports.GetTx(tagtxid);
-						let tagtxobj = tagtx.GetObjTx();
-						if (tagtxobj["type"] == 13){
-							let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
-							let Tagaddpermit = new tagaddpermit.TagAddPermitData(tagtxobj["data"]);
-							let TagaddpermitObjData = Tagaddpermit.GetObjData();
-							PermitAddresss.push(TagaddpermitObjData["address"]);
-						}
-					};
+					let TagPermitAddresss = exports.GetTagPermitAddresss(objtx["tag"]);
 
-					if (PermitAddresss.indexOf(TargetAccount.GetKeys()["address"]) == -1){
+					//TagAddPermitAddresssの中にトランザクション発行元が許可されているか
+					if (TagPermitAddresss.indexOf(TargetAccount.GetKeys()["address"]) == -1){
 						return 0;
 					};
 				};
@@ -585,20 +574,25 @@ exports.GetAllTxids = function(){
 
 
 exports.GetTx = function(txid){
-	let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
+	try{
+		let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
 
-	let rawtx = database.get("ConfirmedTransactions",txid);
-	let TargetTransaction = new exports.Transaction(rawtx[0]);
+		let rawtx = database.get("ConfirmedTransactions",txid);
+		let TargetTransaction = new exports.Transaction(rawtx[0]);
 
-	return TargetTransaction;
+		return TargetTransaction;
+	}catch(e){
+		console.log(e);
+		return {};
+	}
 }
 
 exports.GetTags = function(){
 	let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
 
-	let UnconfirmedTransactionsTags = database.get("UnconfirmedTransactions");
+	let tags = database.get("UnconfirmedTransactions");
 
-	return UnconfirmedTransactionsTags;
+	return tags;
 };
 
 exports.GetTagTxids = function(tag){
@@ -663,7 +657,25 @@ exports.GetTagOrderTx = function(tag){
 }
 
 
+exports.GetTagPermitAddresss = function(tag){
+	let tagtxids = exports.GetTagTxids(tag);
 
+	let PermitAddresss = [];
+	for (let index in tagtxids){
+		let tagtxid = tagtxids[index];
+
+		let tagtx = exports.GetTx(tagtxid);
+		let tagtxobj = tagtx.GetObjTx();
+		if (tagtxobj["type"] == 13){
+			let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
+			let Tagaddpermit = new tagaddpermit.TagAddPermitData(tagtxobj["data"]);
+			let TagaddpermitObjData = Tagaddpermit.GetObjData();
+			PermitAddresss.push(TagaddpermitObjData["address"]);
+		}
+	};
+
+	return PermitAddresss;
+};
 
 
 

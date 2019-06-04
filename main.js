@@ -28,3 +28,15 @@ exports.GetFillZero = function(hex, hexlength){
 
 	return hex;
 };
+
+
+exports.errorHandle = function(process) {
+	return function(){
+		try {
+			return process.apply(this, arguments);
+		}catch (e) {
+			console.log(e);
+			console.log('エラーから復帰しました');
+		}
+	};
+}

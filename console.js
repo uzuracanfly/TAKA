@@ -1,10 +1,10 @@
+const READLINESYNC = require('readline-sync');
+const REQUEST = require('sync-request');
+
 exports.RunConsole = function(){
 	/*
 	コンソール
 	*/
-	const readlineSync = require('readline-sync');
-	const Config = require('./config.js');
-	const request = require('sync-request');
 
 	function SendPostbyjson(url,paras){
 		let headers = {
@@ -12,7 +12,7 @@ exports.RunConsole = function(){
 		};
 
 		//リクエスト送信
-		let res = request(
+		let res = REQUEST(
 			'POST',
 			url, 
 			{
@@ -29,6 +29,9 @@ exports.RunConsole = function(){
 		if (commands[0] == "getaccount"){
 			let key = commands[1];
 			result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"getaccount","args":{"key":key}});
+		}else if (commands[0] == "gettag"){
+			let tag = commands[1];
+			result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"gettag","args":{"tag":tag}});
 		}else if (commands[0] == "sendpaytx"){
 			let privkey = commands[1];
 			let toaddress = commands[2];
@@ -75,7 +78,7 @@ exports.RunConsole = function(){
 	let Promise = require('bluebird');
 	Promise.resolve(0).then(function loop(i) {
 		return new Promise(function(resolve, reject) {
-			let commandtext = readlineSync.question(Math.floor(Date.now()/1000) + " : ");
+			let commandtext = READLINESYNC.question(Math.floor(Date.now()/1000) + " : ");
 			let commands = commandtext.split(' ')
 			console.log(JSON.stringify(CommandAction(commands),null,'\t'));
 

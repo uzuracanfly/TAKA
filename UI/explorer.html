@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=yes" />
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache">
+</head>
+
+<style type="text/css">
+<!--
+#outer
+{
+	width:100%;
+	padding: 0;
+	margin: 0;
+}
+#inner
+{
+	width:100%;
+	padding: 0;
+	margin: 0 auto;
+}
+.sub
+{
+	width:100%;
+	margin:0 auto;
+}
+-->
+</style>
+
+
+
+
+
+
+
+
+
+<div id="outer">
+	<div id="inner">
+	</div>
+</div>
+
+
+
+
+
+
+
+
+
+<script src="//code.jquery.com/jquery.min.js"></script>
+<script src="//cdn.jsdelivr.net/clipboard.js/1.5.3/clipboard.min.js"></script>
+
+<script src="lib/basicfunctions"></script>
+<script src="lib/TAKAAPIRapper"></script>
+<script src="lib/form"></script>
+<script src="lib/notification"></script>
+
+
+
+<script>
+	const TAKA = new TAKAAPIRapper("133.18.169.253",80);
+	let Notification = new notification();
+
+	function AccountForm(address){
+		let AccountData = TAKA.getaccount(address);
+
+		let args = [
+			["title","Address : "+address],
+			["head","Balance : "+AccountData["balance"]],
+			["head","Txids"],
+		];
+		for (let tag in AccountData["txids"]){
+			let txids = AccountData["txids"][tag]["txs"].reverse();
+
+			args.push(["text",tag]);
+
+			for (let index in txids){
+				let txid = txids[index];
+
+				args.push(["button",txid,function(){TxForm(this.value);}]);
+			};
+		};
+
+		let result = new form(
+			args,
+			"AccountForm"
+		);
+
+		return result;
+	};
+
+
+
+	function TxForm(txid){
+		let TxData = TAKA.gettx(txid);
+		let AccountData = TAKA.getaccount(TxData["pubkey"]);
+
+		let args = [
+			["title","Transaction ID : "+txid],
+			["head","Sender"],
+			["text","Pubkey : "+AccountData["pubkey"]],
+			["button",AccountData["address"],function(){AccountForm(this.value);}],
+			["head","Type : "+TxData["type"]],
+			["head","Time : "+TxData["time"]],
+			["head","Tag : "+TxData["tag"]],
+			["head","Index : "+TxData["index"]],
+			["head","MerkleRoot : "+TxData["MerkleRoot"]],
+			["head","To Address : "+TxData["toaddress"]],
+			["head","Amount : "+TxData["amount"]],
+			["head","Data : "+TxData["data"]],
+			["head","Sig : "+TxData["sig"]],
+			["head","Nonce : "+TxData["nonce"]],
+		];
+
+		let result = new form(
+			args,
+			"TxForm"
+		);
+
+		return result;
+	};
+
+
+
+	function TagForm(tag){
+		let TagData = TAKA.gettag(tag);
+
+		if (!TagData){
+			return 0;
+		}
+
+		let args = [
+			["title","Tag : "+tag],
+			["head","Owner"],
+			["text","Pubkey : "+TagData["owner"]["pubkey"]],
+			["text","Address : "+TagData["owner"]["address"]],
+			["head","Permission Type : "+TagData["permissiontype"]],
+			["head","Permit Addresss"],
+		];
+
+		for (let index in TagData["PermitAddresss"]){
+			let PermitAddress = TagData["PermitAddresss"][index];
+
+			args.push(["text",PermitAddress]);
+		}
+
+		args.push(["head","PoW Target : "+TagData["powtarget"]]);
+		args.push(["head","txids"]);
+
+		let txids = TagData["txids"].reverse();
+
+		for (let index in txids){
+			let txid = txids;
+
+			args.push(["button",txid,function(){TxForm(this.value);}]);
+		};
+
+		let result = new form(
+			args,
+			"TxForm"
+		);
+
+		return result;
+	};
+</script>
+
+
+
+
+
+<script>
+	window.onload = function(){
+		let outer=document.getElementById("outer");
+		let inner=document.getElementById("inner");
+
+
+
+		let EleSearch = element(
+			{
+				"name":"EleSearch",
+				"attachele":document.body,
+				"type":"div",
+				"height":"100px",
+				"width":"100%",
+				"maxWidth":"1024px",
+				"position":"fixed",
+			}
+		);
+		var IntervalID = setInterval(
+			function()
+			{
+				if (document.getElementById("EleSearch") == null){clearInterval(IntervalID);return 0;};
+
+				EleSearch.style.top = window.innerHeight/2 - 50 + "px";
+				EleSearch.style.left = window.innerWidth/2 - EleSearch.clientWidth/2 + "px";
+			},
+			10
+		);
+
+		let EleInputSearch = element(
+			{
+				"name":"EleInputSearch",
+				"attachele":EleSearch,
+				"type":"input",
+				"height":"50px",
+				"width":"100%",
+				"placeholder":"tag, address, txid",
+				"textAlign":"center",
+			}
+		);
+		let EleButtonSearch = element(
+			{
+				"name":"EleButtonSearch",
+				"attachele":EleSearch,
+				"type":"input",
+				"height":"50px",
+				"width":"100%",
+				"value":"Search",
+				"textAlign":"center",
+				"clickfunction":function(){
+					let value = document.getElementById("EleInputSearch").value;
+
+					if (value.length == 40){
+						AccountForm(value);
+					}else if (value.length == 64){
+						TxForm(value);
+					}else{
+						if (!TagForm(value)){
+							Notification.notification(
+								[
+									["text","none."]
+								],
+								"news"
+							)
+						};
+					};
+				}
+			}
+		);
+		EleButtonSearch.type = "button";
+	};
+</script>

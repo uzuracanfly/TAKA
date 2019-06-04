@@ -1,6 +1,6 @@
-const cluster = require('cluster');
 global.Config = require('./config.js');
 
+const CLUSTER = require('cluster');
 
 
 function genesis_transaction(toprivkey,InitialAmount){
@@ -53,18 +53,18 @@ let FunctionList = [
 
 
 
-if (cluster.isMaster) {
+if (CLUSTER.isMaster) {
 	for (let index in FunctionList) {
-		let worker = cluster.fork();
+		let worker = CLUSTER.fork();
 		FunctionList[index]["pid"] = worker.process.pid;
 	}
 
-	cluster.on('exit', (worker, code, signal) => {
+	CLUSTER.on('exit', (worker, code, signal) => {
 		console.log(`worker ${worker.process.pid} died`);
 	});
 }else{
 
-	let worker_id = cluster.worker.id;
+	let worker_id = CLUSTER.worker.id;
 	FunctionList[worker_id-1]["function"]();
 
 	console.log(`Worker ${process.pid} to ${FunctionList[worker_id-1]["name"]} started`);

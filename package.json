@@ -1,0 +1,29 @@
+{
+  "name": "taka",
+  "version": "1.0.0",
+  "description": "TAKA ====",
+  "main": "init.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uzuracanfly/TAKA.git"
+  },
+  "author": "uzuracanfly",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/uzuracanfly/TAKA/issues"
+  },
+  "homepage": "https://github.com/uzuracanfly/TAKA#readme",
+  "dependencies": {
+    "aes-js": "^3.1.2",
+    "bluebird": "^3.5.5",
+    "js-sha256": "^0.9.0",
+    "readline-sync": "^1.4.9",
+    "ripemd160": "^2.0.2",
+    "secp256k1": "^3.7.1",
+    "secure-random": "^1.1.2",
+    "sync-request": "^6.1.0"
+  }
+}
