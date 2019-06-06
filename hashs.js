@@ -1,16 +1,17 @@
+const RIPEMD160 = require('ripemd160');
+const SHA256 = require('js-sha256').sha256;
+const SHA512 = require('js-sha512').sha512;
+
 exports.hashs = class{
-	constructor (){
-		this.RIPEMD160 = require('ripemd160');
-		this.sha256 = require('js-sha256').sha256;
-	};
+	constructor (){};
 
 
 	sha256d(hex)
 	{
 		hex = Buffer.from(hex, 'hex');
-		let hash = this.sha256.hex(hex);
+		let hash = SHA256.hex(hex);
 		hash = Buffer.from(hash, 'hex');
-		hash = this.sha256.hex(hash);
+		hash = SHA256.hex(hash);
 
 		return hash;
 	}
@@ -18,7 +19,15 @@ exports.hashs = class{
 	sha256(hex)
 	{
 		hex = Buffer.from(hex, 'hex');
-		let hash = this.sha256.hex(hex);
+		let hash = SHA256.hex(hex);
+
+		return hash;
+	}
+
+	sha512(hex)
+	{
+		hex = Buffer.from(hex, 'hex');
+		let hash = SHA512.hex(hex);
 
 		return hash;
 	}
@@ -26,7 +35,14 @@ exports.hashs = class{
 	ripemd160(hex)
 	{
 		hex = Buffer.from(hex, 'hex');
-		return new this.RIPEMD160().update(hex).digest('hex')
+		return new RIPEMD160().update(hex).digest('hex')
+	}
+
+	yescrypt(hex)
+	{
+		let GetYescryptHashFunction = YESCRYPT.cwrap('GetYescryptHash', 'string',['string']);
+		let hash = GetYescryptHashFunction(hex);
+		return hash;
 	}
 
 

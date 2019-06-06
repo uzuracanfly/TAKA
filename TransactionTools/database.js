@@ -36,7 +36,7 @@ exports.DatabaseData = class{
 
 
 
-exports.SendDatabaseTransaction = function(privkey,tag,data,commonkey){
+exports.SendDatabaseTransaction = function(privkey,tag,data,commonkey=""){
 	let TargetAccount = new (require('../account.js')).account(privkey);
 
 	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);

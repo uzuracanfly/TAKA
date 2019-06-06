@@ -7,7 +7,7 @@ const TRANSACTIONTOOLS_NEGO = require('./TransactionTools/nego');
 const TRANSACTIONTOOLS_DATABASE = require('./TransactionTools/database.js');
 const TRANSACTIONTOOLS_TAGORDER = require('./TransactionTools/tagorder.js');
 const TRANSACTIONTOOLS_TAGADDPERMIT = require('./TransactionTools/tagaddpermit.js');
-
+const TRANSACTIONTOOLS_CUSTOMDATABASE_TOKEN = require('./TransactionTools/CustomDatabase/token.js');
 
 
 //API Server
@@ -120,10 +120,12 @@ exports.SetServer = function(){
 						}
 
 						let TargetTransaction = new TRANSACTION.Transaction(rawtx);
-						TargetTransaction.commit();
+						let result = TargetTransaction.commit();
 
-						response.write(JSON.stringify(true));
-						response.end();
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
 					};
 
 
@@ -167,8 +169,10 @@ exports.SetServer = function(){
 						let result = TRANSACTION.SendPayTransaction(privkey,toaddress,amount);
 
 
-						response.write(JSON.stringify(true));
-						response.end();
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
 					}
 
 
@@ -187,8 +191,10 @@ exports.SetServer = function(){
 
 						let result = TRANSACTIONTOOLS_NEGO.SendNegoTransaction(privkey,tag,amount);
 
-						response.write(JSON.stringify(true));
-						response.end();
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
 					}
 
 
@@ -245,8 +251,10 @@ exports.SetServer = function(){
 
 						let result = TRANSACTIONTOOLS_DATABASE.SendDatabaseTransaction(privkey,tag,data,commonkey);
 
-						response.write(JSON.stringify(true));
-						response.end();
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
 					}
 
 
@@ -269,8 +277,10 @@ exports.SetServer = function(){
 
 						let result = TRANSACTIONTOOLS_TAGORDER.SendTagOrderTransaction(privkey,tag,permissiontype,powtarget);
 
-						response.write(JSON.stringify(true));
-						response.end();
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
 					}
 
 
@@ -289,9 +299,14 @@ exports.SetServer = function(){
 
 						let result = TRANSACTIONTOOLS_TAGADDPERMIT.SendTagAddPermitTransaction(privkey,tag,addaddress);
 
-						response.write(JSON.stringify(true));
-						response.end();
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
 					}
+
+
+
 				}catch(e){
 					console.log(e);
 					response.write(JSON.stringify(false));

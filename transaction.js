@@ -1,15 +1,17 @@
+const MAIN = require('./main.js');
+const CRYPTO = require('./crypto.js');
+const ACCOUNT = require('./account.js');
+const HASHS = require('./hashs.js');
+const HAX = require('./hex.js');
+const DATABASE = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
+
+
+
 exports.Transaction = class{
 	constructor(rawtx="",privkey="",objtx={}){
-		this.main = require('./main.js');
-		this.crypto = require('./crypto.js');
-		this.account = require('./account.js');
-		this.hashs = require('./hashs.js');
-		this.hex = require('./hex.js');
-		this.database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
-
 
 		if (privkey){
-			this.TargetAccount = new this.account.account(privkey);
+			this.TargetAccount = new ACCOUNT.account(privkey);
 		};
 
 
@@ -17,12 +19,12 @@ exports.Transaction = class{
 			this.rawtx = rawtx;
 			this.objtx = this.GetObjTx();
 			if (!privkey){
-				this.TargetAccount = new this.account.account(this.objtx["pubkey"]);
+				this.TargetAccount = new ACCOUNT.account(this.objtx["pubkey"]);
 			};
 		}else{
 			this.objtx = objtx;
 			if (!privkey){
-				this.TargetAccount = new this.account.account(this.objtx["pubkey"]);
+				this.TargetAccount = new ACCOUNT.account(this.objtx["pubkey"]);
 			};
 			this.rawtx = this.GetRawTx();
 		};
@@ -33,7 +35,7 @@ exports.Transaction = class{
 	/*
 		通貨支払い
 
-		pubkey : 66桁
+		pubkey : 2122桁
 		type : 2桁
 		time : 16桁
 		tag length : 2桁
@@ -53,7 +55,7 @@ exports.Transaction = class{
 
 		let type = objtx["type"].toString(16);
 		let time = Math.floor(objtx["time"]).toString(16);
-		let tag = new this.hex.HexText().string_to_utf8_hex_string(objtx["tag"]);
+		let tag = new HAX.HexText().string_to_utf8_hex_string(objtx["tag"]);
 		let index = objtx["index"].toString(16);
 		let MerkleRoot = objtx["MerkleRoot"];
 		let toaddress = objtx["toaddress"];
@@ -64,9 +66,9 @@ exports.Transaction = class{
 
 		let rawtx = "";
 
-		let pubkey_toin = this.main.GetFillZero(TargetAccount.GetKeys()["pubkey"], 66);
-		let type_toin = this.main.GetFillZero(type, 2);
-		let time_toin = this.main.GetFillZero(time, 16);
+		let pubkey_toin = MAIN.GetFillZero(TargetAccount.GetKeys()["pubkey"], 2122);
+		let type_toin = MAIN.GetFillZero(type, 2);
+		let time_toin = MAIN.GetFillZero(time, 16);
 
 		let tag_toin = "";
 		if (tag.length%2 == 0){
@@ -75,12 +77,12 @@ exports.Transaction = class{
 			tag_toin = "0" + tag;
 		}
 		let taglen_toin = (tag_toin.length).toString(16);
-		taglen_toin = this.main.GetFillZero(taglen_toin, 16);
+		taglen_toin = MAIN.GetFillZero(taglen_toin, 2);
 
-		let index_toin = this.main.GetFillZero(index, 16);
-		let MerkleRoot_toin = this.main.GetFillZero(MerkleRoot, 64);
-		let toaddress_toin = this.main.GetFillZero(toaddress, 40);
-		let amount_toin = this.main.GetFillZero(amount, 64);
+		let index_toin = MAIN.GetFillZero(index, 16);
+		let MerkleRoot_toin = MAIN.GetFillZero(MerkleRoot, 64);
+		let toaddress_toin = MAIN.GetFillZero(toaddress, 40);
+		let amount_toin = MAIN.GetFillZero(amount, 64);
 
 		let data_toin = "";
 		if (data.length%2 == 0){
@@ -89,7 +91,7 @@ exports.Transaction = class{
 			data_toin = "0" + data;
 		}
 		let datalen_toin = (data_toin.length).toString(16);
-		datalen_toin = this.main.GetFillZero(datalen_toin, 16);
+		datalen_toin = MAIN.GetFillZero(datalen_toin, 16);
 
 
 		rawtx = rawtx + pubkey_toin;
@@ -114,14 +116,14 @@ exports.Transaction = class{
 			*/
 			let sig = "";
 			if ("privkey" in TargetAccount.GetKeys() && TargetAccount.GetKeys()["privkey"]){
-				let org = new this.hashs.hashs().sha256d(rawtx);
-				sig = new this.crypto.signature().GetSignData(TargetAccount.GetKeys()["privkey"],org);
+				let org = new HASHS.hashs().sha256d(rawtx);
+				sig = new CRYPTO.signature().GetSignData(TargetAccount.GetKeys()["privkey"],org);
 			}
 			if ("sig" in objtx && objtx["sig"]){
 				sig = objtx["sig"];
 			}
 			let siglen_toin = (sig.length).toString(16);
-			siglen_toin = this.main.GetFillZero(siglen_toin, 16);
+			siglen_toin = MAIN.GetFillZero(siglen_toin, 16);
 			rawtx = rawtx + siglen_toin + sig;
 
 
@@ -131,7 +133,7 @@ exports.Transaction = class{
 			if ("nonce" in objtx && objtx["nonce"]){
 				nonce = objtx["nonce"];
 			}
-			let nonce_toin = this.main.GetFillZero(nonce, 16);
+			let nonce_toin = MAIN.GetFillZero(nonce, 16);
 			rawtx = rawtx + nonce_toin;
 		};
 
@@ -149,8 +151,8 @@ exports.Transaction = class{
 		};
 
 
-		function VariableCut(){
-			let len = parseInt(cut(16),16);
+		function VariableCut(lenlen=16){
+			let len = parseInt(cut(lenlen),16);
 
 			let cuthex = rawtx.slice(0,len);
 			rawtx = rawtx.slice(len);
@@ -158,23 +160,23 @@ exports.Transaction = class{
 			return cuthex
 		};
 
-		let pubkey = cut(66);
+		let pubkey = cut(2122);
 		let type = parseInt(cut(2),16);
 		let time = parseInt(cut(16),16);
-		let tag = VariableCut();
+		let tag = VariableCut(2);
 		let index = parseInt(cut(16),16);
 		let MerkleRoot = cut(64);
 		let toaddress = cut(40);
 		let amount = parseInt(cut(64),16);
-		let data = VariableCut();
-		let sig = VariableCut();
+		let data = VariableCut(16);
+		let sig = VariableCut(16);
 		let nonce = parseInt(cut(16),16);
 
 		let objtx = {
 			"pubkey":pubkey,
 			"type":type,
 			"time":time,
-			"tag":new this.hex.HexText().utf8_hex_string_to_string(tag),
+			"tag":new HAX.HexText().utf8_hex_string_to_string(tag),
 			"index":index,
 			"MerkleRoot":MerkleRoot,
 			"toaddress":toaddress,
@@ -192,7 +194,7 @@ exports.Transaction = class{
 
 	//txidの取得
 	GetTxid(rawtx=this.rawtx){
-		let txid = new this.hashs.hashs().sha256d(rawtx);
+		let txid = new HASHS.hashs().sha256d(rawtx);
 		return txid;
 	}
 
@@ -202,7 +204,7 @@ exports.Transaction = class{
 	Confirmation(rawtx=this.rawtx){
 
 		let objtx = this.GetObjTx(rawtx);
-		let TargetAccount = new this.account.account(objtx["pubkey"]);
+		let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 
 
 
@@ -309,7 +311,7 @@ exports.Transaction = class{
 				if (feetxobj["amount"] < 1){
 					return 0;
 				}
-				if (feetxobj["toaddress"] != this.main.GetFillZero("", 40)){
+				if (feetxobj["toaddress"] != MAIN.GetFillZero("", 40)){
 					return 0;
 				}
 			}catch(e){
@@ -396,9 +398,9 @@ exports.Transaction = class{
 
 		//原文と署名文の確認
 		let org = this.GetRawTx(TargetAccount,objtx,true);
-		org = new this.hashs.hashs().sha256d(org);
+		org = new HASHS.hashs().sha256d(org);
 		let sig = objtx["sig"];
-		let sigbool = new this.crypto.signature().ConfirmationSign(org,sig,TargetAccount.GetKeys()["pubkey"]);
+		let sigbool = new CRYPTO.signature().ConfirmationSign(org,sig,TargetAccount.GetKeys()["pubkey"]);
 		if (!sigbool){
 			return 0;
 		};
@@ -415,8 +417,8 @@ exports.Transaction = class{
 
 		//MerkleRootとindexsからのMerkleRootの相違
 		let pretxlist = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
-		let IndexMerkleRoot = new this.hashs.hashs().GetMarkleroot(pretxlist);
-		IndexMerkleRoot = this.main.GetFillZero(IndexMerkleRoot, 64);
+		let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
+		IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
 		if (IndexMerkleRoot != objtx["MerkleRoot"]){
 			return 0;
 		};
@@ -463,7 +465,7 @@ exports.Transaction = class{
 		if (objtx["tag"] == "nego"){
 			return BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		}else if (objtx["tag"] == "pay"){
-			let TargetAccount = new this.account.account(objtx["pubkey"]);
+			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			let time = objtx["time"];
 			let txids = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
@@ -525,14 +527,13 @@ exports.Transaction = class{
 				let objtx = outthis.GetObjTx(rawtx);
 
 				if (numtxid <= target){
-					let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
-					database.add("UnconfirmedTransactions",objtx["tag"],rawtx);
+					DATABASE.add("UnconfirmedTransactions",objtx["tag"],rawtx);
 
 					return resolve(txid);
 				}else{
 					return bPromise.delay(1).then(function() {
 
-						let TargetAccount = new outthis.account.account(objtx["pubkey"]);
+						let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 
 						/*
 						powのtargetを特定する
@@ -565,9 +566,7 @@ exports.Transaction = class{
 
 
 exports.GetAllTxids = function(){
-	let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
-
-	let txids = database.get("TransactionIdsPerAll","live");
+	let txids = DATABASE.get("TransactionIdsPerAll","live");
 
 	return txids;
 }
@@ -575,9 +574,7 @@ exports.GetAllTxids = function(){
 
 exports.GetTx = function(txid){
 	try{
-		let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
-
-		let rawtx = database.get("ConfirmedTransactions",txid);
+		let rawtx = DATABASE.get("ConfirmedTransactions",txid);
 		let TargetTransaction = new exports.Transaction(rawtx[0]);
 
 		return TargetTransaction;
@@ -588,37 +585,31 @@ exports.GetTx = function(txid){
 }
 
 exports.GetTags = function(){
-	let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
-
-	let tags = database.get("UnconfirmedTransactions");
+	let tags = DATABASE.get("UnconfirmedTransactions");
 
 	return tags;
 };
 
 exports.GetTagTxids = function(tag){
-	let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
-
-	let txids = database.get("TransactionIdsPerTag",tag);
+	let txids = DATABASE.get("TransactionIdsPerTag",tag);
 
 	return txids;
 }
 
 exports.GetTagMerkleRoot = function(tag){
-	let Hashs = require('./hashs.js');
-
 	let txids = exports.GetTagTxids(tag);
 
-	let MerkleRoot = new Hashs.hashs().GetMarkleroot(txids);
+	let MerkleRoot = new HASHS.hashs().GetMarkleroot(txids);
 	return MerkleRoot;
 };
 
 exports.SendPayTransaction = function(privkey,toaddress,amount){
 	amount = parseInt(amount);
 
-	let TargetAccount = new (require('./account.js')).account(privkey);
+	let TargetAccount = new ACCOUNT.account(privkey);
 
 	let FormTxList = TargetAccount.GetFormTxList(undefined,"pay");
-	let MerkleRoot = new (require('./hashs.js')).hashs().GetMarkleroot(FormTxList);
+	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objtx = {
 		"pubkey":TargetAccount.GetKeys()["pubkey"],
@@ -686,19 +677,15 @@ exports.GetTagPermitAddresss = function(tag){
 未確認トランザクションの走査と確認
 */
 exports.RunCommit = function(){
-	let database = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
-	let main = require('./main.js');
-
-
 	function commit(TargetTransaction){
-		database.add("ConfirmedTransactions",TargetTransaction.GetTxid(),TargetTransaction.rawtx);
+		DATABASE.add("ConfirmedTransactions",TargetTransaction.GetTxid(),TargetTransaction.rawtx);
 
-		database.add("TransactionIdsPerTag",TargetTransaction.objtx["tag"],TargetTransaction.GetTxid());
-		database.add("TransactionIdsPerAccount",TargetTransaction.TargetAccount.GetKeys()["address"],TargetTransaction.GetTxid());
-		database.add("TransactionIdsPerAccount",TargetTransaction.objtx["toaddress"],TargetTransaction.GetTxid());
-		database.add("TransactionIdsPerAll","live",TargetTransaction.GetTxid());
+		DATABASE.add("TransactionIdsPerTag",TargetTransaction.objtx["tag"],TargetTransaction.GetTxid());
+		DATABASE.add("TransactionIdsPerAccount",TargetTransaction.TargetAccount.GetKeys()["address"],TargetTransaction.GetTxid());
+		DATABASE.add("TransactionIdsPerAccount",TargetTransaction.objtx["toaddress"],TargetTransaction.GetTxid());
+		DATABASE.add("TransactionIdsPerAll","live",TargetTransaction.GetTxid());
 
-		main.note(1,"transaction_RunCommit_commit","[commit transaction] txid : "+TargetTransaction.GetTxid());
+		MAIN.note(1,"transaction_RunCommit_commit","[commit transaction] txid : "+TargetTransaction.GetTxid());
 		return 1;
 	}
 
@@ -706,14 +693,14 @@ exports.RunCommit = function(){
 
 
 	//シード適用
-	let ConfirmedTransactions = database.get("ConfirmedTransactions");
+	let ConfirmedTransactions = DATABASE.get("ConfirmedTransactions");
 	if (ConfirmedTransactions.length==0){
 		for (let index in Config.genesistxs){
 			let rawtx = Config.genesistxs[index];
 
 			let SeedTransaction = new exports.Transaction(rawtx);
 
-			database.add("UnconfirmedTransactions",SeedTransaction.objtx["tag"],rawtx);
+			DATABASE.add("UnconfirmedTransactions",SeedTransaction.objtx["tag"],rawtx);
 		}
 	}
 
@@ -721,7 +708,7 @@ exports.RunCommit = function(){
 	setInterval(
 		function(){
 
-			let UnconfirmedTransactionsTags = database.get("UnconfirmedTransactions");
+			let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
 			for (let index in UnconfirmedTransactionsTags){
 				let tag = UnconfirmedTransactionsTags[index];
 
@@ -730,7 +717,7 @@ exports.RunCommit = function(){
 				};
 
 
-				let UnconfirmedTransactions = database.get("UnconfirmedTransactions",tag);
+				let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
 
 				//timeが古い順並び替え
 				let UnconfirmedTransactionsSort = [];
@@ -764,17 +751,17 @@ exports.RunCommit = function(){
 					let TargetTransaction = new exports.Transaction(rawtx);
 
 
-					main.note(1,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
+					MAIN.note(1,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 
 					let txbool = TargetTransaction.Confirmation();
 					if (txbool){
 						commit(TargetTransaction);
 					}else{
-						main.note(1,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
+						MAIN.note(1,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
 					}
 				}
 
-				database.set("UnconfirmedTransactions",tag,[]);
+				DATABASE.set("UnconfirmedTransactions",tag,[]);
 			};
 		},
 		10000
