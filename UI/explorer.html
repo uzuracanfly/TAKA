@@ -20,6 +20,8 @@
 	width:100%;
 	padding: 0;
 	margin: 0 auto;
+	position: absolute;
+	top: 300px;
 }
 .sub
 {
@@ -194,7 +196,7 @@
 			{
 				if (document.getElementById("EleSearch") == null){clearInterval(IntervalID);return 0;};
 
-				EleSearch.style.top = window.innerHeight/2 - 50 + "px";
+				EleSearch.style.top = "100px";
 				EleSearch.style.left = window.innerWidth/2 - EleSearch.clientWidth/2 + "px";
 			},
 			10
@@ -241,5 +243,78 @@
 			}
 		);
 		EleButtonSearch.type = "button";
+
+
+
+
+
+		/*
+			Nego最新Txリスト
+		*/
+		let EleNewNego = element(
+			{
+				"name":"EleNewNego",
+				"attachele":inner,
+				"type":"div",
+				"width":"100%",
+			}
+		);
+
+
+		let EleNewNegoName = element(
+			{
+				"name":"EleNewNegoName",
+				"attachele":EleNewNego,
+				"type":"h1",
+				"width":"100%",
+				"textAlign":"center",
+				"innerHTML":"Reward Tx List"
+			}
+		);
+
+
+		let EleNewNegoList = element(
+			{
+				"name":"EleNewNegoList",
+				"attachele":EleNewNego,
+				"type":"div",
+				"width":"100%",
+			}
+		);
+
+
+		let tagdata = TAKA.gettag("nego");
+		let tagtxids = tagdata["txids"];
+		tagtxids = tagtxids.reverse();
+
+
+		for (let index in tagtxids){
+			let txid = tagtxids[index];
+
+			let EleNewNegoSeed = element(
+				{
+					"name":"EleNewNegoSeed",
+					"attachele":EleNewNegoList,
+					"type":"div",
+					"width":"100%",
+				}
+			);
+
+			let EleNewNegoSeedButton = element(
+				{
+					"name":"EleNewNegoSeedButton",
+					"attachele":EleNewNegoSeed,
+					"type":"input",
+					"width":"100%",
+					"value":txid,
+					"textAlign":"center",
+					"clickfunction":function(){
+						TxForm(this.value);
+					}
+				}
+			);
+			EleNewNegoSeedButton.type = "button";
+
+		};
 	};
 </script>

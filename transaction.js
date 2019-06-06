@@ -396,6 +396,108 @@ exports.Transaction = class{
 
 
 
+
+
+
+
+		/*
+		contract
+		*/
+		let CONTRACT = require('./contract.js');
+		if (objtx["type"] == 111){
+			try{
+				let objdata = new CONTRACT.SetFunctionData(objtx["data"]).GetObjData();
+			}catch(e){
+				console.log(e);
+				return 0;
+			};
+		};
+		if (objtx["type"] == 112){
+			try{
+				let objdata = new CONTRACT.RunFunctionData(objtx["data"]).GetObjData();
+
+
+
+				//アドレスに結び付いた最新の保存データを取得
+				let SaveDataPerAddress = {};
+				let tagtxids = TargetAccount.GetFormTxList(undefined,objtx["tag"]);
+				tagtxids = tagtxids.reverse();
+
+				for (let index in tagtxids){
+					let tagtxid = tagtxids[index];
+					let tagtx = exports.GetTx(tagtxid);
+					let objtagtx = tagtx.GetObjTx();
+
+					if (objtagtx["type"] == 112){
+						let objtagdata = new CONTRACT.SetFunctionData(objtagtx["data"]).GetObjData();
+
+						if (objtagdata["FunctionName"] == objdata["FunctionName"]){
+							SaveDataPerAddress = objtagdata["SetData"];
+							break;
+						};
+					};
+				}
+
+
+
+
+
+				let tagtxids = exports.GetTagTxids(objtx["tag"]);
+				if (!tagtxids){
+					return 0;
+				}
+
+				//実行するソースのコードをtagのtxidリストから走査
+				for (let index in tagtxids){
+					let tagtxid = tagtxids[index];
+					let tagtx = exports.GetTx(tagtxid);
+					let objtagtx = tagtx.GetObjTx();
+					if (objtagtx["type"] == 111){
+						let objtagdata = new CONTRACT.SetFunctionData(objtagtx["data"]).GetObjData();
+						//ソースコード発見
+						if (objtagdata["FunctionName"] == objdata["FunctionName"]){
+							if (objtagdata["CodeType"] == 1){
+								let CodeData = objtagdata["CodeData"];
+								eval(CodeData);
+								MAIN(objdata["FunctionArgs"],SaveDataPerAddress);
+
+								if (!result){
+									return 0;
+								}
+
+								objdata["SetData"] = SaveDataPerAddress;
+								objdata["result"] = result;
+							}
+							break;
+						}
+					}
+				}
+
+
+				//txのdata書き換え
+				let rawdata = new CONTRACT.RunFunctionData("",objdata).GetRawData();
+				objtx["data"] = rawdata;
+				rawtx = this.GetRawTx(TargetAccount,objtx);
+
+
+
+
+			}catch(e){
+				console.log(e);
+				return 0;
+			};
+		};
+
+
+
+
+
+
+
+
+
+
+
 		//原文と署名文の確認
 		let org = this.GetRawTx(TargetAccount,objtx,true);
 		org = new HASHS.hashs().sha256d(org);
@@ -580,7 +682,7 @@ exports.GetTx = function(txid){
 		return TargetTransaction;
 	}catch(e){
 		console.log(e);
-		return {};
+		return false;
 	}
 }
 
@@ -591,6 +693,10 @@ exports.GetTags = function(){
 };
 
 exports.GetTagTxids = function(tag){
+	if (!tag){
+		return [];
+	}
+
 	let txids = DATABASE.get("TransactionIdsPerTag",tag);
 
 	return txids;
@@ -631,18 +737,26 @@ exports.SendPayTransaction = function(privkey,toaddress,amount){
 };
 
 exports.GetTagOrderTx = function(tag){
-	let tagtxs = exports.GetTagTxids(tag);
-	if (tagtxs){
-		let tagordertxid = tagtxs[0];
+	try{
+		let tagtxs = exports.GetTagTxids(tag);
+		if (tagtxs){
+			let tagordertxid = tagtxs[0];
 
-		let tagordertx = exports.GetTx(tagordertxid);
-		let tagordertxobj = tagordertx.GetObjTx();
-		if (tagordertxobj["type"] != 12){
+			let tagordertx = exports.GetTx(tagordertxid);
+			if (!tagordertx){
+				return 0;
+			}
+			let tagordertxobj = tagordertx.GetObjTx();
+			if (tagordertxobj["type"] != 12){
+				return 0;
+			};
+
+			return tagordertx;
+		}else{
 			return 0;
-		};
-
-		return tagordertx;
-	}else{
+		}
+	}catch(e){
+		console.log(e);
 		return 0;
 	}
 }

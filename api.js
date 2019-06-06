@@ -7,7 +7,7 @@ const TRANSACTIONTOOLS_NEGO = require('./TransactionTools/nego');
 const TRANSACTIONTOOLS_DATABASE = require('./TransactionTools/database.js');
 const TRANSACTIONTOOLS_TAGORDER = require('./TransactionTools/tagorder.js');
 const TRANSACTIONTOOLS_TAGADDPERMIT = require('./TransactionTools/tagaddpermit.js');
-const TRANSACTIONTOOLS_CUSTOMDATABASE_TOKEN = require('./TransactionTools/CustomDatabase/token.js');
+const TRANSACTIONTOOLS_CONTRACT = require('./TransactionTools/contract.js');
 
 
 //API Server
@@ -80,30 +80,35 @@ exports.SetServer = function(){
 						if (!tag){
 							response.write(JSON.stringify(false));
 							response.end();
+							return 0;
 						}
-
-						let TagOrderTx = new TRANSACTION.GetTagOrderTx(tag);
-						let TagOrderObjTx = TagOrderTx.GetObjTx();
-
-						let TagOrderData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]);
-						let TagOrderObjData = TagOrderData.GetObjData();
-
-						let ownerpubkey = TagOrderObjTx["pubkey"];
-						let OwnerAccount = new ACCOUNT.account(ownerpubkey);
 
 						let TagTxids = TRANSACTION.GetTagTxids(tag);
-						let TagPermitAddresss = TRANSACTION.GetTagPermitAddresss(tag);
 
 						let callback = {
-							"owner":{
-								"pubkey":ownerpubkey,
-								"address":OwnerAccount.GetKeys()["address"]
-							},
-							"permissiontype":TagOrderObjData["permissiontype"],
-							"PermitAddresss":TagPermitAddresss,
-							"powtarget":TagOrderObjData["powtarget"],
 							"txids":TagTxids,
 						}
+
+
+						if (tag != "pay" && tag != "nego" && TagTxids.length > 0){
+							let TagOrderTx = new TRANSACTION.GetTagOrderTx(tag);
+							let TagOrderObjTx = TagOrderTx.GetObjTx();
+
+							let TagOrderData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]);
+							let TagOrderObjData = TagOrderData.GetObjData();
+
+							let ownerpubkey = TagOrderObjTx["pubkey"];
+							let OwnerAccount = new ACCOUNT.account(ownerpubkey);
+
+							let TagPermitAddresss = TRANSACTION.GetTagPermitAddresss(tag);
+
+							callback["owner"] = {
+								"pubkey":ownerpubkey,
+								"address":OwnerAccount.GetKeys()["address"]
+							};
+							callback["permissiontype"] = TagOrderObjData["permissiontype"];
+							callback["powtarget"] = TagPermitAddresss;
+						};
 
 						response.write(JSON.stringify(callback));
 						response.end();
@@ -117,6 +122,7 @@ exports.SetServer = function(){
 						if (!rawtx){
 							response.write(JSON.stringify(false));
 							response.end();
+							return 0;
 						}
 
 						let TargetTransaction = new TRANSACTION.Transaction(rawtx);
@@ -136,6 +142,7 @@ exports.SetServer = function(){
 						if (!objtx){
 							response.write(JSON.stringify(false));
 							response.end();
+							return 0;
 						}
 
 						let privkey = "";
@@ -163,6 +170,7 @@ exports.SetServer = function(){
 						if (!privkey || !toaddress || !amount){
 							response.write(JSON.stringify(false));
 							response.end();
+							return 0;
 						}
 
 
@@ -186,6 +194,7 @@ exports.SetServer = function(){
 						if (!privkey || !tag || !amount){
 							response.write(JSON.stringify(false));
 							response.end();
+							return 0;
 						}
 
 
@@ -206,6 +215,7 @@ exports.SetServer = function(){
 						if (!txid){
 							response.write(JSON.stringify(false));
 							response.end();
+							return 0;
 						}
 
 
@@ -245,6 +255,7 @@ exports.SetServer = function(){
 						if (!privkey || !tag || !data){
 							response.write(JSON.stringify(false));
 							response.end();
+							return 0;
 						}
 
 
@@ -273,6 +284,7 @@ exports.SetServer = function(){
 						if (!privkey || !tag || !permissiontype){
 							response.write(JSON.stringify(false));
 							response.end();
+							return 0;
 						}
 
 						let result = TRANSACTIONTOOLS_TAGORDER.SendTagOrderTransaction(privkey,tag,permissiontype,powtarget);
@@ -294,6 +306,7 @@ exports.SetServer = function(){
 						if (!privkey || !tag || !addaddress){
 							response.write(JSON.stringify(false));
 							response.end();
+							return 0;
 						}
 
 
@@ -304,6 +317,59 @@ exports.SetServer = function(){
 							response.end();
 						});
 					}
+
+
+
+					if (postData["function"] == "sendcontractsetfunctiontx"){
+						let privkey = postData["args"]["privkey"];
+						let tag = postData["args"]["tag"];
+						let FunctionName = postData["args"]["FunctionName"];
+						let CodeType = postData["args"]["CodeType"];
+						let CodeData = postData["args"]["CodeData"];
+						let CodePath = "";
+						if ("CodePath" in postData["args"]){
+							CodePath = postData["args"]["CodePath"];
+						};
+
+
+						if (!privkey || !tag || !FunctionName || !CodeType || !CodeData){
+							response.write(JSON.stringify(false));
+							response.end();
+							return 0;
+						}
+
+
+						let result = TRANSACTIONTOOLS_CONTRACT.SendContractSetFunctionTransaction(privkey,tag,FunctionName,CodeType,CodeData,CodePath);
+
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
+					};
+
+
+
+					if (postData["function"] == "sendcontractrunfunctiontx"){
+						let privkey = postData["args"]["privkey"];
+						let tag = postData["args"]["tag"];
+						let FunctionName = postData["args"]["FunctionName"];
+						let FunctionArgs = postData["args"]["FunctionArgs"];
+
+
+						if (!privkey || !tag || !FunctionName || !FunctionArgs){
+							response.write(JSON.stringify(false));
+							response.end();
+							return 0;
+						}
+
+
+						let result = TRANSACTIONTOOLS_CONTRACT.SendContractRunFunctionTransaction(privkey,tag,FunctionName,FunctionArgs);
+
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
+					};
 
 
 

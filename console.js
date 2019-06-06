@@ -70,6 +70,25 @@ exports.RunConsole = function(){
 			let addaddress = commands[3];
 
 			result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendtagaddpermittx","args":{"privkey":privkey,"tag":tag,"addaddress":addaddress}});
+		}else if (commands[0] == "sendcontractsetfunctiontx"){
+			let privkey = commands[1];
+			let tag = commands[2];
+			let FunctionName = commands[3];
+			let CodeType = commands[4];
+			let CodeData = commands[5];
+			let CodePath = "";
+			if (commands.length >= 7){
+				CodePath = commands[6];
+			};
+
+			result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendcontractsetfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"CodeType":CodeType,"CodeData":CodeData,"CodePath":CodePath}});
+		}else if (commands[0] == "sendcontractrunfunctiontx"){
+			let privkey = commands[1];
+			let tag = commands[2];
+			let FunctionName = commands[3];
+			let FunctionArgs = commands[4];
+
+			result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendcontractrunfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
 		};
 
 		return result;
