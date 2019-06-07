@@ -1,5 +1,6 @@
 **/node_modules/
 database/
+exec/
 test.js
 config.js
 package-lock.json

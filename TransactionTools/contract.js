@@ -1,4 +1,5 @@
 const FS = require('fs');
+const TRANSACTION = require('../transaction.js');
 
 exports.SetFunctionData = class{
 	constructor(rawdata="",objdata={}){
@@ -33,7 +34,7 @@ exports.SetFunctionData = class{
 			CodeData = "0" + CodeData;
 		}
 		let CodeDataLen = (CodeData.length).toString(16);
-		CodeDataLen = MAIN.GetFillZero(CodeDataLen, 16);
+		CodeDataLen = this.main.GetFillZero(CodeDataLen, 16);
 
 		let rawdata = FunctionNamelen + FunctionName + CodeType + CodeDataLen + CodeData;
 
@@ -93,7 +94,7 @@ exports.SendContractSetFunctionTransaction = function(privkey,tag,FunctionName,C
 
 	let objdata = {
 		"FunctionName":FunctionName,
-		"CodeType":CodeType,
+		"CodeType":parseInt(CodeType),
 		"CodeData":CodeData,
 	}
 
@@ -117,7 +118,7 @@ exports.SendContractSetFunctionTransaction = function(privkey,tag,FunctionName,C
 		"sig":"",
 		"nonce":0
 	};
-	console.log(objtx);
+	//console.log(objtx);
 	let TargetTransaction = new (require('../transaction.js')).Transaction("",privkey,objtx);
 	let result = TargetTransaction.commit();
 
@@ -188,7 +189,8 @@ exports.RunFunctionData = class{
 		FunctionArgslen = this.main.GetFillZero(FunctionArgslen,16);
 
 
-		let result = new this.hex.HexText().string_to_utf8_hex_string(objdata["result"]);
+		let result = JSON.stringify(objdata["result"]);
+		result = new this.hex.HexText().string_to_utf8_hex_string(result);
 		if (result.length%2 != 0){
 			result = "0" + result;
 		}
@@ -238,6 +240,7 @@ exports.RunFunctionData = class{
 
 		let result = VariableCut();
 		result = new this.hex.HexText().utf8_hex_string_to_string(result);
+		result = JSON.parse(result);
 
 		let SetData = VariableCut();
 		SetData = new this.hex.HexText().utf8_hex_string_to_string(SetData);
@@ -265,11 +268,97 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
 	let MerkleRoot = new (require('../hashs.js')).hashs().GetMarkleroot(FormTxList);
 
+
+	/*
+		コントラクト実行
+	*/
+
+	//アドレスに結び付いた最新の保存データを取得
+	let SaveDataPerAddress = {};
+	let tagtxids = FormTxList.reverse();
+
+	for (let index in tagtxids){
+		let tagtxid = tagtxids[index];
+
+		let tagtx = TRANSACTION.GetTx(tagtxid);
+		let objtagtx = tagtx.GetObjTx();
+
+		if (objtagtx["type"] == 112){
+			let objtagdata = new exports.SetFunctionData(objtagtx["data"]).GetObjData();
+
+			SaveDataPerAddress = objtagdata["SetData"];
+			break;
+		};
+	}
+
+
+
+	tagtxids = TRANSACTION.GetTagTxids(tag);
+	if (tagtxids.length <= 0){
+		return 0;
+	}
+
+	//実行するソースのコードをtagのtxidリストから走査
+
+	let CodeResult = false;
+	for (let index in tagtxids){
+		let tagtxid = tagtxids[index];
+
+		let tagtx = TRANSACTION.GetTx(tagtxid);
+		let objtagtx = tagtx.GetObjTx();
+		if (objtagtx["type"] == 111){
+			let objtagdata = new exports.SetFunctionData(objtagtx["data"]).GetObjData();
+
+			//ソースコード発見
+			if (objtagdata["FunctionName"] == FunctionName){
+				if (objtagdata["CodeType"] == 1){
+					let CodeData = objtagdata["CodeData"];
+
+					try{
+						FS.mkdirSync("../exec/");
+					}catch(e){
+						console.log("");
+					}
+
+					FS.writeFileSync("../exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
+
+					let loopindex = 0;
+					while (loopindex < 100){
+						try{
+							FS.statSync("../exec/"+objtagdata["FunctionName"]+".js");
+							break;
+						}catch(e){
+							loopindex = loopindex + 1;
+						}
+					}
+
+					let ExecFunctions = require("../exec/"+objtagdata["FunctionName"]+".js");
+					CodeResult = ExecFunctions.MAIN(FunctionArgs,SaveDataPerAddress);
+
+					if (!CodeResult){
+						return 0;
+					}
+
+					break;
+				}
+
+			}
+		}
+	}
+	if (!CodeResult){
+		return 0;
+	}
+
+
+
+
+
+
 	let objdata = {
 		"FunctionName":FunctionName,
 		"FunctionArgs":FunctionArgs,
-		"result":"",
-		"SetData":"",
+		"result":CodeResult,
+		"SetData":SaveDataPerAddress,
 	}
 
 	let RUNFUNCTIONDATA = new exports.RunFunctionData("",objdata);
@@ -292,7 +381,7 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 		"sig":"",
 		"nonce":0
 	};
-	console.log(objtx);
+	//console.log(objtx);
 	let TargetTransaction = new (require('../transaction.js')).Transaction("",privkey,objtx);
 	let result = TargetTransaction.commit();
 

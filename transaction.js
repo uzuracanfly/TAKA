@@ -4,7 +4,7 @@ const ACCOUNT = require('./account.js');
 const HASHS = require('./hashs.js');
 const HAX = require('./hex.js');
 const DATABASE = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
-
+const FS = require('fs');
 
 
 exports.Transaction = class{
@@ -361,7 +361,7 @@ exports.Transaction = class{
 		*/
 		if (objtx["type"] > 100){
 			let tagtxids = exports.GetTagTxids(objtx["tag"]);
-			if (tagtxids){
+			if (tagtxids.length > 0){
 				let tagordertxid = tagtxids[0];
 
 				let tagordertx = exports.GetTx(tagordertxid);
@@ -403,7 +403,7 @@ exports.Transaction = class{
 		/*
 		contract
 		*/
-		let CONTRACT = require('./contract.js');
+		let CONTRACT = require('./TransactionTools/contract.js');
 		if (objtx["type"] == 111){
 			try{
 				let objdata = new CONTRACT.SetFunctionData(objtx["data"]).GetObjData();
@@ -431,10 +431,8 @@ exports.Transaction = class{
 					if (objtagtx["type"] == 112){
 						let objtagdata = new CONTRACT.SetFunctionData(objtagtx["data"]).GetObjData();
 
-						if (objtagdata["FunctionName"] == objdata["FunctionName"]){
-							SaveDataPerAddress = objtagdata["SetData"];
-							break;
-						};
+						SaveDataPerAddress = objtagdata["SetData"];
+						break;
 					};
 				}
 
@@ -442,12 +440,13 @@ exports.Transaction = class{
 
 
 
-				let tagtxids = exports.GetTagTxids(objtx["tag"]);
-				if (!tagtxids){
+				tagtxids = exports.GetTagTxids(objtx["tag"]);
+				if (tagtxids.length <= 0){
 					return 0;
 				}
 
 				//実行するソースのコードをtagのtxidリストから走査
+				let bool = false;
 				for (let index in tagtxids){
 					let tagtxid = tagtxids[index];
 					let tagtx = exports.GetTx(tagtxid);
@@ -458,27 +457,46 @@ exports.Transaction = class{
 						if (objtagdata["FunctionName"] == objdata["FunctionName"]){
 							if (objtagdata["CodeType"] == 1){
 								let CodeData = objtagdata["CodeData"];
-								eval(CodeData);
-								MAIN(objdata["FunctionArgs"],SaveDataPerAddress);
+
+								try{
+									FS.mkdirSync("./exec/");
+								}catch(e){
+									console.log("");
+								}
+
+								FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
+
+								let loopindex = 0;
+								while (loopindex < 100){
+									try{
+										FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
+										break;
+									}catch(e){
+										loopindex = loopindex + 1;
+									}
+								}
+
+								let ExecFunctions = require("./exec/"+objtagdata["FunctionName"]+".js");
+								let result = ExecFunctions.MAIN(objdata["FunctionArgs"],SaveDataPerAddress);
+
 
 								if (!result){
 									return 0;
 								}
+								if (JSON.stringify(objdata["SetData"]) != JSON.stringify(SaveDataPerAddress) || objdata["result"] != result){
+									return 0;
+								}
 
-								objdata["SetData"] = SaveDataPerAddress;
-								objdata["result"] = result;
+
+								bool = true;
+								break;
 							}
-							break;
 						}
 					}
 				}
-
-
-				//txのdata書き換え
-				let rawdata = new CONTRACT.RunFunctionData("",objdata).GetRawData();
-				objtx["data"] = rawdata;
-				rawtx = this.GetRawTx(TargetAccount,objtx);
-
+				if (!bool){
+					return 0;
+				}
 
 
 
@@ -563,10 +581,7 @@ exports.Transaction = class{
 	GetPOWTarget(rawtx=this.rawtx){
 		let objtx = this.GetObjTx(rawtx);
 
-		//negoは固定
-		if (objtx["tag"] == "nego"){
-			return BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-		}else if (objtx["tag"] == "pay"){
+		if (objtx["tag"] == "pay" || objtx["tag"] == "nego"){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			let time = objtx["time"];
@@ -611,7 +626,7 @@ exports.Transaction = class{
 
 				return target;
 			}else{
-				return BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+				return BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			}
 		}
 	}
@@ -739,7 +754,7 @@ exports.SendPayTransaction = function(privkey,toaddress,amount){
 exports.GetTagOrderTx = function(tag){
 	try{
 		let tagtxs = exports.GetTagTxids(tag);
-		if (tagtxs){
+		if (tagtxs.length > 0){
 			let tagordertxid = tagtxs[0];
 
 			let tagordertx = exports.GetTx(tagordertxid);
