@@ -1,9 +1,10 @@
 TAKA
 ====
 
-Overview
+Distributed large capacity database
 
 ## Description
+Blockchain is a great technology but can not function as a large capacity database. This has been improved and developed for businesses.
 
 ## Usage
 
