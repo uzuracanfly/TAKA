@@ -418,9 +418,9 @@ exports.Transaction = class{
 
 
 
-				//アドレスに結び付いた最新の保存データを取得
-				let SaveDataPerAddress = {};
-				let tagtxids = TargetAccount.GetFormTxList(undefined,objtx["tag"]);
+				//タグに結び付いた最新の保存データを取得
+				let LoadDataPerTag = {};
+				let tagtxids = exports.GetTagTxids(objtx["tag"]);
 				tagtxids = tagtxids.reverse();
 
 				for (let index in tagtxids){
@@ -429,9 +429,9 @@ exports.Transaction = class{
 					let objtagtx = tagtx.GetObjTx();
 
 					if (objtagtx["type"] == 112){
-						let objtagdata = new CONTRACT.SetFunctionData(objtagtx["data"]).GetObjData();
+						let objtagdata = new CONTRACT.RunFunctionData(objtagtx["data"]).GetObjData();
 
-						SaveDataPerAddress = objtagdata["SetData"];
+						LoadDataPerTag = objtagdata["SetData"];
 						break;
 					};
 				}
@@ -440,7 +440,7 @@ exports.Transaction = class{
 
 
 
-				tagtxids = exports.GetTagTxids(objtx["tag"]);
+
 				if (tagtxids.length <= 0){
 					return 0;
 				}
@@ -477,13 +477,16 @@ exports.Transaction = class{
 								}
 
 								let ExecFunctions = require("./exec/"+objtagdata["FunctionName"]+".js");
-								let result = ExecFunctions.MAIN(objdata["FunctionArgs"],SaveDataPerAddress);
+								let CodeResult = ExecFunctions.MAIN(TargetAccount.GetKeys(),objdata["FunctionArgs"],LoadDataPerTag);
 
 
-								if (!result){
+								if (!CodeResult){
 									return 0;
 								}
-								if (JSON.stringify(objdata["SetData"]) != JSON.stringify(SaveDataPerAddress) || objdata["result"] != result){
+								if (!("result" in CodeResult) || !("SetData" in CodeResult)){
+									return 0;
+								}
+								if (JSON.stringify(objdata["SetData"]) != JSON.stringify(CodeResult["SetData"]) || objdata["result"] != CodeResult["result"]){
 									return 0;
 								}
 

@@ -373,6 +373,30 @@ exports.SetServer = function(){
 
 
 
+					if (postData["function"] == "sendcontractshowfunctiontx"){
+						let privkey = postData["args"]["privkey"];
+						let tag = postData["args"]["tag"];
+						let FunctionName = postData["args"]["FunctionName"];
+						let FunctionArgs = postData["args"]["FunctionArgs"];
+
+
+						if (!privkey || !tag || !FunctionName || !FunctionArgs){
+							response.write(JSON.stringify(false));
+							response.end();
+							return 0;
+						}
+
+
+						let result = TRANSACTIONTOOLS_CONTRACT.SendContractShowFunctionTransaction(privkey,tag,FunctionName,FunctionArgs);
+
+
+						response.write(JSON.stringify(result));
+						response.end();
+
+					};
+
+
+
 				}catch(e){
 					console.log(e);
 					response.write(JSON.stringify(false));

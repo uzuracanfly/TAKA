@@ -91,6 +91,14 @@ exports.RunConsole = function(){
 				FunctionArgs = JSON.parse(FunctionArgs);
 
 				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendcontractrunfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+			}else if (commands[0] == "sendcontractshowfunctiontx"){
+				let privkey = commands[1];
+				let tag = commands[2];
+				let FunctionName = commands[3];
+				let FunctionArgs = commands[4];
+				FunctionArgs = JSON.parse(FunctionArgs);
+
+				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendcontractshowfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
 			};
 
 			resolve(result);

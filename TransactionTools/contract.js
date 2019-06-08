@@ -273,9 +273,10 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 		コントラクト実行
 	*/
 
-	//アドレスに結び付いた最新の保存データを取得
-	let SaveDataPerAddress = {};
-	let tagtxids = FormTxList.reverse();
+	//タグに結び付いた最新の保存データを取得
+	let LoadDataPerTag = {};
+	let tagtxids = TRANSACTION.GetTagTxids(tag);
+	tagtxids = tagtxids.reverse();
 
 	for (let index in tagtxids){
 		let tagtxid = tagtxids[index];
@@ -284,16 +285,16 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 		let objtagtx = tagtx.GetObjTx();
 
 		if (objtagtx["type"] == 112){
-			let objtagdata = new exports.SetFunctionData(objtagtx["data"]).GetObjData();
+			let objtagdata = new exports.RunFunctionData(objtagtx["data"]).GetObjData();
 
-			SaveDataPerAddress = objtagdata["SetData"];
+			LoadDataPerTag = objtagdata["SetData"];
 			break;
 		};
 	}
 
 
 
-	tagtxids = TRANSACTION.GetTagTxids(tag);
+
 	if (tagtxids.length <= 0){
 		return 0;
 	}
@@ -315,17 +316,17 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 					let CodeData = objtagdata["CodeData"];
 
 					try{
-						FS.mkdirSync("../exec/");
+						FS.mkdirSync("./exec/");
 					}catch(e){
 						console.log("");
 					}
 
-					FS.writeFileSync("../exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
+					FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
 
 					let loopindex = 0;
 					while (loopindex < 100){
 						try{
-							FS.statSync("../exec/"+objtagdata["FunctionName"]+".js");
+							FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
 							break;
 						}catch(e){
 							loopindex = loopindex + 1;
@@ -333,7 +334,7 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 					}
 
 					let ExecFunctions = require("../exec/"+objtagdata["FunctionName"]+".js");
-					CodeResult = ExecFunctions.MAIN(FunctionArgs,SaveDataPerAddress);
+					CodeResult = ExecFunctions.MAIN(TargetAccount.GetKeys(),FunctionArgs,LoadDataPerTag);
 
 					if (!CodeResult){
 						return 0;
@@ -348,7 +349,9 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 	if (!CodeResult){
 		return 0;
 	}
-
+	if (!("result" in CodeResult) || !("SetData" in CodeResult)){
+		return 0;
+	}
 
 
 
@@ -357,8 +360,8 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 	let objdata = {
 		"FunctionName":FunctionName,
 		"FunctionArgs":FunctionArgs,
-		"result":CodeResult,
-		"SetData":SaveDataPerAddress,
+		"result":CodeResult["result"],
+		"SetData":CodeResult["SetData"],
 	}
 
 	let RUNFUNCTIONDATA = new exports.RunFunctionData("",objdata);
@@ -386,4 +389,100 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 	let result = TargetTransaction.commit();
 
 	return result;
+};
+
+
+exports.SendContractShowFunctionTransaction = function(privkey,tag,FunctionName,FunctionArgs){
+
+	let TargetAccount = new (require('../account.js')).account(privkey);
+
+	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
+	let MerkleRoot = new (require('../hashs.js')).hashs().GetMarkleroot(FormTxList);
+
+
+	/*
+		コントラクト実行
+	*/
+
+	//タグに結び付いた最新の保存データを取得
+	let LoadDataPerTag = {};
+	let tagtxids = TRANSACTION.GetTagTxids(tag);
+	tagtxids = tagtxids.reverse();
+
+	for (let index in tagtxids){
+		let tagtxid = tagtxids[index];
+
+		let tagtx = TRANSACTION.GetTx(tagtxid);
+		let objtagtx = tagtx.GetObjTx();
+
+		if (objtagtx["type"] == 112){
+			let objtagdata = new exports.RunFunctionData(objtagtx["data"]).GetObjData();
+
+			LoadDataPerTag = objtagdata["SetData"];
+			break;
+		};
+	}
+
+
+
+
+	if (tagtxids.length <= 0){
+		return 0;
+	}
+
+	//実行するソースのコードをtagのtxidリストから走査
+
+	let CodeResult = false;
+	for (let index in tagtxids){
+		let tagtxid = tagtxids[index];
+
+		let tagtx = TRANSACTION.GetTx(tagtxid);
+		let objtagtx = tagtx.GetObjTx();
+		if (objtagtx["type"] == 111){
+			let objtagdata = new exports.SetFunctionData(objtagtx["data"]).GetObjData();
+
+			//ソースコード発見
+			if (objtagdata["FunctionName"] == FunctionName){
+				if (objtagdata["CodeType"] == 1){
+					let CodeData = objtagdata["CodeData"];
+
+					try{
+						FS.mkdirSync("./exec/");
+					}catch(e){
+						console.log("");
+					}
+
+					FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
+
+					let loopindex = 0;
+					while (loopindex < 100){
+						try{
+							FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
+							break;
+						}catch(e){
+							loopindex = loopindex + 1;
+						}
+					}
+
+					let ExecFunctions = require("../exec/"+objtagdata["FunctionName"]+".js");
+					CodeResult = ExecFunctions.MAIN(TargetAccount.GetKeys(),FunctionArgs,LoadDataPerTag);
+
+					if (!CodeResult){
+						return 0;
+					}
+
+					break;
+				}
+
+			}
+		}
+	}
+	if (!CodeResult){
+		return 0;
+	}
+	if (!("result" in CodeResult) || !("SetData" in CodeResult)){
+		return 0;
+	}
+
+	return CodeResult["result"];
 };
