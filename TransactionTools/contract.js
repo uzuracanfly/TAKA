@@ -1,10 +1,18 @@
 const FS = require('fs');
+const CONFIG = require('../config.js');
+const MAIN = require('../main.js');
+const HEX = require('../hex.js');
+
+const ACCOUNT = require('../account.js');
+const HASHS = require('../hashs.js');
 const TRANSACTION = require('../transaction.js');
+
+const CP = require('child_process');
+
+
 
 exports.SetFunctionData = class{
 	constructor(rawdata="",objdata={}){
-		this.main = require('../main.js');
-		this.hex = require('../hex.js');
 		this.rawdata = rawdata;
 		this.objdata = objdata;
 	};
@@ -17,24 +25,24 @@ exports.SetFunctionData = class{
 		}
 	*/
 	GetRawData(objdata=this.objdata){
-		let FunctionName = new this.hex.HexText().string_to_utf8_hex_string(objdata["FunctionName"]);
+		let FunctionName = new HEX.HexText().string_to_utf8_hex_string(objdata["FunctionName"]);
 		if (FunctionName.length%2 != 0){
 			FunctionName = "0" + FunctionName;
 		}
 		let FunctionNamelen = FunctionName.length.toString(16);
-		FunctionNamelen = this.main.GetFillZero(FunctionNamelen,16);
+		FunctionNamelen = MAIN.GetFillZero(FunctionNamelen,16);
 
 
 		let CodeType = objdata["CodeType"].toString(16);
-		CodeType = this.main.GetFillZero(CodeType,2);
+		CodeType = MAIN.GetFillZero(CodeType,2);
 
 
-		let CodeData = new this.hex.HexText().string_to_utf8_hex_string(objdata["CodeData"]);
+		let CodeData = new HEX.HexText().string_to_utf8_hex_string(objdata["CodeData"]);
 		if (CodeData.length%2 != 0){
 			CodeData = "0" + CodeData;
 		}
 		let CodeDataLen = (CodeData.length).toString(16);
-		CodeDataLen = this.main.GetFillZero(CodeDataLen, 16);
+		CodeDataLen = MAIN.GetFillZero(CodeDataLen, 16);
 
 		let rawdata = FunctionNamelen + FunctionName + CodeType + CodeDataLen + CodeData;
 
@@ -61,10 +69,10 @@ exports.SetFunctionData = class{
 
 
 		let FunctionName = VariableCut();
-		FunctionName = new this.hex.HexText().utf8_hex_string_to_string(FunctionName);
+		FunctionName = new HEX.HexText().utf8_hex_string_to_string(FunctionName);
 		let CodeType = parseInt(cut(2),16);
 		let CodeData = VariableCut();
-		CodeData = new this.hex.HexText().utf8_hex_string_to_string(CodeData);
+		CodeData = new HEX.HexText().utf8_hex_string_to_string(CodeData);
 
 		let objdata = {
 			"FunctionName":FunctionName,
@@ -87,10 +95,20 @@ exports.SendContractSetFunctionTransaction = function(privkey,tag,FunctionName,C
 		}
 	};
 
-	let TargetAccount = new (require('../account.js')).account(privkey);
+
+	for (let index in CONFIG.Contract["banword"]){
+		let banword = CONFIG.Contract["banword"][index];
+
+		//禁止句が含まれる場合
+		if (CodeData.indexOf(banword) != -1){
+			return 0;
+		}
+	};
+
+	let TargetAccount = new ACCOUNT.account(privkey);
 
 	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
-	let MerkleRoot = new (require('../hashs.js')).hashs().GetMarkleroot(FormTxList);
+	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objdata = {
 		"FunctionName":FunctionName,
@@ -119,7 +137,7 @@ exports.SendContractSetFunctionTransaction = function(privkey,tag,FunctionName,C
 		"nonce":0
 	};
 	//console.log(objtx);
-	let TargetTransaction = new (require('../transaction.js')).Transaction("",privkey,objtx);
+	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
 	let result = TargetTransaction.commit();
 
 	return result;
@@ -155,8 +173,6 @@ exports.SendContractSetFunctionTransaction = function(privkey,tag,FunctionName,C
 
 exports.RunFunctionData = class{
 	constructor(rawdata="",objdata={}){
-		this.main = require('../main.js');
-		this.hex = require('../hex.js');
 		this.rawdata = rawdata;
 		this.objdata = objdata;
 	};
@@ -172,39 +188,39 @@ exports.RunFunctionData = class{
 		}
 	*/
 	GetRawData(objdata=this.objdata){		
-		let FunctionName = new this.hex.HexText().string_to_utf8_hex_string(objdata["FunctionName"]);
+		let FunctionName = new HEX.HexText().string_to_utf8_hex_string(objdata["FunctionName"]);
 		if (FunctionName.length%2 != 0){
 			FunctionName = "0" + FunctionName;
 		}
 		let FunctionNamelen = FunctionName.length.toString(16);
-		FunctionNamelen = this.main.GetFillZero(FunctionNamelen,16);
+		FunctionNamelen = MAIN.GetFillZero(FunctionNamelen,16);
 
 
 		let FunctionArgs = JSON.stringify(objdata["FunctionArgs"]);
-		FunctionArgs = new this.hex.HexText().string_to_utf8_hex_string(FunctionArgs);
+		FunctionArgs = new HEX.HexText().string_to_utf8_hex_string(FunctionArgs);
 		if (FunctionArgs.length%2 != 0){
 			FunctionArgs = "0" + FunctionArgs;
 		}
 		let FunctionArgslen = FunctionArgs.length.toString(16);
-		FunctionArgslen = this.main.GetFillZero(FunctionArgslen,16);
+		FunctionArgslen = MAIN.GetFillZero(FunctionArgslen,16);
 
 
 		let result = JSON.stringify(objdata["result"]);
-		result = new this.hex.HexText().string_to_utf8_hex_string(result);
+		result = new HEX.HexText().string_to_utf8_hex_string(result);
 		if (result.length%2 != 0){
 			result = "0" + result;
 		}
 		let ResultLen = result.length.toString(16);
-		ResultLen = this.main.GetFillZero(ResultLen,16);
+		ResultLen = MAIN.GetFillZero(ResultLen,16);
 
 
 		let SetData = JSON.stringify(objdata["SetData"]);
-		SetData = new this.hex.HexText().string_to_utf8_hex_string(SetData);
+		SetData = new HEX.HexText().string_to_utf8_hex_string(SetData);
 		if (SetData.length%2 != 0){
 			SetData = "0" + SetData;
 		}
 		let SetDataLen = SetData.length.toString(16);
-		SetDataLen = this.main.GetFillZero(SetDataLen,16);
+		SetDataLen = MAIN.GetFillZero(SetDataLen,16);
 
 
 
@@ -232,18 +248,18 @@ exports.RunFunctionData = class{
 		};
 
 		let FunctionName = VariableCut();
-		FunctionName = new this.hex.HexText().utf8_hex_string_to_string(FunctionName);
+		FunctionName = new HEX.HexText().utf8_hex_string_to_string(FunctionName);
 
 		let FunctionArgs = VariableCut();
-		FunctionArgs = new this.hex.HexText().utf8_hex_string_to_string(FunctionArgs);
+		FunctionArgs = new HEX.HexText().utf8_hex_string_to_string(FunctionArgs);
 		FunctionArgs = JSON.parse(FunctionArgs);
 
 		let result = VariableCut();
-		result = new this.hex.HexText().utf8_hex_string_to_string(result);
+		result = new HEX.HexText().utf8_hex_string_to_string(result);
 		result = JSON.parse(result);
 
 		let SetData = VariableCut();
-		SetData = new this.hex.HexText().utf8_hex_string_to_string(SetData);
+		SetData = new HEX.HexText().utf8_hex_string_to_string(SetData);
 		SetData = JSON.parse(SetData);
 
 
@@ -261,12 +277,46 @@ exports.RunFunctionData = class{
 
 
 
-exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,FunctionArgs){
+exports.RunCode = async function(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag){
+	const starttime = Math.floor(Date.now()/1000);
 
-	let TargetAccount = new (require('../account.js')).account(privkey);
+	let child = CP.spawn("node",["./exec/"+ObjCodeTx["FunctionName"]+".js",JSON.stringify(TargetAccount.GetKeys()),JSON.stringify(FunctionArgs),JSON.stringify(LoadDataPerTag)]);
+
+	let bPromise = require('bluebird');
+	(function loop(index) {
+		if (starttime+10 >= Math.floor(Date.now()/1000)) {
+			return bPromise.delay(1).then(function() {
+				return index+1;
+			}).then(loop);
+		}
+		//console.log("kill");
+		child.kill('SIGHUP');
+		return bPromise.resolve(index);
+	})(0);
+
+	return new Promise(function (resolve, reject) {
+		child.stdout.on("data", function (data) {
+			//console.log("data : "+data);
+			return resolve(JSON.parse(data));
+		});
+		child.on("error", function (e) {
+			console.log("error : "+e.message);
+			return resolve(false);
+		});
+	});
+};
+
+
+
+
+
+
+exports.SendContractRunFunctionTransaction = async function(privkey,tag,FunctionName,FunctionArgs){
+
+	let TargetAccount = new ACCOUNT.account(privkey);
 
 	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
-	let MerkleRoot = new (require('../hashs.js')).hashs().GetMarkleroot(FormTxList);
+	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 
 	/*
@@ -301,7 +351,7 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 
 	//実行するソースのコードをtagのtxidリストから走査
 
-	let CodeResult = false;
+	let ObjCodeTx = false;
 	for (let index in tagtxids){
 		let tagtxid = tagtxids[index];
 
@@ -333,12 +383,7 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 						}
 					}
 
-					let ExecFunctions = require("../exec/"+objtagdata["FunctionName"]+".js");
-					CodeResult = ExecFunctions.MAIN(TargetAccount.GetKeys(),FunctionArgs,LoadDataPerTag);
-
-					if (!CodeResult){
-						return 0;
-					}
+					ObjCodeTx = objtagdata;
 
 					break;
 				}
@@ -346,9 +391,19 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 			}
 		}
 	}
+
+
+	if (!ObjCodeTx){
+		return 0;
+	}
+
+	let CodeResult = await exports.RunCode(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag);
 	if (!CodeResult){
 		return 0;
 	}
+
+
+
 	if (!("result" in CodeResult) || !("SetData" in CodeResult)){
 		return 0;
 	}
@@ -385,19 +440,19 @@ exports.SendContractRunFunctionTransaction = function(privkey,tag,FunctionName,F
 		"nonce":0
 	};
 	//console.log(objtx);
-	let TargetTransaction = new (require('../transaction.js')).Transaction("",privkey,objtx);
+	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
 	let result = TargetTransaction.commit();
 
 	return result;
 };
 
 
-exports.SendContractShowFunctionTransaction = function(privkey,tag,FunctionName,FunctionArgs){
+exports.SendContractShowFunctionTransaction = async function(privkey,tag,FunctionName,FunctionArgs){
 
-	let TargetAccount = new (require('../account.js')).account(privkey);
+	let TargetAccount = new ACCOUNT.account(privkey);
 
 	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
-	let MerkleRoot = new (require('../hashs.js')).hashs().GetMarkleroot(FormTxList);
+	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 
 	/*
@@ -432,7 +487,7 @@ exports.SendContractShowFunctionTransaction = function(privkey,tag,FunctionName,
 
 	//実行するソースのコードをtagのtxidリストから走査
 
-	let CodeResult = false;
+	let ObjCodeTx = false;
 	for (let index in tagtxids){
 		let tagtxid = tagtxids[index];
 
@@ -464,12 +519,7 @@ exports.SendContractShowFunctionTransaction = function(privkey,tag,FunctionName,
 						}
 					}
 
-					let ExecFunctions = require("../exec/"+objtagdata["FunctionName"]+".js");
-					CodeResult = ExecFunctions.MAIN(TargetAccount.GetKeys(),FunctionArgs,LoadDataPerTag);
-
-					if (!CodeResult){
-						return 0;
-					}
+					ObjCodeTx = objtagdata;
 
 					break;
 				}
@@ -477,9 +527,18 @@ exports.SendContractShowFunctionTransaction = function(privkey,tag,FunctionName,
 			}
 		}
 	}
+
+
+	if (!ObjCodeTx){
+		return 0;
+	}
+
+	let CodeResult = await exports.RunCode(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag);
 	if (!CodeResult){
 		return 0;
 	}
+
+
 	if (!("result" in CodeResult) || !("SetData" in CodeResult)){
 		return 0;
 	}

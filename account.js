@@ -1,7 +1,8 @@
 ﻿const CRYPTO = require('./crypto.js');
 const HASHS = require('./hashs.js');
 const TRANSACTION = require('./transaction.js');
-const DATABASE = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
+const CONFIG = require('./config.js');
+const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.database["address"],CONFIG.database["port"],CONFIG.database["database"]);
 
 
 

@@ -1,7 +1,13 @@
+const MAIN = require('../main.js');
+const HEX = require('../hex.js');
+
+const ACCOUNT = require('../account.js');
+const HASHS = require('../hashs.js');
+const TRANSACTION = require('../transaction.js');
+
+
 exports.TagAddPermitData = class{
 	constructor(rawdata="",objdata={}){
-		this.main = require('../main.js');
-		this.hex = require('../hex.js');
 		this.rawdata = rawdata;
 		this.objdata = objdata;
 	};
@@ -9,7 +15,7 @@ exports.TagAddPermitData = class{
 	GetRawData(objdata=this.objdata){
 
 		let address = objdata["address"];
-		address = this.main.GetFillZero(address, 40);
+		address = MAIN.GetFillZero(address, 40);
 
 		let data = address;
 
@@ -49,16 +55,11 @@ exports.TagAddPermitData = class{
 
 
 exports.SendTagAddPermitTransaction = function(privkey,tag,addaddress){
-	let account = require('../account.js');
-	let transaction = require('../transaction.js');
-	let hashs = require('../hashs.js');
-	let main = require('../main.js');
 
-
-	let TargetAccount = new account.account(privkey);
+	let TargetAccount = new ACCOUNT.account(privkey);
 
 	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
-	let MerkleRoot = new hashs.hashs().GetMarkleroot(FormTxList);
+	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objdata = {
 		"address":addaddress,
@@ -80,7 +81,7 @@ exports.SendTagAddPermitTransaction = function(privkey,tag,addaddress){
 		"nonce":0
 	};
 	//console.log(objtx);
-	let TargetTransaction = new (require('../transaction.js')).Transaction("",privkey,objtx);
+	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
 	let result = TargetTransaction.commit();
 
 	return result;

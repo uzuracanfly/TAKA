@@ -75,7 +75,7 @@ exports.signature = class{
 
 
 	GetSmartPubkeySeed(privkeyseed){
-		let pubkeyseed = HASHS.yescrypt(privkeyseed);
+		let pubkeyseed = HASHS.sha256(privkeyseed);
 		pubkeyseed = pubkeyseed.slice(0,this.PubkeyPara["UnitSize"]);
 
 		return pubkeyseed;

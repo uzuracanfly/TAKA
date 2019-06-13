@@ -1,7 +1,17 @@
+const CONFIG = require('../config.js');
+
+const MAIN = require('../main.js');
+const HEX = require('../hex.js');
+
+const ACCOUNT = require('../account.js');
+const HASHS = require('../hashs.js');
+const TRANSACTION = require('../transaction.js');
+const CRYPTO = require('../crypto.js');
+
+
+
 exports.NegoData = class{
 	constructor(rawdata="",objdata={}){
-		this.main = require('../main.js');
-		this.hex = require('../hex.js');
 		this.rawdata = rawdata;
 		this.objdata = objdata;
 	};
@@ -9,13 +19,13 @@ exports.NegoData = class{
 	GetRawData(objdata=this.objdata){
 		let data = "";
 
-		let tag = new this.hex.HexText().string_to_utf8_hex_string(objdata["tag"]);
+		let tag = new HEX.HexText().string_to_utf8_hex_string(objdata["tag"]);
 		let taglen = tag.length.toString(16);
-		data = data + this.main.GetFillZero(taglen,16) + tag;
+		data = data + MAIN.GetFillZero(taglen,16) + tag;
 
 		let EncryptoPrivkey = objdata["EncryptoPrivkey"];
 		let EncryptoPrivkeyLen = EncryptoPrivkey.length.toString(16);
-		data = data + this.main.GetFillZero(EncryptoPrivkeyLen,16) + EncryptoPrivkey;
+		data = data + MAIN.GetFillZero(EncryptoPrivkeyLen,16) + EncryptoPrivkey;
 
 		return data;
 	};
@@ -41,7 +51,7 @@ exports.NegoData = class{
 		let EncryptoPrivkey = VariableCut();
 
 		let objdata = {
-			"tag":new this.hex.HexText().utf8_hex_string_to_string(tag),
+			"tag":new HEX.HexText().utf8_hex_string_to_string(tag),
 			"EncryptoPrivkey":EncryptoPrivkey,
 		}
 
@@ -59,12 +69,12 @@ exports.SendNegoTransaction = function(privkey,tag,amount){
 
 	return new Promise(function (resolve, reject) {
 
-		let TargetAccount = new (require('../account.js')).account(privkey);
+		let TargetAccount = new ACCOUNT.account(privkey);
 
-		let RewardAccount = new (require('../account.js')).account();
+		let RewardAccount = new ACCOUNT.account();
 		let RewardPrivkey = RewardAccount.GetKeys()["privkey"];
 		//console.log(RewardPrivkey);
-		let result = new (require('../transaction.js')).SendPayTransaction(privkey,RewardAccount.GetKeys()["address"],amount);
+		let result = new TRANSACTION.SendPayTransaction(privkey,RewardAccount.GetKeys()["address"],amount);
 
 
 		result.then(function (paytxid) {
@@ -73,10 +83,10 @@ exports.SendNegoTransaction = function(privkey,tag,amount){
 			*/
 
 			let FormTxList = TargetAccount.GetFormTxList(undefined,"nego");
-			let MerkleRoot = new (require('../hashs.js')).hashs().GetMarkleroot(FormTxList);
+			let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
-			let TagMerkleRoot = (require('../transaction.js')).GetTagMerkleRoot(tag);
-			let EncryptoPrivkey = new (require('../crypto.js')).common().GetEncryptedData(TagMerkleRoot,RewardPrivkey);
+			let TagMerkleRoot = TRANSACTION.GetTagMerkleRoot(tag);
+			let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(TagMerkleRoot,RewardPrivkey);
 
 			let objdata = {
 				"tag":tag,
@@ -99,7 +109,7 @@ exports.SendNegoTransaction = function(privkey,tag,amount){
 				"nonce":0
 			};
 			//console.log(objtx);
-			let TargetTransaction = new (require('../transaction.js')).Transaction("",privkey,objtx);
+			let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
 			let result = TargetTransaction.commit();
 
 			result.then(function (txid) {
@@ -121,30 +131,25 @@ exports.SendNegoTransaction = function(privkey,tag,amount){
 
 
 exports.RunMining = function(){
-	let Account = require('../account.js');
-	let Transaction = require('../transaction.js');
-	let main = require('../main.js');
-
-
 	function mining(){
 		/*
 		negoトランザクションを走査してprivkeyを集める
 		*/
-		let negotxids = Transaction.GetTagTxids("nego");
+		let negotxids = TRANSACTION.GetTagTxids("nego");
 		let Rewards = [];
 		for (let index in negotxids){
 			let txid = negotxids[index];
-			let tx = Transaction.GetTx(txid);
+			let tx = TRANSACTION.GetTx(txid);
 
 			let negodata = new exports.NegoData(tx.GetObjTx()["data"]);
 
 
-			if (Config.Nego["MiningTags"].indexOf(negodata.GetObjData()["tag"]) == -1){continue;};
+			if (CONFIG.Nego["MiningTags"].indexOf(negodata.GetObjData()["tag"]) == -1){continue;};
 
 
 			//tagのtxリストから共通鍵作る
-			let tagtxids = Transaction.GetTagTxids(negodata.GetObjData()["tag"]);
-			let commonkey = new (require('../hashs.js')).hashs().GetMarkleroot(tagtxids);
+			let tagtxids = TRANSACTION.GetTagTxids(negodata.GetObjData()["tag"]);
+			let commonkey = new HASHS.hashs().GetMarkleroot(tagtxids);
 
 			if (!commonkey){continue;};
 
@@ -152,7 +157,7 @@ exports.RunMining = function(){
 			//賞金の入った秘密鍵を取得
 			let EncryptoPrivkey = negodata.GetObjData()["EncryptoPrivkey"];
 
-			let RewardPrivkey = new (require('../crypto.js')).common().GetDecryptedData(commonkey,EncryptoPrivkey);
+			let RewardPrivkey = new CRYPTO.common().GetDecryptedData(commonkey,EncryptoPrivkey);
 			//console.log(commonkey);
 			//console.log(EncryptoPrivkey);
 			//console.log(RewardPrivkey);
@@ -171,8 +176,8 @@ exports.RunMining = function(){
 			let tag = reward["tag"];
 
 
-			let CollectAccount = new Account.account(Config.Nego["CollectPrivkey"]);
-			let RewardAccount = new Account.account(RewardPrivkey);
+			let CollectAccount = new ACCOUNT.account(CONFIG.Nego["CollectPrivkey"]);
+			let RewardAccount = new ACCOUNT.account(RewardPrivkey);
 
 			let sendamount = 0;
 			try{
@@ -183,8 +188,8 @@ exports.RunMining = function(){
 
 			if (sendamount > 0 && UsedRewardPrivkey.indexOf(RewardPrivkey) == -1){
 				UsedRewardPrivkey.push(RewardPrivkey);
-				main.note(1,"nego_RunMining","[Reward] "+sendamount+" by tag of "+tag);
-				let result = Transaction.SendPayTransaction(RewardPrivkey,CollectAccount.GetKeys()["address"],sendamount);
+				MAIN.note(1,"nego_RunMining","[Reward] "+sendamount+" by tag of "+tag);
+				let result = TRANSACTION.SendPayTransaction(RewardPrivkey,CollectAccount.GetKeys()["address"],sendamount);
 			}
 		}
 

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=yes" />
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache">
+</head>
+
+<style type="text/css">
+<!--
+#outer
+{
+	width:100%;
+	padding: 0;
+	margin: 0;
+}
+#inner
+{
+	width:100%;
+	padding: 0;
+	margin: 0 auto;
+	position: absolute;
+	top: 300px;
+}
+.sub
+{
+	width:100%;
+	margin:0 auto;
+}
+-->
+</style>
+
+
+
+
+
+
+
+
+
+<div id="outer">
+	<div id="inner">
+	</div>
+</div>
+
+
+
+
+
+
+
+
+
+<script src="//code.jquery.com/jquery.min.js"></script>
+<script src="//cdn.jsdelivr.net/clipboard.js/1.5.3/clipboard.min.js"></script>
+
+<script src="lib/basicfunctions"></script>
+<script src="lib/TAKAAPIRapper"></script>
+<script src="lib/form"></script>
+<script src="lib/notification"></script>
+<script src="lib/TAKALIBRapper"></script>
+
+<script>
+	const TAKA = new TAKAAPIRapper("133.18.169.253",80);
+	let Notification = new notification();
+	let account = {};
+
+
+
+
+	function Login(){
+		let formargs = [
+			["title","Login"],
+			["input","privkey","privkey"],
+			[
+				"button",
+				"Login",
+				function()
+				{
+					let privkey = document.getElementById("privkey").value;
+
+					let keys = new ACCOUNT.account(privkey).GetKeys();
+
+					account = keys;
+
+					TopForm();
+				}
+			],
+			[
+				"button",
+				"NewAccount",
+				function()
+				{
+					let keys = new ACCOUNT.account().GetKeys();
+
+					let LoginNewAccountForm = new form(
+						[
+							["title","New Account"],
+							["head","Privkey"],
+							["text","SAVE THIS! AND NOT BE SHOWN TO PEOPLE!"],
+							["input","privkey","mprivkey"],
+							["head","Pubkey"],
+							["input","pubkey","pubkey"],
+							["head","Address"],
+							["text","THIS IS USING RECEIVE COINS! YOU CAN SHOW THIS!"],
+							["input","address","address"],
+						],
+						"LoginNewAccountForm"
+					);
+					document.getElementById("privkey").value = keys["privkey"];
+					document.getElementById("mprivkey").value = keys["privkey"];
+					document.getElementById("pubkey").value = keys["pubkey"];
+					document.getElementById("address").value = keys["address"];
+				}
+			],
+		];
+
+		let LoginForm = new form(
+			formargs,
+			"LoginForm"
+		);
+
+		return true;
+	}
+
+
+	function TopForm(){
+		TAKA.getaccount(
+			account["address"],
+			0,
+			function(CallbackResult,CallbackArgs){
+				let formargs = [
+					["head","Address"],
+					["text",account["address"]],
+					["head","Balance"],
+					["text",CallbackResult["balance"]],
+					[
+						"button",
+						"Withdraw",
+						function()
+						{
+							let formargs = [
+								["title","Withdraw"],
+								["input","toaddress","toaddress"],
+								["input","amount","amount"],
+								[
+									"button",
+									"Withdraw",
+									function()
+									{
+										let toaddress = document.getElementById("toaddress").value;
+										let amount = document.getElementById("amount").value;
+										amount = parseInt(amount);
+
+										let tag = "pay";
+
+										let AccountData = TAKA.getaccount(account["address"]);
+										let MerkleRoot = AccountData["txids"][tag]["MerkleRoot"];
+										let txs = AccountData["txids"][tag]["txs"];
+										let index = txs.length;
+
+										let objtx = {
+											"pubkey":account["pubkey"],
+											"type":1,
+											"time":Math.floor(Date.now()/1000),
+											"tag":tag,
+											"index":index+1,
+											"MerkleRoot":MerkleRoot,
+											"toaddress":toaddress,
+											"amount":amount,
+											"data":"",
+											"sig":"",
+											"nonce":0,
+										};
+
+										let TargetTransaction = new TRANSACTION.Transaction("",account["privkey"],objtx);
+
+
+										//lasttxtime取得
+										let lasttxtime = Math.floor(Date.now()/1000) - 10*60;
+										if (index > 0){
+											let objlasttx = TAKA.gettx(txs.slice(-1)[0]);
+											lasttxtime = objlasttx["time"];
+										};
+
+										let result = TargetTransaction.GetNonce(TargetTransaction.GetRawTx(),lasttxtime);
+										let objsendtx = TargetTransaction.GetObjTx();
+
+
+
+										//送信ロード画面
+										let TopWithdrawLoadForm = new form(
+											[
+												["title","Sending....."]
+											],
+											"TopWithdrawLoadForm"
+										);
+
+
+										result.then(function(nonce){
+											TopWithdrawLoadForm.DeleteForm();
+
+											objsendtx["nonce"] = nonce;
+
+											TargetTransaction = new TRANSACTION.Transaction("",account["privkey"],objsendtx);
+											let rawtx = TargetTransaction.GetRawTx();
+
+
+											TAKA.sendtx(
+												rawtx,
+												function(CallbackResult,CallbackArgs){
+													let TopWithdrawResultForm = new form(
+														[
+															["title","Withdraw Result"],
+															["head","Result"],
+															["input","result","result"],
+															["head","RawTx"],
+															["input","rawtx","rawtx"],
+															[
+																"button",
+																"Done",
+																function()
+																{
+																	TopWithdrawResultForm.DeleteForm();
+																	TopWithdrawForm.DeleteForm();
+																}
+															]
+														],
+														"TopWithdrawResultForm"
+													);
+
+													document.getElementById("result").value = CallbackResult;
+													document.getElementById("rawtx").value = CallbackArgs["rawtx"];
+												},
+												{
+													"rawtx":rawtx
+												}
+											);
+										});
+									}
+								]
+							]
+
+
+							let TopWithdrawForm = new form(
+								formargs,
+								"TopWithdrawForm"
+							);
+						}
+					],
+					[
+						"button",
+						"TagOrder",
+						function()
+						{
+						}
+					],
+				];
+
+				let TopForm = new form(
+					formargs,
+					"TopForm"
+				);
+			},
+			{}
+		);
+
+		return true;
+	}
+</script>
+
+
+
+
+
+<script>
+	window.onload = function(){
+		let outer=document.getElementById("outer");
+		let inner=document.getElementById("inner");
+
+
+		Login();
+	};
+</script>

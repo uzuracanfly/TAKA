@@ -13,7 +13,7 @@ class TAKAAPIRapper{
 			data: args,
 			contentType: 'application/json',
 			dataType: "json",
-			timeout:10000,
+			timeout:1000*10,
 			async: false,
 		}).responseText;
 
@@ -22,7 +22,29 @@ class TAKAAPIRapper{
 		return JSON.parse( jresult );
 	};
 
-	getaccount(key,LessIndex=0){
+
+	PostAsync(args,callback,CallbackArgs){
+
+		args = (JSON.stringify(args)).replace( /@/g , "" );
+
+		let ret = $.ajax({
+			url: "http://"+this.apiaddress+":"+this.apiport,
+			type:'POST',
+			data: args,
+			contentType: 'application/json',
+			dataType: "json",
+			timeout:1000*60*10,
+			async: true,
+			success: function(CallbackResult){
+				callback(CallbackResult,CallbackArgs);
+			}
+		});
+
+		return ret;
+	};
+
+
+	getaccount(key,LessIndex=0,callback="",CallbackArgs=""){
 		let args = {
 			"function":"getaccount",
 			"args":{
@@ -31,9 +53,15 @@ class TAKAAPIRapper{
 			}
 		};
 
-		let result = this.post(args);
+		let result;
+		if (!callback){
+			result = this.post(args);
+		}else{
+			result = this.PostAsync(args,callback,CallbackArgs);
+		};
 		return result;
 	};
+
 
 	gettag(tag){
 		let args = {
@@ -47,7 +75,7 @@ class TAKAAPIRapper{
 		return result;
 	};
 
-	sendtx(rawtx){
+	sendtx(rawtx,callback="",CallbackArgs=""){
 		let args = {
 			"function":"sendtx",
 			"args":{
@@ -55,7 +83,12 @@ class TAKAAPIRapper{
 			}
 		};
 
-		let result = this.post(args);
+		let result;
+		if (!callback){
+			result = this.post(args);
+		}else{
+			result = this.PostAsync(args,callback,CallbackArgs);
+		};
 		return result;
 	}
 

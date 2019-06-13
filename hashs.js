@@ -38,13 +38,6 @@ exports.hashs = class{
 		return new RIPEMD160().update(hex).digest('hex')
 	}
 
-	yescrypt(hex)
-	{
-		let GetYescryptHashFunction = YESCRYPT.cwrap('GetYescryptHash', 'string',['string']);
-		let hash = GetYescryptHashFunction(hex);
-		return hash;
-	}
-
 
 	GetMarkleroot(hashlist){
 		if (hashlist.length == 0){

@@ -3,7 +3,8 @@ const CRYPTO = require('./crypto.js');
 const ACCOUNT = require('./account.js');
 const HASHS = require('./hashs.js');
 const HAX = require('./hex.js');
-const DATABASE = new (require('./database.js')).ChangeMemDatabase(Config.database["address"],Config.database["port"],Config.database["database"]);
+const CONFIG = require('./config.js');
+const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.database["address"],CONFIG.database["port"],CONFIG.database["database"]);
 const FS = require('fs');
 
 
@@ -129,9 +130,9 @@ exports.Transaction = class{
 
 
 			/* nonce */
-			let nonce = 0;
+			let nonce = "";
 			if ("nonce" in objtx && objtx["nonce"]){
-				nonce = objtx["nonce"];
+				nonce = objtx["nonce"].toString(16);
 			}
 			let nonce_toin = MAIN.GetFillZero(nonce, 16);
 			rawtx = rawtx + nonce_toin;
@@ -201,7 +202,7 @@ exports.Transaction = class{
 
 
 	//トランザクション有効性
-	Confirmation(rawtx=this.rawtx){
+	async Confirmation(rawtx=this.rawtx){
 
 		let objtx = this.GetObjTx(rawtx);
 		let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
@@ -209,8 +210,8 @@ exports.Transaction = class{
 
 
 		//シードは強制
-		for (let index in Config.genesistxs){
-			let seedrawtx = Config.genesistxs[index];
+		for (let index in CONFIG.genesistxs){
+			let seedrawtx = CONFIG.genesistxs[index];
 
 			let seedtxid = this.GetTxid(seedrawtx);
 			if (this.GetTxid() == seedtxid){
@@ -407,6 +408,16 @@ exports.Transaction = class{
 		if (objtx["type"] == 111){
 			try{
 				let objdata = new CONTRACT.SetFunctionData(objtx["data"]).GetObjData();
+
+				//禁止句が含まれる場合
+				let CodeData = objdata["CodeData"];
+				for (let index in CONFIG.Contract["banword"]){
+					let banword = CONFIG.Contract["banword"][index];
+					
+					if (CodeData.indexOf(banword) != -1){
+						return 0;
+					}
+				};
 			}catch(e){
 				console.log(e);
 				return 0;
@@ -415,6 +426,8 @@ exports.Transaction = class{
 		if (objtx["type"] == 112){
 			try{
 				let objdata = new CONTRACT.RunFunctionData(objtx["data"]).GetObjData();
+				let FunctionArgs = objdata["FunctionArgs"];
+				let FunctionName = objdata["FunctionName"];
 
 
 
@@ -446,15 +459,18 @@ exports.Transaction = class{
 				}
 
 				//実行するソースのコードをtagのtxidリストから走査
-				let bool = false;
+
+				let ObjCodeTx = false;
 				for (let index in tagtxids){
 					let tagtxid = tagtxids[index];
+
 					let tagtx = exports.GetTx(tagtxid);
 					let objtagtx = tagtx.GetObjTx();
 					if (objtagtx["type"] == 111){
 						let objtagdata = new CONTRACT.SetFunctionData(objtagtx["data"]).GetObjData();
+
 						//ソースコード発見
-						if (objtagdata["FunctionName"] == objdata["FunctionName"]){
+						if (objtagdata["FunctionName"] == FunctionName){
 							if (objtagdata["CodeType"] == 1){
 								let CodeData = objtagdata["CodeData"];
 
@@ -476,28 +492,25 @@ exports.Transaction = class{
 									}
 								}
 
-								let ExecFunctions = require("./exec/"+objtagdata["FunctionName"]+".js");
-								let CodeResult = ExecFunctions.MAIN(TargetAccount.GetKeys(),objdata["FunctionArgs"],LoadDataPerTag);
+								ObjCodeTx = objtagdata;
 
-
-								if (!CodeResult){
-									return 0;
-								}
-								if (!("result" in CodeResult) || !("SetData" in CodeResult)){
-									return 0;
-								}
-								if (JSON.stringify(objdata["SetData"]) != JSON.stringify(CodeResult["SetData"]) || objdata["result"] != CodeResult["result"]){
-									return 0;
-								}
-
-
-								bool = true;
 								break;
 							}
+
 						}
 					}
 				}
-				if (!bool){
+
+				if (!ObjCodeTx){
+					return 0;
+				}
+
+				let CodeResult = await CONTRACT.RunCode(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag);
+				if (!CodeResult){
+					return 0;
+				}
+
+				if (!("result" in CodeResult) || !("SetData" in CodeResult)){
 					return 0;
 				}
 
@@ -581,22 +594,26 @@ exports.Transaction = class{
 
 
 
-	GetPOWTarget(rawtx=this.rawtx){
+	GetPOWTarget(rawtx=this.rawtx,lasttxtime=0){
 		let objtx = this.GetObjTx(rawtx);
 
 		if (objtx["tag"] == "pay" || objtx["tag"] == "nego"){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			let time = objtx["time"];
-			let txids = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
-			
-			let lasttx = false;
-			if (txids.length > 0){
-				lasttx  = exports.GetTx(txids.slice(-1)[0]);
-			}
-			let lasttxtime = time - 60*10;
-			if (lasttx){
-				lasttxtime = lasttx.objtx["time"];
+
+			if (!lasttxtime){
+				let txids = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
+
+				
+				let lasttx = false;
+				if (txids.length > 0){
+					lasttx  = exports.GetTx(txids.slice(-1)[0]);
+				}
+				lasttxtime = time - 60*10;
+				if (lasttx){
+					lasttxtime = lasttx.objtx["time"];
+				}
 			}
 
 			let needtime = 60*10 - (time - lasttxtime);
@@ -604,13 +621,13 @@ exports.Transaction = class{
 			let target = target_upper;
 			if (needtime > 0){
 				if (needtime > 60*3){
-					target = BigInt("0x000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 				}
 				if (needtime > 60*6){
-					target = BigInt("0x0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 				}
 				if (needtime > 60*9){
-					target = BigInt("0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 				}
 			};
 
@@ -635,16 +652,63 @@ exports.Transaction = class{
 	}
 
 
-	commit(rawtx=this.rawtx){
+	GetNonce(rawtx=this.rawtx,lasttxtime=0){
+		let objtx = this.GetObjTx(rawtx);
+
+		let nonce = objtx["nonce"];
 		let outthis = this;
-		let target = BigInt("0x0000000000000000000000000000000000000000000000000000000000000000");
+		let target = this.GetPOWTarget(rawtx,lasttxtime);
 		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
 
 		return new Promise(function (resolve, reject) {
 			let bPromise = require('bluebird');
 			(function loop(nonce) {
-				let objtx = outthis.GetObjTx(rawtx);
+
+				let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
+
+				objtx["nonce"] = nonce;
+				rawtx = outthis.GetRawTx(TargetAccount,objtx);
+				txid = outthis.GetTxid(rawtx);
+				numtxid = BigInt("0x"+txid);
+
+
+				if (numtxid <= target){
+					return resolve(nonce);
+				}else{
+					return bPromise.delay(1).then(function() {
+						return nonce+1;
+					}).then(loop);
+				};
+			})(nonce);
+		}).catch(function (error) {
+			console.log(error);
+		});
+	}
+
+
+	commit(rawtx=this.rawtx){
+		let objtx = this.GetObjTx(rawtx);
+
+		let nonce = objtx["nonce"];
+		let outthis = this;
+		let target = this.GetPOWTarget(rawtx);
+		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
+
+		return new Promise(function (resolve, reject) {
+			let bPromise = require('bluebird');
+			(function loop(nonce) {
+
+				let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
+				
+				objtx["nonce"] = nonce;
+				rawtx = outthis.GetRawTx(TargetAccount,objtx);
+				txid = outthis.GetTxid(rawtx);
+				numtxid = BigInt("0x"+txid);
+
 
 				if (numtxid <= target){
 					DATABASE.add("UnconfirmedTransactions",objtx["tag"],rawtx);
@@ -652,24 +716,10 @@ exports.Transaction = class{
 					return resolve(txid);
 				}else{
 					return bPromise.delay(1).then(function() {
-
-						let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
-
-						/*
-						powのtargetを特定する
-						*/
-						target = outthis.GetPOWTarget(rawtx);
-
-						objtx["nonce"] = nonce;
-
-						rawtx = outthis.GetRawTx(TargetAccount,objtx);
-						txid = outthis.GetTxid(rawtx);
-						numtxid = BigInt("0x"+txid);
-						
 						return nonce+1;
 					}).then(loop);
 				};
-			})(0);
+			})(nonce);
 		}).catch(function (error) {
 			console.log(error);
 		});
@@ -827,8 +877,8 @@ exports.RunCommit = function(){
 	//シード適用
 	let ConfirmedTransactions = DATABASE.get("ConfirmedTransactions");
 	if (ConfirmedTransactions.length==0){
-		for (let index in Config.genesistxs){
-			let rawtx = Config.genesistxs[index];
+		for (let index in CONFIG.genesistxs){
+			let rawtx = CONFIG.genesistxs[index];
 
 			let SeedTransaction = new exports.Transaction(rawtx);
 
@@ -844,7 +894,7 @@ exports.RunCommit = function(){
 			for (let index in UnconfirmedTransactionsTags){
 				let tag = UnconfirmedTransactionsTags[index];
 
-				if (Config.ImportTags.length>0 && (Config.ImportTags).indexOf(tag) == -1){
+				if (CONFIG.ImportTags.length>0 && (CONFIG.ImportTags).indexOf(tag) == -1){
 					continue;
 				};
 

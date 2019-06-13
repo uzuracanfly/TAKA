@@ -40,3 +40,11 @@ exports.errorHandle = function(process) {
 		}
 	};
 }
+
+
+
+exports.sleep = function(time){
+	return new Promise(function(resolve) {
+		setTimeout(function() {resolve()}, msec);
+	})
+}

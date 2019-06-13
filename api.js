@@ -1,5 +1,6 @@
 const FS = require('fs');
 
+const CONFIG = require('./config.js');
 const ACCOUNT = require('./account.js');
 const TRANSACTION = require('./transaction.js');
 const HASHS = require('./hashs.js');
@@ -23,7 +24,7 @@ exports.SetServer = function(){
 			let postData = "";
 			request.on('data', function(chunk) {
 				postData += chunk;
-			}).on('end', function() {
+			}).on('end', async function() {
 				try{
 
 
@@ -387,7 +388,7 @@ exports.SetServer = function(){
 						}
 
 
-						let result = TRANSACTIONTOOLS_CONTRACT.SendContractShowFunctionTransaction(privkey,tag,FunctionName,FunctionArgs);
+						let result = await TRANSACTIONTOOLS_CONTRACT.SendContractShowFunctionTransaction(privkey,tag,FunctionName,FunctionArgs);
 
 
 						response.write(JSON.stringify(result));
@@ -410,9 +411,11 @@ exports.SetServer = function(){
 				"notification":FS.readFileSync('UI/lib/MessagerLib/notification.js'),
 				"basicfunctions":FS.readFileSync('UI/lib/basicfunctions.js'),
 				"TAKAAPIRapper":FS.readFileSync('UI/lib/TAKAAPIRapper.js'),
+				"TAKALIBRapper":FS.readFileSync('UI/lib/TAKALIBRapper_bundle.js'),
 			};
 
 			let ExplorerHtml = FS.readFileSync('UI/explorer.html');
+			let WalletHtml = FS.readFileSync('UI/wallet.html');
 
 
 			//GETメゾット
@@ -429,7 +432,11 @@ exports.SetServer = function(){
 				response.writeHead(200, {'Content-Type': 'text/html'});
 				response.end(ExplorerHtml);
 			};
+			if (request.url == "/wallet"){
+				response.writeHead(200, {'Content-Type': 'text/html'});
+				response.end(WalletHtml);
+			};
 		}
 
-	}).listen(Config.API["port"], Config.API["address"]);
+	}).listen(CONFIG.API["port"], CONFIG.API["address"]);
 }

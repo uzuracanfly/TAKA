@@ -1,6 +1,8 @@
 const READLINESYNC = require('readline-sync');
 const REQUEST = require('sync-request');
 
+const CONFIG = require('./config.js');
+
 exports.RunConsole = function(){
 	/*
 	コンソール
@@ -29,23 +31,23 @@ exports.RunConsole = function(){
 			let result = false;
 			if (commands[0] == "getaccount"){
 				let key = commands[1];
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"getaccount","args":{"key":key}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getaccount","args":{"key":key}});
 			}else if (commands[0] == "gettag"){
 				let tag = commands[1];
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"gettag","args":{"tag":tag}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettag","args":{"tag":tag}});
 			}else if (commands[0] == "sendpaytx"){
 				let privkey = commands[1];
 				let toaddress = commands[2];
 				let amount = commands[3];
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendpaytx","args":{"privkey":privkey,"toaddress":toaddress,"amount":amount}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendpaytx","args":{"privkey":privkey,"toaddress":toaddress,"amount":amount}});
 			}else if (commands[0] == "sendrewardtx"){
 				let privkey = commands[1];
 				let tag = commands[2];
 				let amount = commands[3];
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendrewardtx","args":{"privkey":privkey,"tag":tag,"amount":amount}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendrewardtx","args":{"privkey":privkey,"tag":tag,"amount":amount}});
 			}else if (commands[0] == "gettx"){
 				let txid = commands[1];
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"gettx","args":{"txid":txid}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettx","args":{"txid":txid}});
 			}else if (commands[0] == "senddatabasetx"){
 				let privkey = commands[1];
 				let tag = commands[2];
@@ -54,7 +56,7 @@ exports.RunConsole = function(){
 				if (commands.length >= 5){
 					commonkey = commands[4];
 				};
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"senddatabasetx","args":{"privkey":privkey,"tag":tag,"data":data,"commonkey":commonkey}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"senddatabasetx","args":{"privkey":privkey,"tag":tag,"data":data,"commonkey":commonkey}});
 			}else if (commands[0] == "sendtagordertx"){
 				let privkey = commands[1];
 				let tag = commands[2];
@@ -64,13 +66,13 @@ exports.RunConsole = function(){
 					powtarget = commands[4];
 				};
 
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendtagordertx","args":{"privkey":privkey,"tag":tag,"permissiontype":permissiontype,"powtarget":powtarget}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagordertx","args":{"privkey":privkey,"tag":tag,"permissiontype":permissiontype,"powtarget":powtarget}});
 			}else if (commands[0] == "sendtagaddpermittx"){
 				let privkey = commands[1];
 				let tag = commands[2];
 				let addaddress = commands[3];
 
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendtagaddpermittx","args":{"privkey":privkey,"tag":tag,"addaddress":addaddress}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagaddpermittx","args":{"privkey":privkey,"tag":tag,"addaddress":addaddress}});
 			}else if (commands[0] == "sendcontractsetfunctiontx"){
 				let privkey = commands[1];
 				let tag = commands[2];
@@ -82,7 +84,7 @@ exports.RunConsole = function(){
 					CodePath = commands[6];
 				};
 
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendcontractsetfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"CodeType":CodeType,"CodeData":CodeData,"CodePath":CodePath}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendcontractsetfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"CodeType":CodeType,"CodeData":CodeData,"CodePath":CodePath}});
 			}else if (commands[0] == "sendcontractrunfunctiontx"){
 				let privkey = commands[1];
 				let tag = commands[2];
@@ -90,7 +92,7 @@ exports.RunConsole = function(){
 				let FunctionArgs = commands[4];
 				FunctionArgs = JSON.parse(FunctionArgs);
 
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendcontractrunfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendcontractrunfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
 			}else if (commands[0] == "sendcontractshowfunctiontx"){
 				let privkey = commands[1];
 				let tag = commands[2];
@@ -98,7 +100,7 @@ exports.RunConsole = function(){
 				let FunctionArgs = commands[4];
 				FunctionArgs = JSON.parse(FunctionArgs);
 
-				result = SendPostbyjson("http://127.0.0.1:"+Config.API["port"],{"function":"sendcontractshowfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendcontractshowfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
 			};
 
 			resolve(result);

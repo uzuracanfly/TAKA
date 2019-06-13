@@ -1,7 +1,13 @@
+const CONFIG = require('./config.js');
+const SYNCREQUEST = require('sync-request');
+const HTTP = require('http');
+const FS = require('fs');
+const CRYPTO = require('./crypto.js');
+
+
+
 exports.ChangeMemDatabase = class{
 	constructor (address,port,database){
-		this.request = require('sync-request');
-
 		this.address = address;
 		this.port = port;
 		this.database = database;
@@ -14,7 +20,7 @@ exports.ChangeMemDatabase = class{
 		};
 
 		//リクエスト送信
-		let res = this.request(
+		let res = SYNCREQUEST(
 			'POST',
 			url, 
 			{
@@ -55,17 +61,13 @@ exports.ChangeMemDatabase = class{
 
 
 exports.RunCommit = function(key){
-	let http = require('http');
-	let fs = require('fs');
-	let crypto = require('./crypto.js');
-	let main = require('./main.js');
 
 	function load(database,table,index=""){
 		try {
 			if (!index){
 				let result = [];
 				let path = "database/"+database+"/"+table+"/";
-				let list = fs.readdirSync(path);
+				let list = FS.readdirSync(path);
 				for (let index in list){
 					let value = list[index];
 
@@ -77,9 +79,9 @@ exports.RunCommit = function(key){
 
 
 			let path = "database/"+database+"/"+table+"/"+index+".json";
-			fs.statSync(path);
-			let data = fs.readFileSync(path, 'utf8');
-			data = new crypto.common().GetDecryptedData(key,data);
+			FS.statSync(path);
+			let data = FS.readFileSync(path, 'utf8');
+			data = new CRYPTO.common().GetDecryptedData(key,data);
 			data = JSON.parse(data);
 			return data;
 		} catch (error) {
@@ -94,13 +96,13 @@ exports.RunCommit = function(key){
 
 	function save(database,table,index,data){
 		data = JSON.stringify(data);
-		data = new crypto.common().GetEncryptedData(key,data);
+		data = new CRYPTO.common().GetEncryptedData(key,data);
 
-		fs.mkdir("database/", function (err) {
-			fs.mkdir("database/"+database+"/", function (err) {
-				fs.mkdir("database/"+database+"/"+table+"/", function (err) {
+		FS.mkdir("database/", function (err) {
+			FS.mkdir("database/"+database+"/", function (err) {
+				FS.mkdir("database/"+database+"/"+table+"/", function (err) {
 
-					fs.writeFile("database/"+database+"/"+table+"/"+index+".json", data, "utf8", (error) => {
+					FS.writeFile("database/"+database+"/"+table+"/"+index+".json", data, "utf8", (error) => {
 						if (error) {
 							console.log(error.message);
 							throw error;
@@ -116,7 +118,7 @@ exports.RunCommit = function(key){
 
 	let transactions = [];
 
-	http.createServer(function(request, response) {
+	HTTP.createServer(function(request, response) {
 		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
 
 		if(request.method === 'POST') {
@@ -179,7 +181,7 @@ exports.RunCommit = function(key){
 			});
 		};
 
-	}).listen(Config.database["port"], Config.database["address"]);
+	}).listen(CONFIG.database["port"], CONFIG.database["address"]);
 
 
 

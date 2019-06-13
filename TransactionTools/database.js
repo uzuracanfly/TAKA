@@ -1,8 +1,14 @@
+const MAIN = require('../main.js');
+const HEX = require('../hex.js');
+const CRYPTO = require('../crypto.js');
+
+const ACCOUNT = require('../account.js');
+const HASHS = require('../hashs.js');
+const TRANSACTION = require('../transaction.js');
+
+
 exports.DatabaseData = class{
 	constructor(commonkey="",data="",signdata=""){
-		this.main = require('../main.js');
-		this.hex = require('../hex.js');
-		this.crypto = require('../crypto.js');
 		this.commonkey = commonkey;
 		this.data = data;
 		this.signdata = signdata;
@@ -14,7 +20,7 @@ exports.DatabaseData = class{
 		}
 		let data = signdata;
 		if (commonkey){
-			data = new this.crypto.common().GetDecryptedData(commonkey,data);
+			data = new CRYPTO.common().GetDecryptedData(commonkey,data);
 		};
 		if (parseInt(data,16)==NaN){
 			return "";
@@ -28,7 +34,7 @@ exports.DatabaseData = class{
 		}
 		let signdata = data;
 		if (commonkey){
-			signdata = new this.crypto.common().GetEncryptedData(commonkey,signdata);
+			signdata = new CRYPTO.common().GetEncryptedData(commonkey,signdata);
 		};
 		return signdata;
 	};
@@ -37,10 +43,10 @@ exports.DatabaseData = class{
 
 
 exports.SendDatabaseTransaction = function(privkey,tag,data,commonkey=""){
-	let TargetAccount = new (require('../account.js')).account(privkey);
+	let TargetAccount = new ACCOUNT.account(privkey);
 
 	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
-	let MerkleRoot = new (require('../hashs.js')).hashs().GetMarkleroot(FormTxList);
+	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let DatabaseData = new exports.DatabaseData(commonkey,data);
 
@@ -63,7 +69,7 @@ exports.SendDatabaseTransaction = function(privkey,tag,data,commonkey=""){
 		"nonce":0
 	};
 	//console.log(objtx);
-	let TargetTransaction = new (require('../transaction.js')).Transaction("",privkey,objtx);
+	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
 	let result = TargetTransaction.commit();
 
 	return result;

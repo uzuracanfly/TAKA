@@ -1,7 +1,14 @@
+const MAIN = require('../main.js');
+const HEX = require('../hex.js');
+
+const ACCOUNT = require('../account.js');
+const HASHS = require('../hashs.js');
+const TRANSACTION = require('../transaction.js');
+
+
+
 exports.TagOrderData = class{
 	constructor(rawdata="",objdata={}){
-		this.main = require('../main.js');
-		this.hex = require('../hex.js');
 		this.rawdata = rawdata;
 		this.objdata = objdata;
 	};
@@ -9,12 +16,12 @@ exports.TagOrderData = class{
 	GetRawData(objdata=this.objdata){
 
 		let feetxid = objdata["feetxid"];
-		feetxid = this.main.GetFillZero(feetxid, 64);
+		feetxid = MAIN.GetFillZero(feetxid, 64);
 
 		let permissiontype = objdata["permissiontype"].toString(16);
-		permissiontype = this.main.GetFillZero(permissiontype, 2);
+		permissiontype = MAIN.GetFillZero(permissiontype, 2);
 
-		let powtarget = this.main.GetFillZero(objdata["powtarget"], 64);
+		let powtarget = MAIN.GetFillZero(objdata["powtarget"], 64);
 
 		let data = feetxid + permissiontype + powtarget;
 
@@ -58,22 +65,18 @@ exports.TagOrderData = class{
 
 
 exports.SendTagOrderTransaction = function(privkey,tag,permissiontype,powtarget){
-	let account = require('../account.js');
-	let transaction = require('../transaction.js');
-	let hashs = require('../hashs.js');
-	let main = require('../main.js');
 
 	return new Promise(function (resolve, reject) {
 
-		let TargetAccount = new account.account(privkey);
+		let TargetAccount = new ACCOUNT.account(privkey);
 
 		//tag利用料支払いのトランザクションを発行
-		let result = new transaction.SendPayTransaction(privkey,main.GetFillZero("", 40),1);
+		let result = new TRANSACTION.SendPayTransaction(privkey,MAIN.GetFillZero("", 40),1);
 
 
 		result.then(function (paytxid) {
 			let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
-			let MerkleRoot = new hashs.hashs().GetMarkleroot(FormTxList);
+			let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 			let objdata = {
 				"feetxid":paytxid,
@@ -97,7 +100,7 @@ exports.SendTagOrderTransaction = function(privkey,tag,permissiontype,powtarget)
 				"nonce":0
 			};
 			//console.log(objtx);
-			let TargetTransaction = new (require('../transaction.js')).Transaction("",privkey,objtx);
+			let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
 			let result = TargetTransaction.commit();
 
 			result.then(function (txid) {
