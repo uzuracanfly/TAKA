@@ -594,7 +594,7 @@ exports.Transaction = class{
 
 
 
-	GetPOWTarget(rawtx=this.rawtx,lasttxtime=0){
+	GetPOWTarget(rawtx=this.rawtx){
 		let objtx = this.GetObjTx(rawtx);
 
 		if (objtx["tag"] == "pay" || objtx["tag"] == "nego"){
@@ -602,19 +602,19 @@ exports.Transaction = class{
 			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			let time = objtx["time"];
 
-			if (!lasttxtime){
-				let txids = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
 
-				
-				let lasttx = false;
-				if (txids.length > 0){
-					lasttx  = exports.GetTx(txids.slice(-1)[0]);
-				}
-				lasttxtime = time - 60*10;
-				if (lasttx){
-					lasttxtime = lasttx.objtx["time"];
-				}
+			let txids = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
+
+			
+			let lasttx = false;
+			if (txids.length > 0){
+				lasttx  = exports.GetTx(txids.slice(-1)[0]);
 			}
+			let lasttxtime = time - 60*10;
+			if (lasttx){
+				lasttxtime = lasttx.objtx["time"];
+			}
+
 
 			let needtime = 60*10 - (time - lasttxtime);
 
@@ -652,12 +652,14 @@ exports.Transaction = class{
 	}
 
 
-	GetNonce(rawtx=this.rawtx,lasttxtime=0){
+	GetNonce(rawtx=this.rawtx,target=0){
 		let objtx = this.GetObjTx(rawtx);
 
 		let nonce = objtx["nonce"];
 		let outthis = this;
-		let target = this.GetPOWTarget(rawtx,lasttxtime);
+		if (!target){
+			target = this.GetPOWTarget(rawtx);
+		}
 		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
@@ -888,7 +890,7 @@ exports.RunCommit = function(){
 
 
 	setInterval(
-		function(){
+		async function(){
 
 			let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
 			for (let index in UnconfirmedTransactionsTags){
@@ -935,7 +937,7 @@ exports.RunCommit = function(){
 
 					MAIN.note(1,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 
-					let txbool = TargetTransaction.Confirmation();
+					let txbool = await TargetTransaction.Confirmation();
 					if (txbool){
 						commit(TargetTransaction);
 					}else{

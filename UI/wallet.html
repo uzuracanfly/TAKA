@@ -69,6 +69,92 @@
 
 
 
+
+
+
+	function SendTransaction(type,tag,toaddress,amount,data,privkey=account["privkey"]){
+		return new Promise(function (resolve, reject) {
+
+			let address = new ACCOUNT.account(privkey).GetKeys()["address"];
+
+			let AccountData = TAKA.getaccount(address);
+			let MerkleRoot = "";
+			let txs = [];
+			if (tag in AccountData["txids"]){
+				MerkleRoot = AccountData["txids"][tag]["MerkleRoot"];
+				txs = AccountData["txids"][tag]["txs"];
+			}
+			let index = txs.length;
+
+			let objtx = {
+				"pubkey":account["pubkey"],
+				"type":type,
+				"time":Math.floor(Date.now()/1000),
+				"tag":tag,
+				"index":index+1,
+				"MerkleRoot":MerkleRoot,
+				"toaddress":toaddress,
+				"amount":amount,
+				"data":data,
+				"sig":"",
+				"nonce":0,
+			};
+
+			let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
+
+
+
+			let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			if (tag == "pay" || tag == "nego"){
+				target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			}
+			if (tag != "pay" && tag != "nego" && index > 0){
+				let objfirsttx = TAKA.gettx(txs[0]);
+
+				let FIRSTTXDATA = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
+				let objdata = FIRSTTXDATA.GetObjData();
+
+				target = BigInt("0x"+objdata["powtarget"]);
+			}
+
+			let result = TargetTransaction.GetNonce(TargetTransaction.GetRawTx(),target);
+			let objsendtx = TargetTransaction.GetObjTx();
+
+
+
+			result.then(function(nonce){
+
+				objsendtx["nonce"] = nonce;
+
+				TargetTransaction = new TRANSACTION.Transaction("",privkey,objsendtx);
+				let rawtx = TargetTransaction.GetRawTx();
+
+
+				TAKA.sendtx(
+					rawtx,
+					function(CallbackResult,CallbackArgs){
+						return resolve({"txid":CallbackResult,"rawtx":rawtx});
+					}
+				);
+			});
+		});
+	};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	function Login(){
 		let formargs = [
 			["title","Login"],
@@ -146,97 +232,51 @@
 								["input","amount","amount"],
 								[
 									"button",
-									"Withdraw",
+									"send",
 									function()
 									{
 										let toaddress = document.getElementById("toaddress").value;
 										let amount = document.getElementById("amount").value;
 										amount = parseInt(amount);
 
-										let tag = "pay";
 
-										let AccountData = TAKA.getaccount(account["address"]);
-										let MerkleRoot = AccountData["txids"][tag]["MerkleRoot"];
-										let txs = AccountData["txids"][tag]["txs"];
-										let index = txs.length;
-
-										let objtx = {
-											"pubkey":account["pubkey"],
-											"type":1,
-											"time":Math.floor(Date.now()/1000),
-											"tag":tag,
-											"index":index+1,
-											"MerkleRoot":MerkleRoot,
-											"toaddress":toaddress,
-											"amount":amount,
-											"data":"",
-											"sig":"",
-											"nonce":0,
-										};
-
-										let TargetTransaction = new TRANSACTION.Transaction("",account["privkey"],objtx);
-
-
-										//lasttxtime取得
-										let lasttxtime = Math.floor(Date.now()/1000) - 10*60;
-										if (index > 0){
-											let objlasttx = TAKA.gettx(txs.slice(-1)[0]);
-											lasttxtime = objlasttx["time"];
-										};
-
-										let result = TargetTransaction.GetNonce(TargetTransaction.GetRawTx(),lasttxtime);
-										let objsendtx = TargetTransaction.GetObjTx();
-
+										let result = SendTransaction(1,"pay",toaddress,amount,"");
 
 
 										//送信ロード画面
-										let TopWithdrawLoadForm = new form(
+										let TopLoadForm = new form(
 											[
 												["title","Sending....."]
 											],
-											"TopWithdrawLoadForm"
+											"TopLoadForm"
 										);
 
 
-										result.then(function(nonce){
-											TopWithdrawLoadForm.DeleteForm();
+										result.then(function(TxResult){
+											TopLoadForm.DeleteForm();
 
-											objsendtx["nonce"] = nonce;
-
-											TargetTransaction = new TRANSACTION.Transaction("",account["privkey"],objsendtx);
-											let rawtx = TargetTransaction.GetRawTx();
-
-
-											TAKA.sendtx(
-												rawtx,
-												function(CallbackResult,CallbackArgs){
-													let TopWithdrawResultForm = new form(
-														[
-															["title","Withdraw Result"],
-															["head","Result"],
-															["input","result","result"],
-															["head","RawTx"],
-															["input","rawtx","rawtx"],
-															[
-																"button",
-																"Done",
-																function()
-																{
-																	TopWithdrawResultForm.DeleteForm();
-																	TopWithdrawForm.DeleteForm();
-																}
-															]
-														],
-														"TopWithdrawResultForm"
-													);
-
-													document.getElementById("result").value = CallbackResult;
-													document.getElementById("rawtx").value = CallbackArgs["rawtx"];
-												},
-												{
-													"rawtx":rawtx
-												}
+											let TopResultForm = new form(
+												[
+													["title","Result"],
+													["head","Result"],
+													["input","result","result"],
+													["head","RawTx"],
+													["input","rawtx","rawtx"],
+													[
+														"button",
+														"Done",
+														function()
+														{
+															TopResultForm.DeleteForm();
+															TopWithdrawForm.DeleteForm();
+														}
+													]
+												],
+												"TopResultForm"
 											);
+
+											document.getElementById("result").value = TxResult["txid"];
+											document.getElementById("rawtx").value = TxResult["rawtx"];
 										});
 									}
 								]
@@ -254,8 +294,385 @@
 						"TagOrder",
 						function()
 						{
+							let TopTagOrderForm = new form(
+								[
+									["title","Tag Order"],
+									["input","tag","tag"],
+									["input","Permission Type","permissiontype"],
+									["input","Pow Target","powtarget"],
+									[
+										"button",
+										"send",
+										function()
+										{
+											let tag = document.getElementById("tag").value;
+											let permissiontype = document.getElementById("permissiontype").value;
+											let powtarget = document.getElementById("powtarget").value;
+
+											if (!powtarget){
+												powtarget = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+											};
+
+
+											//FeeTx作成
+											let result = SendTransaction(1,"pay","0000000000000000000000000000000000000000",1,"");
+
+
+											//送信ロード画面
+											let TopLoadForm = new form(
+												[
+													["title","Sending....."]
+												],
+												"TopLoadForm"
+											);
+
+
+											result.then(function(FeeTxResult){
+												TopLoadForm.DeleteForm();
+												if (!FeeTxResult){
+													let TopFailForm = new form(
+														[
+															["title","FAIL"]
+														],
+														"TopFailForm"
+													);
+												}
+
+
+
+												//TagOrderのデータ生成
+												let objdata = {
+													"feetxid":FeeTxResult["txid"],
+													"permissiontype":permissiontype,
+													"powtarget":powtarget,
+												};
+
+												let TXDATA = new TRANSACTIONTOOLS_TAGORDER.TagOrderData("",objdata);
+												let rawdata = TXDATA.GetRawData();
+
+
+
+												//TagOrderTx作成
+												let TagOrderResult = SendTransaction(12,tag,"0000000000000000000000000000000000000000",0,rawdata);
+
+												TopLoadForm = new form(
+													[
+														["title","Sending....."]
+													],
+													"TopLoadForm"
+												);
+
+												TagOrderResult.then(function(TagOrderTxResult){
+													TopLoadForm.DeleteForm();
+
+													let TopResultForm = new form(
+														[
+															["title","Result"],
+															["head","Result"],
+															["input","result","result"],
+															["head","RawTx"],
+															["input","rawtx","rawtx"],
+															[
+																"button",
+																"Done",
+																function()
+																{
+																	TopResultForm.DeleteForm();
+																	TopTagOrderForm.DeleteForm();
+																}
+															]
+														],
+														"TopResultForm"
+													);
+
+													document.getElementById("result").value = TagOrderTxResult["txid"];
+													document.getElementById("rawtx").value = TagOrderTxResult["rawtx"];
+												}).catch(function(e){
+													console.log(e);
+												});
+											}).catch(function(e){
+												console.log(e);
+											});
+										}
+									]
+								],
+								"TopTagOrderForm"
+							);
 						}
 					],
+					[
+						"button",
+						"Nego",
+						function()
+						{
+							let TopNegoForm = new form(
+								[
+									["title","Nego"],
+									["text","You can pay reward for node administrator keeping the specified tag."],
+									["input","tag","tag"],
+									["input","amount","amount"],
+									[
+										"button",
+										"send",
+										function()
+										{
+											let tag = document.getElementById("tag").value;
+											let amount = document.getElementById("amount").value;
+
+											let TagData = TAKA.gettag(tag);
+											let TagsMerkleRoot = TagData["MerkleRoot"];
+											if (!TagsMerkleRoot){
+												let TopFailForm = new form(
+													[
+														["title","FAIL"]
+													],
+													"TopFailForm"
+												);
+											}
+
+											let RewardPrivkeyKeys = new ACCOUNT.account().GetKeys();
+											let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(TagsMerkleRoot,RewardPrivkeyKeys["privkey"]);
+
+											let result = SendTransaction(1,"pay",RewardPrivkeyKeys["address"],amount,"");
+
+
+
+											//送信ロード画面
+											let TopLoadForm = new form(
+												[
+													["title","Sending....."]
+												],
+												"TopLoadForm"
+											);
+
+
+											result.then(function(FeeTxResult){
+												TopLoadForm.DeleteForm();
+												if (!FeeTxResult){
+													let TopFailForm = new form(
+														[
+															["title","FAIL"]
+														],
+														"TopFailForm"
+													);
+												}
+
+
+
+												//negoのデータ生成
+												let objdata = {
+													"tag":tag,
+													"EncryptoPrivkey":EncryptoPrivkey,
+												};
+
+												let TXDATA = new TRANSACTIONTOOLS_NEGO.NegoData("",objdata);
+												let rawdata = TXDATA.GetRawData();
+
+
+
+												//NegoTx作成
+												let NegoResult = SendTransaction(11,"nego","0000000000000000000000000000000000000000",0,rawdata);
+
+
+
+												TopLoadForm = new form(
+													[
+														["title","Sending....."]
+													],
+													"TopLoadForm"
+												);
+
+												///Negoの結果発表
+												NegoResult.then(function(NegoTxResult){
+													TopLoadForm.DeleteForm();
+
+													let TopResultForm = new form(
+														[
+															["title","Result"],
+															["head","Result"],
+															["input","result","result"],
+															["head","RawTx"],
+															["input","rawtx","rawtx"],
+															[
+																"button",
+																"Done",
+																function()
+																{
+																	TopResultForm.DeleteForm();
+																	TopTagOrderForm.DeleteForm();
+																}
+															]
+														],
+														"TopResultForm"
+													);
+
+													document.getElementById("result").value = NegoTxResult["txid"];
+													document.getElementById("rawtx").value = NegoTxResult["rawtx"];
+												}).catch(function(e){
+													console.log(e);
+												});
+
+											}).catch(function(e){
+												console.log(e);
+											});
+										}
+									]
+								]
+							);
+						}
+					],
+					[
+						"button",
+						"Tag add permit",
+						function()
+						{
+							let TopTagAddpermForm = new form(
+								[
+									["title","Tag add permit"],
+									["input","tag","tag"],
+									["input","Add address","addaddress"],
+									[
+										"button",
+										"send",
+										function()
+										{
+											let tag = document.getElementById("tag").value;
+											let addaddress = document.getElementById("addaddress").value;
+
+											//negoのデータ生成
+											let objdata = {
+												"address":addaddress,
+											};
+
+											let TXDATA = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData("",objdata);
+											let rawdata = TXDATA.GetRawData();
+
+											let result = SendTransaction(13,tag,"0000000000000000000000000000000000000000",0,rawdata);
+
+
+											//送信ロード画面
+											let TopLoadForm = new form(
+												[
+													["title","Sending....."]
+												],
+												"TopLoadForm"
+											);
+
+											result.then(function(TxResult){
+												TopLoadForm.DeleteForm();
+
+												let TopResultForm = new form(
+													[
+														["title","Result"],
+														["head","Result"],
+														["input","result","result"],
+														["head","RawTx"],
+														["input","rawtx","rawtx"],
+														[
+															"button",
+															"Done",
+															function()
+															{
+																TopResultForm.DeleteForm();
+																TopTagOrderForm.DeleteForm();
+															}
+														]
+													],
+													"TopResultForm"
+												);
+
+												document.getElementById("result").value = TxResult["txid"];
+												document.getElementById("rawtx").value = TxResult["rawtx"];
+
+											}).catch(function(e){
+												console.log(e);
+											});
+
+
+										}
+									]
+								]
+							);
+						}
+					],
+					[
+						"button",
+						"Database",
+						function()
+						{
+							let TopNegoForm = new form(
+								[
+									["title","Database"],
+									["input","tag","tag"],
+									["input","data","data"],
+									["input","commonkey","commonkey"],
+									[
+										"button",
+										"send",
+										function()
+										{
+
+
+											let tag = document.getElementById("tag").value;
+											let data = document.getElementById("data").value;
+											let commonkey = document.getElementById("commonkey").value;
+
+
+											if (commonkey){
+												data = new CRYPTO.common().GetEncryptedData(commonkey,data);
+											}
+
+
+											let result = SendTransaction(101,tag,"0000000000000000000000000000000000000000",0,data);
+
+
+											//送信ロード画面
+											let TopLoadForm = new form(
+												[
+													["title","Sending....."]
+												],
+												"TopLoadForm"
+											);
+
+											result.then(function(TxResult){
+												TopLoadForm.DeleteForm();
+
+												let TopResultForm = new form(
+													[
+														["title","Result"],
+														["head","Result"],
+														["input","result","result"],
+														["head","RawTx"],
+														["input","rawtx","rawtx"],
+														[
+															"button",
+															"Done",
+															function()
+															{
+																TopResultForm.DeleteForm();
+																TopTagOrderForm.DeleteForm();
+															}
+														]
+													],
+													"TopResultForm"
+												);
+
+												document.getElementById("result").value = TxResult["txid"];
+												document.getElementById("rawtx").value = TxResult["rawtx"];
+												
+											}).catch(function(e){
+												console.log(e);
+											});
+
+
+										}
+									]
+								]
+							);
+						}
+					]
+
+
 				];
 
 				let TopForm = new form(

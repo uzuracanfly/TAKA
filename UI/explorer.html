@@ -155,7 +155,7 @@
 		let txids = TagData["txids"].reverse();
 
 		for (let index in txids){
-			let txid = txids;
+			let txid = txids[index];
 
 			args.push(["button",txid,function(){TxForm(this.value);}]);
 		};

@@ -85,9 +85,11 @@ exports.SetServer = function(){
 						}
 
 						let TagTxids = TRANSACTION.GetTagTxids(tag);
+						let TagMerkleRoot = new HASHS.hashs().GetMarkleroot(TagTxids);
 
 						let callback = {
 							"txids":TagTxids,
+							"MerkleRoot":TagMerkleRoot,
 						}
 
 
