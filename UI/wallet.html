@@ -105,10 +105,10 @@
 
 
 			let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-			if (tag == "pay" || tag == "nego"){
+			if (tag == "pay" || tag == "tagreward"){
 				target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			}
-			if (tag != "pay" && tag != "nego" && index > 0){
+			if (tag != "pay" && tag != "tagreward" && index > 0){
 				let objfirsttx = TAKA.gettx(txs[0]);
 
 				let FIRSTTXDATA = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
@@ -402,12 +402,12 @@
 					],
 					[
 						"button",
-						"Nego",
+						"Tagreward",
 						function()
 						{
-							let TopNegoForm = new form(
+							let TopTagrewardForm = new form(
 								[
-									["title","Nego"],
+									["title","Tagreward"],
 									["text","You can pay reward for node administrator keeping the specified tag."],
 									["input","tag","tag"],
 									["input","amount","amount"],
@@ -459,19 +459,19 @@
 
 
 
-												//negoのデータ生成
+												//tagrewardのデータ生成
 												let objdata = {
 													"tag":tag,
 													"EncryptoPrivkey":EncryptoPrivkey,
 												};
 
-												let TXDATA = new TRANSACTIONTOOLS_NEGO.NegoData("",objdata);
+												let TXDATA = new TRANSACTIONTOOLS_TAGREWARD.TagrewardData("",objdata);
 												let rawdata = TXDATA.GetRawData();
 
 
 
-												//NegoTx作成
-												let NegoResult = SendTransaction(11,"nego","0000000000000000000000000000000000000000",0,rawdata);
+												//TagrewardTx作成
+												let TagrewardResult = SendTransaction(11,"tagreward","0000000000000000000000000000000000000000",0,rawdata);
 
 
 
@@ -482,8 +482,8 @@
 													"TopLoadForm"
 												);
 
-												///Negoの結果発表
-												NegoResult.then(function(NegoTxResult){
+												///Tagrewardの結果発表
+												TagrewardResult.then(function(TagrewardTxResult){
 													TopLoadForm.DeleteForm();
 
 													let TopResultForm = new form(
@@ -506,8 +506,8 @@
 														"TopResultForm"
 													);
 
-													document.getElementById("result").value = NegoTxResult["txid"];
-													document.getElementById("rawtx").value = NegoTxResult["rawtx"];
+													document.getElementById("result").value = TagrewardTxResult["txid"];
+													document.getElementById("rawtx").value = TagrewardTxResult["rawtx"];
 												}).catch(function(e){
 													console.log(e);
 												});
@@ -539,7 +539,7 @@
 											let tag = document.getElementById("tag").value;
 											let addaddress = document.getElementById("addaddress").value;
 
-											//negoのデータ生成
+											//tagrewardのデータ生成
 											let objdata = {
 												"address":addaddress,
 											};
@@ -600,7 +600,7 @@
 						"Database",
 						function()
 						{
-							let TopNegoForm = new form(
+							let TopTagrewardForm = new form(
 								[
 									["title","Database"],
 									["input","tag","tag"],

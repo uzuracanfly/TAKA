@@ -14,20 +14,56 @@
 	width:100%;
 	padding: 0;
 	margin: 0;
+	color: rgba(0,0,0,1);
+	background-color: rgba(255,127,0,0.5);
 }
 #inner
 {
 	width:100%;
+	height:50%;
 	padding: 0;
-	margin: 0 auto;
+	margin: 0;
 	position: absolute;
-	top: 300px;
+	top: 50%;
+	left:0px;
+	color: rgba(0,0,0,1);
+	background-color: rgba(255,127,0,0.5);
 }
 .sub
 {
 	width:100%;
 	margin:0 auto;
 }
+
+
+
+.btn-border-bottom {
+	position: relative;
+	display: inline-block;
+	font-weight: bold;
+	padding: 0.25em 0;
+	text-decoration: none;
+	color: #67c5ff;	
+	background-color: rgba(255,255,255,0.8);
+}
+
+.btn-border-bottom:before {
+	position: absolute;
+	content: '';
+	width: 100%;
+	height: 4px;
+	top:100%;
+	left: 0;
+	border-radius: 3px;
+	background:#67c5ff;
+	transition: .2s;
+}
+
+.btn-border-bottom:hover:before {
+	top: -webkit-calc(100% - 3px);
+	top: calc(100% - 3px);
+}
+
 -->
 </style>
 
@@ -74,7 +110,7 @@
 	function GetObjData(type,rawdata){
 		let objdata = {}
 		if (type == 11){
-			objdata = new TRANSACTIONTOOLS_NEGO.NegoData(rawdata).GetObjData();
+			objdata = new TRANSACTIONTOOLS_TAGREWARD.TagrewardData(rawdata).GetObjData();
 		}else if (type == 101){
 			objdata = new TRANSACTIONTOOLS_DATABASE.DatabaseData("",rawdata).GetOrgData();
 		}else if (type == 12){
@@ -224,27 +260,47 @@
 				"name":"EleSearch",
 				"attachele":document.body,
 				"type":"div",
-				"height":"100px",
+				"height":"50%",
 				"width":"100%",
-				"maxWidth":"1024px",
 				"position":"fixed",
+				"top":"0px",
+				"left":"0px",
+				"color":"rgba(0,0,0,1)",
+				"backgroundColor":"rgba(255,127,0,1)",
 			}
 		);
-		var IntervalID = setInterval(
+
+
+
+
+
+		let EleSearchInner = element(
+			{
+				"name":"EleSearchInner",
+				"attachele":EleSearch,
+				"type":"div",
+				"width":"100%",
+				"maxWidth":"1024px",
+				"position":"relative",
+			}
+		);
+		var IntervalID_EleSearchInner = setInterval(
 			function()
 			{
-				if (document.getElementById("EleSearch") == null){clearInterval(IntervalID);return 0;};
+				if (document.getElementById("EleSearchInner") == null){clearInterval(IntervalID_EleSearchInner);return 0;};
 
-				EleSearch.style.top = "100px";
-				EleSearch.style.left = window.innerWidth/2 - EleSearch.clientWidth/2 + "px";
+				EleSearchInner.style.top = EleSearch.clientHeight/2 - EleSearchInner.clientHeight/2 + "px";
+				EleSearchInner.style.left = EleSearch.clientWidth/2 - EleSearchInner.clientWidth/2 + "px";
 			},
 			10
 		);
 
+
+
 		let EleInputSearch = element(
 			{
 				"name":"EleInputSearch",
-				"attachele":EleSearch,
+				"attachele":EleSearchInner,
 				"type":"input",
 				"height":"50px",
 				"width":"100%",
@@ -255,11 +311,12 @@
 		let EleButtonSearch = element(
 			{
 				"name":"EleButtonSearch",
-				"attachele":EleSearch,
-				"type":"input",
+				"attachele":EleSearchInner,
+				"type":"a",
+				"class":"btn-border-bottom",
 				"height":"50px",
 				"width":"100%",
-				"value":"Search",
+				"innerHTML":"Search",
 				"textAlign":"center",
 				"clickfunction":function(){
 					let value = document.getElementById("EleInputSearch").value;
@@ -281,18 +338,17 @@
 				}
 			}
 		);
-		EleButtonSearch.type = "button";
 
 
 
 
 
 		/*
-			Nego最新Txリスト
+			Tagreward最新Txリスト
 		*/
-		let EleNewNego = element(
+		let EleNewTagreward = element(
 			{
-				"name":"EleNewNego",
+				"name":"EleNewTagreward",
 				"attachele":inner,
 				"type":"div",
 				"width":"100%",
@@ -300,10 +356,10 @@
 		);
 
 
-		let EleNewNegoName = element(
+		let EleNewTagrewardName = element(
 			{
-				"name":"EleNewNegoName",
-				"attachele":EleNewNego,
+				"name":"EleNewTagrewardName",
+				"attachele":EleNewTagreward,
 				"type":"h1",
 				"width":"100%",
 				"textAlign":"center",
@@ -312,17 +368,17 @@
 		);
 
 
-		let EleNewNegoList = element(
+		let EleNewTagrewardList = element(
 			{
-				"name":"EleNewNegoList",
-				"attachele":EleNewNego,
+				"name":"EleNewTagrewardList",
+				"attachele":EleNewTagreward,
 				"type":"div",
 				"width":"100%",
 			}
 		);
 
 
-		let tagdata = TAKA.gettag("nego");
+		let tagdata = TAKA.gettag("tagreward");
 		let tagtxids = tagdata["txids"];
 		tagtxids = tagtxids.reverse();
 
@@ -330,19 +386,19 @@
 		for (let index in tagtxids){
 			let txid = tagtxids[index];
 
-			let EleNewNegoSeed = element(
+			let EleNewTagrewardSeed = element(
 				{
-					"name":"EleNewNegoSeed",
-					"attachele":EleNewNegoList,
+					"name":"EleNewTagrewardSeed",
+					"attachele":EleNewTagrewardList,
 					"type":"div",
 					"width":"100%",
 				}
 			);
 
-			let EleNewNegoSeedButton = element(
+			let EleNewTagrewardSeedButton = element(
 				{
-					"name":"EleNewNegoSeedButton",
-					"attachele":EleNewNegoSeed,
+					"name":"EleNewTagrewardSeedButton",
+					"attachele":EleNewTagrewardSeed,
 					"type":"input",
 					"width":"100%",
 					"value":txid,
@@ -352,7 +408,7 @@
 					}
 				}
 			);
-			EleNewNegoSeedButton.type = "button";
+			EleNewTagrewardSeedButton.type = "button";
 
 		};
 	};

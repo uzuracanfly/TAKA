@@ -10,7 +10,7 @@ const CRYPTO = require('../crypto.js');
 
 
 
-exports.NegoData = class{
+exports.TagrewardData = class{
 	constructor(rawdata="",objdata={}){
 		this.rawdata = rawdata;
 		this.objdata = objdata;
@@ -64,7 +64,7 @@ exports.NegoData = class{
 
 
 
-exports.SendNegoTransaction = function(privkey,tag,amount){
+exports.SendTagrewardTransaction = function(privkey,tag,amount){
 	amount = parseInt(amount);
 
 	return new Promise(function (resolve, reject) {
@@ -82,7 +82,7 @@ exports.SendNegoTransaction = function(privkey,tag,amount){
 			報酬トランザクション生成
 			*/
 
-			let FormTxList = TargetAccount.GetFormTxList(undefined,"nego");
+			let FormTxList = TargetAccount.GetFormTxList(undefined,"tagreward");
 			let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 			let TagMerkleRoot = TRANSACTION.GetTagMerkleRoot(tag);
@@ -93,18 +93,18 @@ exports.SendNegoTransaction = function(privkey,tag,amount){
 				"EncryptoPrivkey":EncryptoPrivkey,
 			};
 
-			let Nego = new exports.NegoData("",objdata);
-			//console.log(Nego.GetRawData());
+			let Tagreward = new exports.TagrewardData("",objdata);
+			//console.log(Tagreward.GetRawData());
 			let objtx = {
 				"pubkey":TargetAccount.GetKeys()["pubkey"],
 				"type":11,
 				"time":Math.floor(Date.now()/1000),
-				"tag":"nego",
+				"tag":"tagreward",
 				"index":FormTxList.length+1,
 				"MerkleRoot":MerkleRoot,
 				"toaddress":"",
 				"amount":0,
-				"data":Nego.GetRawData(),
+				"data":Tagreward.GetRawData(),
 				"sig":"",
 				"nonce":0
 			};
@@ -133,35 +133,35 @@ exports.SendNegoTransaction = function(privkey,tag,amount){
 exports.RunMining = function(){
 	function mining(){
 		/*
-		negoトランザクションを走査してprivkeyを集める
+		tagrewardトランザクションを走査してprivkeyを集める
 		*/
-		let negotxids = TRANSACTION.GetTagTxids("nego");
+		let tagrewardtxids = TRANSACTION.GetTagTxids("tagreward");
 		let Rewards = [];
-		for (let index in negotxids){
-			let txid = negotxids[index];
+		for (let index in tagrewardtxids){
+			let txid = tagrewardtxids[index];
 			let tx = TRANSACTION.GetTx(txid);
 
-			let negodata = new exports.NegoData(tx.GetObjTx()["data"]);
+			let tagrewarddata = new exports.TagrewardData(tx.GetObjTx()["data"]);
 
 
-			if (CONFIG.Nego["MiningTags"].indexOf(negodata.GetObjData()["tag"]) == -1){continue;};
+			if (CONFIG.Tagreward["MiningTags"].indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
 
 
 			//tagのtxリストから共通鍵作る
-			let tagtxids = TRANSACTION.GetTagTxids(negodata.GetObjData()["tag"]);
+			let tagtxids = TRANSACTION.GetTagTxids(tagrewarddata.GetObjData()["tag"]);
 			let commonkey = new HASHS.hashs().GetMarkleroot(tagtxids);
 
 			if (!commonkey){continue;};
 
 
 			//賞金の入った秘密鍵を取得
-			let EncryptoPrivkey = negodata.GetObjData()["EncryptoPrivkey"];
+			let EncryptoPrivkey = tagrewarddata.GetObjData()["EncryptoPrivkey"];
 
 			let RewardPrivkey = new CRYPTO.common().GetDecryptedData(commonkey,EncryptoPrivkey);
 			//console.log(commonkey);
 			//console.log(EncryptoPrivkey);
 			//console.log(RewardPrivkey);
-			Rewards.push({"tag":negodata.GetObjData()["tag"],"RewardPrivkey":RewardPrivkey});
+			Rewards.push({"tag":tagrewarddata.GetObjData()["tag"],"RewardPrivkey":RewardPrivkey});
 		}
 
 
@@ -176,7 +176,7 @@ exports.RunMining = function(){
 			let tag = reward["tag"];
 
 
-			let CollectAccount = new ACCOUNT.account(CONFIG.Nego["CollectPrivkey"]);
+			let CollectAccount = new ACCOUNT.account(CONFIG.Tagreward["CollectPrivkey"]);
 			let RewardAccount = new ACCOUNT.account(RewardPrivkey);
 
 			let sendamount = 0;
@@ -188,7 +188,7 @@ exports.RunMining = function(){
 
 			if (sendamount > 0 && UsedRewardPrivkey.indexOf(RewardPrivkey) == -1){
 				UsedRewardPrivkey.push(RewardPrivkey);
-				MAIN.note(1,"nego_RunMining","[Reward] "+sendamount+" by tag of "+tag);
+				MAIN.note(1,"tagreward_RunMining","[Reward] "+sendamount+" by tag of "+tag);
 				let result = TRANSACTION.SendPayTransaction(RewardPrivkey,CollectAccount.GetKeys()["address"],sendamount);
 			}
 		}

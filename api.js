@@ -4,7 +4,7 @@ const CONFIG = require('./config.js');
 const ACCOUNT = require('./account.js');
 const TRANSACTION = require('./transaction.js');
 const HASHS = require('./hashs.js');
-const TRANSACTIONTOOLS_NEGO = require('./TransactionTools/nego');
+const TRANSACTIONTOOLS_TAGREWARD = require('./TransactionTools/tagreward');
 const TRANSACTIONTOOLS_DATABASE = require('./TransactionTools/database.js');
 const TRANSACTIONTOOLS_TAGORDER = require('./TransactionTools/tagorder.js');
 const TRANSACTIONTOOLS_TAGADDPERMIT = require('./TransactionTools/tagaddpermit.js');
@@ -93,7 +93,7 @@ exports.SetServer = function(){
 						}
 
 
-						if (tag != "pay" && tag != "nego" && TagTxids.length > 0){
+						if (tag != "pay" && tag != "tagreward" && TagTxids.length > 0){
 							let TagOrderTx = new TRANSACTION.GetTagOrderTx(tag);
 							let TagOrderObjTx = TagOrderTx.GetObjTx();
 
@@ -188,7 +188,7 @@ exports.SetServer = function(){
 
 
 
-					if (postData["function"] == "sendrewardtx"){
+					if (postData["function"] == "sendtagrewardtx"){
 						let privkey = postData["args"]["privkey"];
 						let tag = postData["args"]["tag"];
 						let amount = postData["args"]["amount"];
@@ -201,7 +201,7 @@ exports.SetServer = function(){
 						}
 
 
-						let result = TRANSACTIONTOOLS_NEGO.SendNegoTransaction(privkey,tag,amount);
+						let result = TRANSACTIONTOOLS_TAGREWARD.SendTagrewardTransaction(privkey,tag,amount);
 
 						result.then(function(value){
 							response.write(JSON.stringify(value));

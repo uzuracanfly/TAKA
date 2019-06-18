@@ -13,7 +13,7 @@ let FunctionList = [
 	{"name":"BroadcastSetServer","function":function(){let Broadcast = require('./broadcast.js');Broadcast.SetServer()},"time":1000},
 	{"name":"BroadcastRunScanning","function":function(){let Broadcast = require('./broadcast.js');Broadcast.RunScanning()},"time":1000},
 	{"name":"APISetServer","function":function(){let API = require('./api.js');API.SetServer()},"time":1000},
-	{"name":"NegoRunMining","function":function(){let Nego = require('./TransactionTools/nego.js');Nego.RunMining()},"time":1000},
+	{"name":"TagrewardRunMining","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()},"time":1000},
 	{"name":"console","function":function(){let Console = require('./console.js');Console.RunConsole()},"time":1000},
 	{
 		"name":"TEST",

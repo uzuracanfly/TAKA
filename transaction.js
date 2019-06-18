@@ -257,25 +257,25 @@ exports.Transaction = class{
 
 
 		/*
-		Nego関連
+		Tagreward関連
 		*/
 
-		if (objtx["type"] == 11 && objtx["tag"] != "nego"){
+		if (objtx["type"] == 11 && objtx["tag"] != "tagreward"){
 			return 0;
 		};
-		if (objtx["type"] != 11 && objtx["tag"] == "nego"){
+		if (objtx["type"] != 11 && objtx["tag"] == "tagreward"){
 			return 0;
 		};
 		if (objtx["type"] == 11){
 			try{
-				let nego = require('./TransactionTools/nego.js');
-				let Nego = new nego.NegoData(objtx["data"]);
-				let NegoObjData = Nego.GetObjData();
-				//console.log(NegoObjData);
-				if (!("tag" in NegoObjData) || !NegoObjData["tag"]){
+				let tagreward = require('./TransactionTools/tagreward.js');
+				let Tagreward = new tagreward.TagrewardData(objtx["data"]);
+				let TagrewardObjData = Tagreward.GetObjData();
+				//console.log(TagrewardObjData);
+				if (!("tag" in TagrewardObjData) || !TagrewardObjData["tag"]){
 					return 0;
 				}
-				if (!("EncryptoPrivkey" in NegoObjData) || !NegoObjData["EncryptoPrivkey"]){
+				if (!("EncryptoPrivkey" in TagrewardObjData) || !TagrewardObjData["EncryptoPrivkey"]){
 					return 0;
 				}
 			}catch(e){
@@ -597,7 +597,7 @@ exports.Transaction = class{
 	GetPOWTarget(rawtx=this.rawtx){
 		let objtx = this.GetObjTx(rawtx);
 
-		if (objtx["tag"] == "pay" || objtx["tag"] == "nego"){
+		if (objtx["tag"] == "pay" || objtx["tag"] == "tagreward"){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			let time = objtx["time"];

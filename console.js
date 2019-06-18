@@ -40,11 +40,11 @@ exports.RunConsole = function(){
 				let toaddress = commands[2];
 				let amount = commands[3];
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendpaytx","args":{"privkey":privkey,"toaddress":toaddress,"amount":amount}});
-			}else if (commands[0] == "sendrewardtx"){
+			}else if (commands[0] == "sendtagrewardtx"){
 				let privkey = commands[1];
 				let tag = commands[2];
 				let amount = commands[3];
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendrewardtx","args":{"privkey":privkey,"tag":tag,"amount":amount}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagrewardtx","args":{"privkey":privkey,"tag":tag,"amount":amount}});
 			}else if (commands[0] == "gettx"){
 				let txid = commands[1];
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettx","args":{"txid":txid}});
