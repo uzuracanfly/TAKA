@@ -59,12 +59,41 @@
 <script src="lib/TAKAAPIRapper"></script>
 <script src="lib/form"></script>
 <script src="lib/notification"></script>
+<script src="lib/TAKALIBRapper"></script>
 
 
 
 <script>
 	const TAKA = new TAKAAPIRapper("133.18.169.253",80);
 	let Notification = new notification();
+
+
+
+
+
+	function GetObjData(type,rawdata){
+		let objdata = {}
+		if (type == 11){
+			objdata = new TRANSACTIONTOOLS_NEGO.NegoData(rawdata).GetObjData();
+		}else if (type == 101){
+			objdata = new TRANSACTIONTOOLS_DATABASE.DatabaseData("",rawdata).GetOrgData();
+		}else if (type == 12){
+			objdata = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(rawdata).GetObjData();
+		}else if (type == 13){
+			objdata = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(rawdata).GetObjData();
+		}else if (type == 111){
+			objdata = new TRANSACTIONTOOLS_CONTRACT.SetFunctionData(rawdata).GetObjData();
+		}else if (type == 112){
+			objdata = new TRANSACTIONTOOLS_CONTRACT.RunFunctionData(rawdata).GetObjData();
+		};
+
+		return objdata;
+	}
+
+
+
+
+
 
 	function AccountForm(address){
 		let AccountData = TAKA.getaccount(address);
@@ -110,12 +139,22 @@
 			["head","Tag : "+TxData["tag"]],
 			["head","Index : "+TxData["index"]],
 			["head","MerkleRoot : "+TxData["MerkleRoot"]],
-			["head","To Address : "+TxData["toaddress"]],
+			["head","To Address"],
+			["button",TxData["toaddress"],function(){AccountForm(this.value);}],
 			["head","Amount : "+TxData["amount"]],
-			["head","Data : "+TxData["data"]],
-			["head","Sig : "+TxData["sig"]],
-			["head","Nonce : "+TxData["nonce"]],
+			["head","Data"],
 		];
+
+		let ObjData = GetObjData(TxData["type"],TxData["data"]);
+		for (let key in ObjData){
+			let value = ObjData[key];
+
+			args.push(["text",key+" : "+value]);
+		}
+
+
+		args.push(["head","Sig : "+TxData["sig"]]);
+		args.push(["head","Nonce : "+TxData["nonce"]]);
 
 		let result = new form(
 			args,
