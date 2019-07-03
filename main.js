@@ -43,7 +43,7 @@ exports.errorHandle = function(process) {
 
 
 
-exports.sleep = function(time){
+exports.sleep = function(msec){
 	return new Promise(function(resolve) {
 		setTimeout(function() {resolve()}, msec);
 	})
