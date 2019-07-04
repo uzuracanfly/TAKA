@@ -138,30 +138,34 @@ exports.RunMining = function(){
 		let tagrewardtxids = TRANSACTION.GetTagTxids("tagreward");
 		let Rewards = [];
 		for (let index in tagrewardtxids){
-			let txid = tagrewardtxids[index];
-			let tx = TRANSACTION.GetTx(txid);
-
-			let tagrewarddata = new exports.TagrewardData(tx.GetObjTx()["data"]);
-
-
-			if (CONFIG.Tagreward["MiningTags"].indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
+			try{
+				let txid = tagrewardtxids[index];
+				let tx = TRANSACTION.GetTx(txid);
+				let tagrewarddata = new exports.TagrewardData(tx.GetObjTx()["data"]);
 
 
-			//tagのtxリストから共通鍵作る
-			let tagtxids = TRANSACTION.GetTagTxids(tagrewarddata.GetObjData()["tag"]);
-			let commonkey = new HASHS.hashs().GetMarkleroot(tagtxids);
-
-			if (!commonkey){continue;};
+				if (CONFIG.Tagreward["MiningTags"].indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
 
 
-			//賞金の入った秘密鍵を取得
-			let EncryptoPrivkey = tagrewarddata.GetObjData()["EncryptoPrivkey"];
+				//tagのtxリストから共通鍵作る
+				let tagtxids = TRANSACTION.GetTagTxids(tagrewarddata.GetObjData()["tag"]);
+				let commonkey = new HASHS.hashs().GetMarkleroot(tagtxids);
 
-			let RewardPrivkey = new CRYPTO.common().GetDecryptedData(commonkey,EncryptoPrivkey);
-			//console.log(commonkey);
-			//console.log(EncryptoPrivkey);
-			//console.log(RewardPrivkey);
-			Rewards.push({"tag":tagrewarddata.GetObjData()["tag"],"RewardPrivkey":RewardPrivkey});
+				if (!commonkey){continue;};
+
+
+				//賞金の入った秘密鍵を取得
+				let EncryptoPrivkey = tagrewarddata.GetObjData()["EncryptoPrivkey"];
+
+				let RewardPrivkey = new CRYPTO.common().GetDecryptedData(commonkey,EncryptoPrivkey);
+				//console.log(commonkey);
+				//console.log(EncryptoPrivkey);
+				//console.log(RewardPrivkey);
+				Rewards.push({"tag":tagrewarddata.GetObjData()["tag"],"RewardPrivkey":RewardPrivkey});
+			}catch(e){
+				console.log(e);
+				continue;
+			};
 		}
 
 

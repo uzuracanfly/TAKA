@@ -203,393 +203,399 @@ exports.Transaction = class{
 
 	//トランザクション有効性
 	async Confirmation(rawtx=this.rawtx){
+		try{
 
-		let objtx = this.GetObjTx(rawtx);
-		let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
+			let objtx = this.GetObjTx(rawtx);
+			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 
 
 
-		//シードは強制
-		for (let index in CONFIG.genesistxs){
-			let seedrawtx = CONFIG.genesistxs[index];
+			//シードは強制
+			for (let index in CONFIG.genesistxs){
+				let seedrawtx = CONFIG.genesistxs[index];
 
-			let seedtxid = this.GetTxid(seedrawtx);
-			if (this.GetTxid() == seedtxid){
-				return 1;
+				let seedtxid = this.GetTxid(seedrawtx);
+				if (this.GetTxid() == seedtxid){
+					return 1;
+				}
 			}
-		}
 
 
 
 
-		//割り当て済みの部分は自由に利用できない
-		if (objtx["type"] != 1 && objtx["type"] != 11 && objtx["type"] != 12 && objtx["type"] != 13){
-			if (objtx["type"] <= 100){
-				return 0;
-			};
-		}
-
-
-
-		if (objtx["type"] != 1 && objtx["amount"] > 0){
-			return 0;
-		};
-		
-
-
-
-		if (objtx["type"] == 1 && objtx["tag"] != "pay"){
-			return 0;
-		};
-		if (objtx["type"] != 1 && objtx["tag"] == "pay"){
-			return 0;
-		};
-		if (objtx["type"] == 1 && objtx["data"].length > 0){
-			return 0;
-		};
-		if (objtx["type"] == 1 && objtx["amount"] <= 0){
-			return 0;
-		};
-
-
-
-
-
-
-		/*
-		Tagreward関連
-		*/
-
-		if (objtx["type"] == 11 && objtx["tag"] != "tagreward"){
-			return 0;
-		};
-		if (objtx["type"] != 11 && objtx["tag"] == "tagreward"){
-			return 0;
-		};
-		if (objtx["type"] == 11){
-			try{
-				let tagreward = require('./TransactionTools/tagreward.js');
-				let Tagreward = new tagreward.TagrewardData(objtx["data"]);
-				let TagrewardObjData = Tagreward.GetObjData();
-				//console.log(TagrewardObjData);
-				if (!("tag" in TagrewardObjData) || !TagrewardObjData["tag"]){
-					return 0;
-				}
-				if (!("EncryptoPrivkey" in TagrewardObjData) || !TagrewardObjData["EncryptoPrivkey"]){
-					return 0;
-				}
-			}catch(e){
-				return 0;
-			};
-		};
-
-
-
-
-
-		/*
-		tag order関連
-		> 否定条件
-		・指定tagにすでにtxが存在する
-		・txのtag orderのデータのfeetxidのpubkeyとtxのpubkeyが違うまたは数量が足りない
-		*/
-		if (objtx["type"] == 12){
-			try{
-				let tagorder = require('./TransactionTools/tagorder.js');
-				let Tagorder = new tagorder.TagOrderData(objtx["data"]);
-				let TagorderObjData = Tagorder.GetObjData();
-
-				let tagtxs = exports.GetTagTxids(objtx["tag"]);
-				if (tagtxs.length > 0){
+			//割り当て済みの部分は自由に利用できない
+			if (objtx["type"] != 1 && objtx["type"] != 11 && objtx["type"] != 12 && objtx["type"] != 13){
+				if (objtx["type"] <= 100){
 					return 0;
 				};
-
-				let feetx = exports.GetTx(TagorderObjData["feetxid"]);
-				let feetxobj = feetx.GetObjTx();
-				if (feetxobj["pubkey"] != objtx["pubkey"]){
-					return 0;
-				}
-				if (feetxobj["amount"] < 1){
-					return 0;
-				}
-				if (feetxobj["toaddress"] != MAIN.GetFillZero("", 40)){
-					return 0;
-				}
-			}catch(e){
-				return 0;
-			};
-		};
-
-
-
-
-
-		/*
-		タグへの権利者追加
-		> 否定条件
-		・タグの管理者自身が追加していない
-		*/
-		if (objtx["type"] == 13){
-			try{
-				let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
-				let Tagaddpermit = new tagaddpermit.TagAddPermitData(objtx["data"]);
-				let TagaddpermitObjData = Tagaddpermit.GetObjData();
-
-				let TagOrderTx = exports.GetTagOrderTx(objtx["tag"]);
-				if (TagOrderTx.GetObjTx()["pubkey"] != objtx["pubkey"]){
-					return 0;
-				}
-			}catch(e){
-				//console.log(e);
-				return 0;
-			};
-
-		};
-
-
-
-
-
-
-		/*
-		ユーザー定義のデータ関連
-		>否定条件
-		・tag orderが提出されていないtagを利用している場合
-			- tag orderのパーミッションタイプによるdata送信の制限
-			 0、制限なし
-			 1、owner以外すべて制限
-			 2、指定されたアドレスのみ
-		*/
-		if (objtx["type"] > 100){
-			let tagtxids = exports.GetTagTxids(objtx["tag"]);
-			if (tagtxids.length > 0){
-				let tagordertxid = tagtxids[0];
-
-				let tagordertx = exports.GetTx(tagordertxid);
-				let tagordertxobj = tagordertx.GetObjTx();
-				if (tagordertxobj["type"] != 12){
-					return 0;
-				};
-
-				let tagorder = require('./TransactionTools/tagorder.js');
-				let Tagorder = new tagorder.TagOrderData(tagordertxobj["data"]);
-				let TagorderObjData = Tagorder.GetObjData();
-				if (TagorderObjData["permissiontype"] == 1 && tagordertxobj["pubkey"] != objtx["pubkey"]){
-					return 0;
-				}
-
-
-				if (TagorderObjData["permissiontype"] == 2 && tagordertxobj["pubkey"] != objtx["pubkey"]){
-					let TagPermitAddresss = exports.GetTagPermitAddresss(objtx["tag"]);
-
-					//TagAddPermitAddresssの中にトランザクション発行元が許可されているか
-					if (TagPermitAddresss.indexOf(TargetAccount.GetKeys()["address"]) == -1){
-						return 0;
-					};
-				};
-			}else{
-				return 0;
 			}
-		};
+
+
+
+			if (objtx["type"] != 1 && objtx["amount"] > 0){
+				return 0;
+			};
+			
+
+
+
+			if (objtx["type"] == 1 && objtx["tag"] != "pay"){
+				return 0;
+			};
+			if (objtx["type"] != 1 && objtx["tag"] == "pay"){
+				return 0;
+			};
+			if (objtx["type"] == 1 && objtx["data"].length > 0){
+				return 0;
+			};
+			if (objtx["type"] == 1 && objtx["amount"] <= 0){
+				return 0;
+			};
 
 
 
 
 
 
+			/*
+			Tagreward関連
+			*/
 
-
-
-
-		/*
-		contract
-		*/
-		let CONTRACT = require('./TransactionTools/contract.js');
-		if (objtx["type"] == 111){
-			try{
-				let objdata = new CONTRACT.SetFunctionData(objtx["data"]).GetObjData();
-
-				//禁止句が含まれる場合
-				let CodeData = objdata["CodeData"];
-				for (let index in CONFIG.Contract["banword"]){
-					let banword = CONFIG.Contract["banword"][index];
-					
-					if (CodeData.indexOf(banword) != -1){
+			if (objtx["type"] == 11 && objtx["tag"] != "tagreward"){
+				return 0;
+			};
+			if (objtx["type"] != 11 && objtx["tag"] == "tagreward"){
+				return 0;
+			};
+			if (objtx["type"] == 11){
+				try{
+					let tagreward = require('./TransactionTools/tagreward.js');
+					let Tagreward = new tagreward.TagrewardData(objtx["data"]);
+					let TagrewardObjData = Tagreward.GetObjData();
+					//console.log(TagrewardObjData);
+					if (!("tag" in TagrewardObjData) || !TagrewardObjData["tag"]){
 						return 0;
 					}
+					if (!("EncryptoPrivkey" in TagrewardObjData) || !TagrewardObjData["EncryptoPrivkey"]){
+						return 0;
+					}
+				}catch(e){
+					return 0;
 				};
-			}catch(e){
-				console.log(e);
-				return 0;
 			};
-		};
-		if (objtx["type"] == 112){
-			try{
-				let objdata = new CONTRACT.RunFunctionData(objtx["data"]).GetObjData();
-				let FunctionArgs = objdata["FunctionArgs"];
-				let FunctionName = objdata["FunctionName"];
 
 
 
-				//タグに結び付いた最新の保存データを取得
-				let LoadDataPerTag = {};
-				let tagtxids = exports.GetTagTxids(objtx["tag"]);
-				tagtxids = tagtxids.reverse();
 
-				for (let index in tagtxids){
-					let tagtxid = tagtxids[index];
-					let tagtx = exports.GetTx(tagtxid);
-					let objtagtx = tagtx.GetObjTx();
 
-					if (objtagtx["type"] == 112){
-						let objtagdata = new CONTRACT.RunFunctionData(objtagtx["data"]).GetObjData();
+			/*
+			tag order関連
+			> 否定条件
+			・指定tagにすでにtxが存在する
+			・txのtag orderのデータのfeetxidのpubkeyとtxのpubkeyが違うまたは数量が足りない
+			*/
+			if (objtx["type"] == 12){
+				try{
+					let tagorder = require('./TransactionTools/tagorder.js');
+					let Tagorder = new tagorder.TagOrderData(objtx["data"]);
+					let TagorderObjData = Tagorder.GetObjData();
 
-						LoadDataPerTag = objtagdata["SetData"];
-						break;
+					let tagtxs = exports.GetTagTxids(objtx["tag"]);
+					if (tagtxs.length > 0){
+						return 0;
 					};
-				}
+
+					let feetx = exports.GetTx(TagorderObjData["feetxid"]);
+					let feetxobj = feetx.GetObjTx();
+					if (feetxobj["pubkey"] != objtx["pubkey"]){
+						return 0;
+					}
+					if (feetxobj["amount"] < 1){
+						return 0;
+					}
+					if (feetxobj["toaddress"] != MAIN.GetFillZero("", 40)){
+						return 0;
+					}
+				}catch(e){
+					return 0;
+				};
+			};
+
+
+
+
+
+			/*
+			タグへの権利者追加
+			> 否定条件
+			・タグの管理者自身が追加していない
+			*/
+			if (objtx["type"] == 13){
+				try{
+					let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
+					let Tagaddpermit = new tagaddpermit.TagAddPermitData(objtx["data"]);
+					let TagaddpermitObjData = Tagaddpermit.GetObjData();
+
+					let TagOrderTx = exports.GetTagOrderTx(objtx["tag"]);
+					if (TagOrderTx.GetObjTx()["pubkey"] != objtx["pubkey"]){
+						return 0;
+					}
+				}catch(e){
+					//console.log(e);
+					return 0;
+				};
+
+			};
 
 
 
 
 
 
-				if (tagtxids.length <= 0){
+			/*
+			ユーザー定義のデータ関連
+			>否定条件
+			・tag orderが提出されていないtagを利用している場合
+				- tag orderのパーミッションタイプによるdata送信の制限
+				 0、制限なし
+				 1、owner以外すべて制限
+				 2、指定されたアドレスのみ
+			*/
+			if (objtx["type"] > 100){
+				let tagtxids = exports.GetTagTxids(objtx["tag"]);
+				if (tagtxids.length > 0){
+					let tagordertxid = tagtxids[0];
+
+					let tagordertx = exports.GetTx(tagordertxid);
+					let tagordertxobj = tagordertx.GetObjTx();
+					if (tagordertxobj["type"] != 12){
+						return 0;
+					};
+
+					let tagorder = require('./TransactionTools/tagorder.js');
+					let Tagorder = new tagorder.TagOrderData(tagordertxobj["data"]);
+					let TagorderObjData = Tagorder.GetObjData();
+					if (TagorderObjData["permissiontype"] == 1 && tagordertxobj["pubkey"] != objtx["pubkey"]){
+						return 0;
+					}
+
+
+					if (TagorderObjData["permissiontype"] == 2 && tagordertxobj["pubkey"] != objtx["pubkey"]){
+						let TagPermitAddresss = exports.GetTagPermitAddresss(objtx["tag"]);
+
+						//TagAddPermitAddresssの中にトランザクション発行元が許可されているか
+						if (TagPermitAddresss.indexOf(TargetAccount.GetKeys()["address"]) == -1){
+							return 0;
+						};
+					};
+				}else{
 					return 0;
 				}
+			};
 
-				//実行するソースのコードをtagのtxidリストから走査
 
-				let ObjCodeTx = false;
-				for (let index in tagtxids){
-					let tagtxid = tagtxids[index];
 
-					let tagtx = exports.GetTx(tagtxid);
-					let objtagtx = tagtx.GetObjTx();
-					if (objtagtx["type"] == 111){
-						let objtagdata = new CONTRACT.SetFunctionData(objtagtx["data"]).GetObjData();
 
-						//ソースコード発見
-						if (objtagdata["FunctionName"] == FunctionName){
-							if (objtagdata["CodeType"] == 1){
-								let CodeData = objtagdata["CodeData"];
 
-								try{
-									FS.mkdirSync("./exec/");
-								}catch(e){
-									console.log("");
-								}
 
-								FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
 
-								let loopindex = 0;
-								while (loopindex < 100){
+
+
+
+			/*
+			contract
+			*/
+			let CONTRACT = require('./TransactionTools/contract.js');
+			if (objtx["type"] == 111){
+				try{
+					let objdata = new CONTRACT.SetFunctionData(objtx["data"]).GetObjData();
+
+					//禁止句が含まれる場合
+					let CodeData = objdata["CodeData"];
+					for (let index in CONFIG.Contract["banword"]){
+						let banword = CONFIG.Contract["banword"][index];
+						
+						if (CodeData.indexOf(banword) != -1){
+							return 0;
+						}
+					};
+				}catch(e){
+					console.log(e);
+					return 0;
+				};
+			};
+			if (objtx["type"] == 112){
+				try{
+					let objdata = new CONTRACT.RunFunctionData(objtx["data"]).GetObjData();
+					let FunctionArgs = objdata["FunctionArgs"];
+					let FunctionName = objdata["FunctionName"];
+
+
+
+					//タグに結び付いた最新の保存データを取得
+					let LoadDataPerTag = {};
+					let tagtxids = exports.GetTagTxids(objtx["tag"]);
+					tagtxids = tagtxids.reverse();
+
+					for (let index in tagtxids){
+						let tagtxid = tagtxids[index];
+						let tagtx = exports.GetTx(tagtxid);
+						let objtagtx = tagtx.GetObjTx();
+
+						if (objtagtx["type"] == 112){
+							let objtagdata = new CONTRACT.RunFunctionData(objtagtx["data"]).GetObjData();
+
+							LoadDataPerTag = objtagdata["SetData"];
+							break;
+						};
+					}
+
+
+
+
+
+
+					if (tagtxids.length <= 0){
+						return 0;
+					}
+
+					//実行するソースのコードをtagのtxidリストから走査
+
+					let ObjCodeTx = false;
+					for (let index in tagtxids){
+						let tagtxid = tagtxids[index];
+
+						let tagtx = exports.GetTx(tagtxid);
+						let objtagtx = tagtx.GetObjTx();
+						if (objtagtx["type"] == 111){
+							let objtagdata = new CONTRACT.SetFunctionData(objtagtx["data"]).GetObjData();
+
+							//ソースコード発見
+							if (objtagdata["FunctionName"] == FunctionName){
+								if (objtagdata["CodeType"] == 1){
+									let CodeData = objtagdata["CodeData"];
+
 									try{
-										FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
-										break;
+										FS.mkdirSync("./exec/");
 									}catch(e){
-										loopindex = loopindex + 1;
+										console.log("");
 									}
+
+									FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
+
+									let loopindex = 0;
+									while (loopindex < 100){
+										try{
+											FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
+											break;
+										}catch(e){
+											loopindex = loopindex + 1;
+										}
+									}
+
+									ObjCodeTx = objtagdata;
+
+									break;
 								}
 
-								ObjCodeTx = objtagdata;
-
-								break;
 							}
-
 						}
 					}
-				}
 
-				if (!ObjCodeTx){
+					if (!ObjCodeTx){
+						return 0;
+					}
+
+					let CodeResult = await CONTRACT.RunCode(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag);
+					if (!CodeResult){
+						return 0;
+					}
+
+					if (!("result" in CodeResult) || !("SetData" in CodeResult)){
+						return 0;
+					}
+
+
+
+				}catch(e){
+					console.log(e);
 					return 0;
-				}
-
-				let CodeResult = await CONTRACT.RunCode(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag);
-				if (!CodeResult){
-					return 0;
-				}
-
-				if (!("result" in CodeResult) || !("SetData" in CodeResult)){
-					return 0;
-				}
+				};
+			};
 
 
 
-			}catch(e){
-				console.log(e);
+
+
+
+
+
+
+
+
+			//原文と署名文の確認
+			let org = this.GetRawTx(TargetAccount,objtx,true);
+			org = new HASHS.hashs().sha256d(org);
+			let sig = objtx["sig"];
+			let sigbool = new CRYPTO.signature().ConfirmationSign(org,sig,TargetAccount.GetKeys()["pubkey"]);
+			if (!sigbool){
 				return 0;
 			};
-		};
+
+
+			//txidとtarget
+			let target = this.GetPOWTarget(rawtx);
+			let numtxid = BigInt("0x"+this.GetTxid(rawtx));
+			if (numtxid > target){
+				return 0;
+			};
 
 
 
+			//MerkleRootとindexsからのMerkleRootの相違
+			let pretxlist = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
+			let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
+			IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
+			if (IndexMerkleRoot != objtx["MerkleRoot"]){
+				return 0;
+			};
 
 
 
-
-
-
-
-
-		//原文と署名文の確認
-		let org = this.GetRawTx(TargetAccount,objtx,true);
-		org = new HASHS.hashs().sha256d(org);
-		let sig = objtx["sig"];
-		let sigbool = new CRYPTO.signature().ConfirmationSign(org,sig,TargetAccount.GetKeys()["pubkey"]);
-		if (!sigbool){
-			return 0;
-		};
-
-
-		//txidとtarget
-		let target = this.GetPOWTarget(rawtx);
-		let numtxid = BigInt("0x"+this.GetTxid(rawtx));
-		if (numtxid > target){
-			return 0;
-		};
-
-
-
-		//MerkleRootとindexsからのMerkleRootの相違
-		let pretxlist = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
-		let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
-		IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
-		if (IndexMerkleRoot != objtx["MerkleRoot"]){
-			return 0;
-		};
-
-
-
-		//indexの相違
-		if (pretxlist.length+1 != objtx["index"]){
-			return 0;
-		}
-
-
-		//トランザクション以前での残高の有無
-		let balance = TargetAccount.GetBalance(undefined,objtx["index"]);
-		if (balance < objtx["amount"]){
-			return 0;
-		}
-
-
-
-		//時間が不自然
-		let time = Math.floor(Date.now()/1000);
-		if (objtx["time"] >= time){
-			return 0;
-		}
-		if (pretxlist.length > 0){
-			let lasttx = exports.GetTx(pretxlist.slice(-1)[0]);
-			if (objtx["time"] <= lasttx.objtx["time"]){
+			//indexの相違
+			if (pretxlist.length+1 != objtx["index"]){
 				return 0;
 			}
-		}
+
+
+			//トランザクション以前での残高の有無
+			let balance = TargetAccount.GetBalance(undefined,objtx["index"]);
+			if (balance < objtx["amount"]){
+				return 0;
+			}
 
 
 
-		return 1;
+			//時間が不自然
+			let time = Math.floor(Date.now()/1000);
+			if (objtx["time"] >= time){
+				return 0;
+			}
+			if (pretxlist.length > 0){
+				let lasttx = exports.GetTx(pretxlist.slice(-1)[0]);
+				if (objtx["time"] <= lasttx.objtx["time"]){
+					return 0;
+				}
+			}
+
+
+
+			return 1;
+
+		}catch(e){
+			console.log(e);
+			return 0;
+		};
 	};
 
 
@@ -896,6 +902,10 @@ exports.RunCommit = function(){
 			for (let index in UnconfirmedTransactionsTags){
 				let tag = UnconfirmedTransactionsTags[index];
 
+				if (!tag){
+					continue;
+				}
+
 				if (CONFIG.ImportTags.length>0 && (CONFIG.ImportTags).indexOf(tag) == -1){
 					continue;
 				};
@@ -906,42 +916,52 @@ exports.RunCommit = function(){
 				//timeが古い順並び替え
 				let UnconfirmedTransactionsSort = [];
 				for (let mindex in UnconfirmedTransactions){
-					let oldtime = 9999999999999999;
-					let oldrawtx = "";
-					for (let mmindex in UnconfirmedTransactions){
-						let rawtx = UnconfirmedTransactions[mmindex];
+					try{
+						let oldtime = 9999999999999999;
+						let oldrawtx = "";
+						for (let mmindex in UnconfirmedTransactions){
+							let rawtx = UnconfirmedTransactions[mmindex];
 
-						if (UnconfirmedTransactionsSort.indexOf(rawtx) >= 0){
-							continue;
+							if (UnconfirmedTransactionsSort.indexOf(rawtx) >= 0){
+								continue;
+							}
+
+							let TargetTransaction = new exports.Transaction(rawtx);
+
+							let objtx = TargetTransaction.GetObjTx();
+							if (oldtime >= objtx["time"]){
+								oldtime = objtx["time"];
+								oldrawtx = rawtx;
+							}
+						};
+						if (oldrawtx){
+							UnconfirmedTransactionsSort.push(oldrawtx);
 						}
-
-						let TargetTransaction = new exports.Transaction(rawtx);
-
-						let objtx = TargetTransaction.GetObjTx();
-						if (oldtime >= objtx["time"]){
-							oldtime = objtx["time"];
-							oldrawtx = rawtx;
-						}
-					};
-					if (oldrawtx){
-						UnconfirmedTransactionsSort.push(oldrawtx);
+					}catch(e){
+						console.log(e);
+						continue;
 					}
 				};
 
 
 				for (let mindex in UnconfirmedTransactionsSort){
-					let rawtx = UnconfirmedTransactionsSort[mindex];
+					try{
+						let rawtx = UnconfirmedTransactionsSort[mindex];
 
-					let TargetTransaction = new exports.Transaction(rawtx);
+						let TargetTransaction = new exports.Transaction(rawtx);
 
 
-					MAIN.note(1,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
+						MAIN.note(1,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 
-					let txbool = await TargetTransaction.Confirmation();
-					if (txbool){
-						commit(TargetTransaction);
-					}else{
-						MAIN.note(1,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
+						let txbool = await TargetTransaction.Confirmation();
+						if (txbool){
+							commit(TargetTransaction);
+						}else{
+							MAIN.note(1,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
+						}
+					}catch(e){
+						console.log(e);
+						continue;
 					}
 				}
 
