@@ -1,4 +1,5 @@
 const FS = require('fs');
+const IP = require("ip");
 
 const CONFIG = require('./config.js');
 const ACCOUNT = require('./account.js');
@@ -431,10 +432,18 @@ exports.SetServer = function(){
 
 
 			if (request.url == "/explorer"){
+				ExplorerHtml = ExplorerHtml.toString();
+				ExplorerHtml = ExplorerHtml.replace( "MYIPADDRESS", IP.address() );
+				ExplorerHtml = ExplorerHtml.replace( "MYPORT", CONFIG.API["port"] );
+				ExplorerHtml = Buffer.from(ExplorerHtml, 'utf-8');
 				response.writeHead(200, {'Content-Type': 'text/html'});
 				response.end(ExplorerHtml);
 			};
 			if (request.url == "/wallet"){
+				WalletHtml = WalletHtml.toString();
+				WalletHtml = WalletHtml.replace( "MYIPADDRESS", IP.address() );
+				WalletHtml = WalletHtml.replace( "MYPORT", CONFIG.API["port"] );
+				WalletHtml = Buffer.from(WalletHtml, 'utf-8');
 				response.writeHead(200, {'Content-Type': 'text/html'});
 				response.end(WalletHtml);
 			};

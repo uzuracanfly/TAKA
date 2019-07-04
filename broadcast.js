@@ -145,132 +145,165 @@ exports.SetClient = async function(){
 
 
 
-	function SetNode(address){
-		return new Promise(function (resolve, reject) {
-			let broadcast = IO('http://'+address+':'+CONFIG.broadcast["port"]);
+	function SetActionNode(address){
+
+		let broadcast = IO('http://'+address+':'+CONFIG.broadcast["port"]);
 
 
 
 
-			/* データ到着時の処理 */
+		/* データ到着時の処理 */
 
-			/* ノードリスト取得 */
-			broadcast.on('NodeList', function(data){
-				try{
-					let nodelist = DATABASE.get("nodelist","live");
+		/* ノードリスト取得 */
+		broadcast.on('NodeList', function(data){
+			try{
+				let nodelist = DATABASE.get("nodelist","live");
 
-					for (let mindex in data){
-						let address = nodelist[mindex];
+				for (let mindex in data){
+					let address = nodelist[mindex];
 
-						exports.SetNode(address);
-					};
-				}catch(e){
-					console.log(e);
-				}
-			});
-
-
-
-			/* 未承認のトランザクション追加 */
-			broadcast.on('UnconfirmedTransactions', function(data){
-				try{
-					for (let mindex in data){
-						let rawtx = data[mindex];
-
-						if (!rawtx){
-							continue;
-						}
-
-						let TargetTransaction = new TRANSACTION.Transaction(rawtx);
-						let txid = TargetTransaction.GetTxid();
-
-						let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
-						if (TransactionIdsPerAll.indexOf(txid) >= 0){
-							continue;
-						};
-
-						if (MyNodeGetPlanTxids.indexOf(txid) >= 0){
-							continue;
-						};
-
-						TargetTransaction.commit();
-					};
-				}catch(e){
-					console.log(e);
-				}
-			});
+					exports.SetNode(address);
+				};
+			}catch(e){
+				console.log(e);
+			}
+		});
 
 
 
-			/* 承認済みのトランザクションIdからトランザクションデータ要求用のリストにid追加 */
-			broadcast.on('TransactionIdsPerAll', function(data){
-				try{
+		/* 未承認のトランザクション追加 */
+		broadcast.on('UnconfirmedTransactions', function(data){
+			try{
+				for (let mindex in data){
+					let rawtx = data[mindex];
+
+					if (!rawtx){
+						continue;
+					}
+
+					let TargetTransaction = new TRANSACTION.Transaction(rawtx);
+					let txid = TargetTransaction.GetTxid();
+
 					let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
-
-					for (let mindex in data){
-						let txid = data[mindex];
-
-						if (!txid){
-							return 0;
-						}
-
-						if (txid.length != 64){
-							return 0;
-						}
-
-						if (TransactionIdsPerAll.indexOf(txid) >= 0){
-							continue;
-						};
-
-						if (MyNodeGetPlanTxids.indexOf(txid) >= 0){
-							continue;
-						};
-
-						MyNodeGetPlanTxids.push(txid);
+					if (TransactionIdsPerAll.indexOf(txid) >= 0){
+						continue;
 					};
-				}catch(e){
-					console.log(e);
-				}
-			});
+
+					if (MyNodeGetPlanTxids.indexOf(txid) >= 0){
+						continue;
+					};
+
+					TargetTransaction.commit();
+				};
+			}catch(e){
+				console.log(e);
+			}
+		});
 
 
 
-			/* トランザクションデータ到着 */
-			broadcast.on('Transaction', function(data){
-				try{
-					if (!data){
+		/* 承認済みのトランザクションIdからトランザクションデータ要求用のリストにid追加 */
+		broadcast.on('TransactionIdsPerAll', function(data){
+			try{
+				let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
+
+				for (let mindex in data){
+					let txid = data[mindex];
+
+					if (!txid){
 						return 0;
 					}
 
-					let TargetTransaction = new TRANSACTION.Transaction(data);
+					if (txid.length != 64){
+						return 0;
+					}
 
-					TargetTransaction.commit().then(function(){
-						MyNodeGetPlanTxids = MyNodeGetPlanTxids.filter(n => n !== TargetTransaction.GetTxid());
-					});
-				}catch(e){
-					console.log(e);
-				}
-			});
+					if (TransactionIdsPerAll.indexOf(txid) >= 0){
+						continue;
+					};
 
+					if (MyNodeGetPlanTxids.indexOf(txid) >= 0){
+						continue;
+					};
 
-
-
-
-
-
-
-			broadcast.on('connect', async function(){
-				MAIN.note(1,"SetClient_connect","Connect Node : "+address);
-				resolve(broadcast);
-			});
-
-
-
-			broadcast.on('disconnect', async function(){
-				MAIN.note(1,"SetClient_disconnect","Disconnect Node : "+address);
-			});
-
+					MyNodeGetPlanTxids.push(txid);
+				};
+			}catch(e){
+				console.log(e);
+			}
 		});
+
+
+
+		/* トランザクションデータ到着 */
+		broadcast.on('Transaction', function(data){
+			try{
+				if (!data){
+					return 0;
+				}
+
+				let TargetTransaction = new TRANSACTION.Transaction(data);
+
+				TargetTransaction.commit().then(function(){
+					MyNodeGetPlanTxids = MyNodeGetPlanTxids.filter(n => n !== TargetTransaction.GetTxid());
+				});
+			}catch(e){
+				console.log(e);
+			}
+		});
+
+
+
+
+
+
+
+
+		broadcast.on('connect', async function(){
+			MAIN.note(1,"SetClient_connect","Connect Node : "+address);
+
+			RunSendToNodeAddressList.push(broadcast);
+			RunSendToNode(broadcast);
+		});
+
+
+
+		broadcast.on('disconnect', async function(){
+			MAIN.note(1,"SetClient_disconnect","Disconnect Node : "+address);
+
+			RunSendToNodeAddressList = RunSendToNodeAddressList.filter(n => n !== broadcast);
+		});
+
+	}
+
+
+
+	async function RunSendToNode(broadcast){
+
+		/* 接続ノードに対してデータの要求 */
+		while (true){
+			try{
+				if (RunSendToNodeAddressList.indexOf(broadcast) < 0){
+					break;
+				};
+
+				broadcast.emit('GetNodeList');
+				broadcast.emit('GetUnconfirmedTransactions');
+				broadcast.emit('GetTransactionIdsPerAll');
+
+				for (let index in MyNodeGetPlanTxids){
+					let txid = MyNodeGetPlanTxids[index];
+
+					broadcast.emit('GetTransaction',txid);
+					await MAIN.sleep(1);
+				}
+
+				await MAIN.sleep(1);
+			}catch(e){
+				console.log(e);
+				continue;
+			};
+		};
 	}
 
 
@@ -278,10 +311,14 @@ exports.SetClient = async function(){
 
 
 
-	//txidのrawtxを取得する予定
+	//rawtxを取得する予定のtxidリスト
 	let MyNodeGetPlanTxids = [];
 
-	let SetNodeAddressList = [];
+	//アクション設定が完了したノードリスト
+	let SetActionAddressList = [];
+
+	//RunSendToNode実行中のノードリスト
+	let RunSendToNodeAddressList = [];
 
 	while (true){
 		try{
@@ -292,35 +329,11 @@ exports.SetClient = async function(){
 			for (let index in nodelist){
 				let address = nodelist[index];
 
-				if (SetNodeAddressList.indexOf(address) >= 0){
+				if (SetActionAddressList.indexOf(address) >= 0){
 					continue;
-				}
-				SetNodeAddressList.push(address);
-
-
-				SetNode(address).then(async function(broadcast){
-
-					/* 接続ノードに対してデータの要求 */
-					while (true){
-						try{
-							broadcast.emit('GetNodeList');
-							broadcast.emit('GetUnconfirmedTransactions');
-							broadcast.emit('GetTransactionIdsPerAll');
-
-							for (let index in MyNodeGetPlanTxids){
-								let txid = MyNodeGetPlanTxids[index];
-
-								broadcast.emit('GetTransaction',txid);
-								await MAIN.sleep(1);
-							}
-
-							await MAIN.sleep(1);
-						}catch(e){
-							console.log(e);
-							continue;
-						};
-					};
-				});
+				};
+				SetActionAddressList.push(address);
+				SetActionNode(address);
 			};
 
 
