@@ -1,3 +1,5 @@
+const IP = require("ip");
+
 const CONFIG = require('./config.js');
 
 const MAIN = require('./main.js');
@@ -31,6 +33,9 @@ exports.SetNode = function(address){
 	if (nodelist.indexOf(address) >= 0){
 		return 0;
 	};
+	if (address == IP.address()){
+		return 0;
+	}
 
 	MAIN.note(1,"SetNode",address);
 
@@ -157,12 +162,10 @@ exports.SetClient = async function(){
 		/* ノードリスト取得 */
 		broadcast.on('NodeList', function(data){
 			try{
-				let nodelist = DATABASE.get("nodelist","live");
-
 				for (let mindex in data){
-					let address = nodelist[mindex];
+					let maddress = data[mindex];
 
-					exports.SetNode(address);
+					exports.SetNode(maddress);
 				};
 			}catch(e){
 				console.log(e);
@@ -180,6 +183,13 @@ exports.SetClient = async function(){
 					if (!rawtx){
 						continue;
 					}
+
+
+					let UnconfirmedTransactions = TRANSACTION.GetUnconfirmedTransactions();
+					if (UnconfirmedTransactions.indexOf(rawtx) >= 0){
+						continue;
+					};
+
 
 					let TargetTransaction = new TRANSACTION.Transaction(rawtx);
 					let txid = TargetTransaction.GetTxid();
@@ -242,10 +252,21 @@ exports.SetClient = async function(){
 					return 0;
 				}
 
-				let TargetTransaction = new TRANSACTION.Transaction(data);
+				let UnconfirmedTransactions = TRANSACTION.GetUnconfirmedTransactions();
+				if (UnconfirmedTransactions.indexOf(data) >= 0){
+					return 0;
+				};
 
-				TargetTransaction.commit().then(function(){
-					MyNodeGetPlanTxids = MyNodeGetPlanTxids.filter(n => n !== TargetTransaction.GetTxid());
+				let TargetTransaction = new TRANSACTION.Transaction(data);
+				let txid = TargetTransaction.GetTxid();
+
+				let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
+				if (TransactionIdsPerAll.indexOf(txid) >= 0){
+					return 0;
+				};
+
+				TargetTransaction.commit().then(function(txid){
+					MyNodeGetPlanTxids = MyNodeGetPlanTxids.filter(n => n !== txid);
 				});
 			}catch(e){
 				console.log(e);

@@ -860,6 +860,21 @@ exports.GetTagPermitAddresss = function(tag){
 
 
 
+exports.GetUnconfirmedTransactions = function(){
+	rawtxs = [];
+
+	let tags = exports.GetTags();
+	for (let index in tags){
+		let tag = tags[index];
+
+		Array.prototype.push.apply(rawtxs, DATABASE.get("UnconfirmedTransactions",tag));
+	};
+
+	return rawtxs;
+};
+
+
+
 
 
 
