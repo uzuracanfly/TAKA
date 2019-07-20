@@ -95,11 +95,7 @@ exports.RunCommit = function(){
 
 
 			let path = "database/"+database+"/"+table+"/"+index+".json";
-			try {
-				FS.statSync(path);
-			}catch(e){
-				return [];
-			}
+			FS.statSync(path);
 
 			let data = FS.readFileSync(path, 'utf8');
 			data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
@@ -112,7 +108,7 @@ exports.RunCommit = function(){
 
 			return data;
 
-		} catch (e) {
+		}catch (e){
 			if (e.code === 'ENOENT') {
 				return [];
 			} else {
@@ -207,7 +203,7 @@ exports.RunCommit = function(){
 					let table = postData["args"]["table"];
 					let index = postData["args"]["index"];
 
-					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index}});
+					transactions.push({"function":"delete","args":{"database":database,"table":table,"index":index}});
 
 					response.write(JSON.stringify(true));
 					response.end();
