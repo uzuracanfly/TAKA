@@ -410,6 +410,20 @@ exports.Transaction = class{
 				try{
 					let objdata = new CONTRACT.SetFunctionData(objtx["data"]).GetObjData();
 
+					//contractの設定権限の有無
+					let tagtxids = exports.GetTagTxids(objtx["tag"]);
+					let tagordertxid = tagtxids[0];
+					let tagordertx = exports.GetTx(tagordertxid);
+					let tagordertxobj = tagordertx.GetObjTx();
+					if (tagordertxobj["pubkey"] != objtx["pubkey"]){
+						let TagPermitAddresss = exports.GetTagPermitAddresss(objtx["tag"]);
+						let keys = TargetAccount.GetKeys();
+						if (!(keys["address"] in TagPermitAddresss)){
+							return 0;
+						};
+					};
+
+
 					//禁止句が含まれる場合
 					let CodeData = objdata["CodeData"];
 					for (let index in CONFIG.Contract["banword"]){
