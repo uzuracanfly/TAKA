@@ -4,7 +4,6 @@ const FS = require('fs');
 const bPROMISE = require('bluebird');
 
 const CONFIG = require('./config.js');
-const CRYPTO = require('./crypto.js');
 
 
 
@@ -98,7 +97,11 @@ exports.RunCommit = function(){
 			FS.statSync(path);
 
 			let data = FS.readFileSync(path, 'utf8');
-			data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
+			//暗号化必要性
+			if ("key" in CONFIG.database && CONFIG.database["key"]){
+				const CRYPTO = require('./crypto.js');
+				data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
+			};
 			try{
 				data = JSON.parse(data);
 			}catch(e){
@@ -120,7 +123,10 @@ exports.RunCommit = function(){
 
 	function save(database,table,index,data){
 		data = JSON.stringify(data);
-		data = new CRYPTO.common().GetEncryptedData(CONFIG.database["key"],data);
+		if ("key" in CONFIG.database && CONFIG.database["key"]){
+			const CRYPTO = require('./crypto.js');
+			data = new CRYPTO.common().GetEncryptedData(CONFIG.database["key"],data);
+		};
 
 		FS.mkdir("database/", function (err) {
 			FS.mkdir("database/"+database+"/", function (err) {
