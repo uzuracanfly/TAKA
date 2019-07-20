@@ -1,8 +1,11 @@
-const CONFIG = require('./config.js');
 const SYNCREQUEST = require('sync-request');
 const HTTP = require('http');
 const FS = require('fs');
+const bPROMISE = require('bluebird');
+
+const CONFIG = require('./config.js');
 const CRYPTO = require('./crypto.js');
+
 
 
 
@@ -43,6 +46,18 @@ exports.ChangeMemDatabase = class{
 	}
 
 
+	remove(table,index,removeindex){
+		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"remove","args":{"database":this.database,"table":table,"index":index,"removeindex":parseInt(removeindex)}});
+		return result;
+	}
+
+
+	delete(table,index){
+		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"delete","args":{"database":this.database,"table":table,"index":index}});
+		return result;
+	}
+
+
 	get(table,index=""){
 		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"get","args":{"database":this.database,"table":table,"index":index}});
 		return result;
@@ -60,9 +75,10 @@ exports.ChangeMemDatabase = class{
 
 
 
-exports.RunCommit = function(key){
+exports.RunCommit = function(){
 
-	function load(database,table,index=""){
+
+	function load(database,table,index=""){	
 		try {
 			if (!index){
 				let result = [];
@@ -75,20 +91,32 @@ exports.RunCommit = function(key){
 				}
 
 				return result;
-			}
+			};
 
 
 			let path = "database/"+database+"/"+table+"/"+index+".json";
-			FS.statSync(path);
+			try {
+				FS.statSync(path);
+			}catch(e){
+				return [];
+			}
+
 			let data = FS.readFileSync(path, 'utf8');
-			data = new CRYPTO.common().GetDecryptedData(key,data);
-			data = JSON.parse(data);
+			data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
+			try{
+				data = JSON.parse(data);
+			}catch(e){
+				console.log(e);
+				return [];
+			}
+
 			return data;
-		} catch (error) {
-			if (error.code === 'ENOENT') {
+
+		} catch (e) {
+			if (e.code === 'ENOENT') {
 				return [];
 			} else {
-				console.log(error);
+				console.log(e);
 			}
 		}
 	}
@@ -96,7 +124,7 @@ exports.RunCommit = function(key){
 
 	function save(database,table,index,data){
 		data = JSON.stringify(data);
-		data = new CRYPTO.common().GetEncryptedData(key,data);
+		data = new CRYPTO.common().GetEncryptedData(CONFIG.database["key"],data);
 
 		FS.mkdir("database/", function (err) {
 			FS.mkdir("database/"+database+"/", function (err) {
@@ -112,6 +140,12 @@ exports.RunCommit = function(key){
 				});
 			});
 		});
+		return true;
+	}
+
+
+	function Delete(database,table,index){
+		FS.unlinkSync("database/"+database+"/"+table+"/"+index+".json");
 		return true;
 	}
 
@@ -141,7 +175,7 @@ exports.RunCommit = function(key){
 						result = [data];
 					}
 
-					transactions.push({"database":database,"table":table,"index":index,"data":result});
+					transactions.push({"function":"set","args":{"database":database,"table":table,"index":index,"data":result}});
 
 					response.write(JSON.stringify(true));
 					response.end();
@@ -152,11 +186,28 @@ exports.RunCommit = function(key){
 					let index = postData["args"]["index"];
 					let data = postData["args"]["data"];
 
+					transactions.push({"function":"add","args":{"database":database,"table":table,"index":index,"data":data}});
 
-					let result = load(database,table,index);
-					result.push(data);
+					response.write(JSON.stringify(true));
+					response.end();
+				};
+				if(postData["function"] == "remove"){
+					let database = postData["args"]["database"];
+					let table = postData["args"]["table"];
+					let index = postData["args"]["index"];
+					let removeindex = parseInt(postData["args"]["removeindex"]);
 
-					transactions.push({"database":database,"table":table,"index":index,"data":result});
+					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index,"removeindex":removeindex}});
+
+					response.write(JSON.stringify(true));
+					response.end();
+				};
+				if(postData["function"] == "delete"){
+					let database = postData["args"]["database"];
+					let table = postData["args"]["table"];
+					let index = postData["args"]["index"];
+
+					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index}});
 
 					response.write(JSON.stringify(true));
 					response.end();
@@ -166,17 +217,28 @@ exports.RunCommit = function(key){
 					let table = postData["args"]["table"];
 					let index = postData["args"]["index"];
 
-					while(transactions.length > 0){};
+					
 
-					let result = load(database,table,index);
+					(function loop(i) {
+						if (transactions.length > 0) {
+							return bPROMISE.delay(100).then(function() {
+								return i+1;
+							}).then(loop);
+						}
 
-					if (result){
-						response.write(JSON.stringify(result));
-						response.end();
-					}else{
-						response.write(JSON.stringify([]));
-						response.end();
-					}
+						let result = load(database,table,index);
+
+						if (result){
+							response.write(JSON.stringify(result));
+							response.end();
+						}else{
+							response.write(JSON.stringify([]));
+							response.end();
+						}
+
+						return bPROMISE.resolve(i);
+					})(0);
+
 				};
 			});
 		};
@@ -190,7 +252,24 @@ exports.RunCommit = function(key){
 			for (let index in transactions){
 				let transaction = transactions[index];
 
-				save(transaction["database"],transaction["table"],transaction["index"],transaction["data"]);
+				if (transaction["function"] == "set"){
+					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
+				};
+				if (transaction["function"] == "add"){
+					let data = load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+					data.push(transaction["args"]["data"]);
+
+					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+				};
+				if (transaction["function"] == "remove"){
+					let data = load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+					data.splice(transaction["args"]["removeindex"], 1);
+
+					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+				};
+				if (transaction["function"] == "delete"){
+					Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+				};
 			};
 			transactions = [];
 		},

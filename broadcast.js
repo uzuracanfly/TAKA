@@ -193,6 +193,12 @@ exports.SetClient = async function(){
 
 					let TargetTransaction = new TRANSACTION.Transaction(rawtx);
 					let txid = TargetTransaction.GetTxid();
+					let objtx = TargetTransaction.GetObjTx();
+
+					//1分経っていまだに未承認のトランザクションは受け入れない
+					if (objtx["time"]+60*1 < Math.floor(Date.now()/1000)){
+						continue;
+					}
 
 					let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
 					if (TransactionIdsPerAll.indexOf(txid) >= 0){

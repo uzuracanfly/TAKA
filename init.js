@@ -8,7 +8,7 @@ const CONFIG = require('./config.js');
 
 
 let FunctionList = [
-	{"name":"DatabaseRunCommit","function":function(){let Database = require('./database.js');Database.RunCommit(CONFIG.database["key"])},"time":0},
+	{"name":"DatabaseRunCommit","function":function(){let Database = require('./database.js');Database.RunCommit()},"time":0},
 	{"name":"TransactionRunCommit","function":function(){let Transaction = require('./transaction.js');Transaction.RunCommit()},"time":1000},
 	{"name":"BroadcastSetServer","function":function(){let Broadcast = require('./broadcast.js');Broadcast.SetServer()},"time":1000},
 	{"name":"BroadcastSetClient","function":function(){let Broadcast = require('./broadcast.js');Broadcast.SetClient()},"time":1000},
