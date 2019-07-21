@@ -86,7 +86,7 @@ exports.SetFunctionData = class{
 
 
 
-exports.SendContractSetFunctionTransaction = function(privkey,tag,FunctionName,CodeType,CodeData,CodePath=""){
+exports.SendSetContractTransaction = function(privkey,tag,FunctionName,CodeType,CodeData,CodePath=""){
 	if (CodePath){
 		try{
 			CodeData = FS.readFileSync(CodePath, 'utf8');
@@ -311,7 +311,7 @@ exports.RunCode = async function(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPe
 
 
 
-exports.SendContractRunFunctionTransaction = async function(privkey,tag,FunctionName,FunctionArgs){
+exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,FunctionArgs){
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
@@ -447,13 +447,8 @@ exports.SendContractRunFunctionTransaction = async function(privkey,tag,Function
 };
 
 
-exports.SendContractShowFunctionTransaction = async function(privkey,tag,FunctionName,FunctionArgs){
-
-	let TargetAccount = new ACCOUNT.account(privkey);
-
-	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
-	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
-
+exports.CallRunContractTransaction = async function(address,tag,FunctionName,FunctionArgs){
+	let TargetAccount = new ACCOUNT.account(address);
 
 	/*
 		コントラクト実行

@@ -324,7 +324,7 @@ exports.SetServer = function(){
 
 
 
-					if (postData["function"] == "sendcontractsetfunctiontx"){
+					if (postData["function"] == "sendsetcontracttransaction"){
 						let privkey = postData["args"]["privkey"];
 						let tag = postData["args"]["tag"];
 						let FunctionName = postData["args"]["FunctionName"];
@@ -343,7 +343,7 @@ exports.SetServer = function(){
 						}
 
 
-						let result = TRANSACTIONTOOLS_CONTRACT.SendContractSetFunctionTransaction(privkey,tag,FunctionName,CodeType,CodeData,CodePath);
+						let result = TRANSACTIONTOOLS_CONTRACT.SendSetContractTransaction(privkey,tag,FunctionName,CodeType,CodeData,CodePath);
 
 						result.then(function(value){
 							response.write(JSON.stringify(value));
@@ -353,7 +353,7 @@ exports.SetServer = function(){
 
 
 
-					if (postData["function"] == "sendcontractrunfunctiontx"){
+					if (postData["function"] == "sendruncontracttransaction"){
 						let privkey = postData["args"]["privkey"];
 						let tag = postData["args"]["tag"];
 						let FunctionName = postData["args"]["FunctionName"];
@@ -367,7 +367,7 @@ exports.SetServer = function(){
 						}
 
 
-						let result = TRANSACTIONTOOLS_CONTRACT.SendContractRunFunctionTransaction(privkey,tag,FunctionName,FunctionArgs);
+						let result = TRANSACTIONTOOLS_CONTRACT.SendRunContractTransaction(privkey,tag,FunctionName,FunctionArgs);
 
 						result.then(function(value){
 							response.write(JSON.stringify(value));
@@ -377,21 +377,21 @@ exports.SetServer = function(){
 
 
 
-					if (postData["function"] == "sendcontractshowfunctiontx"){
-						let privkey = postData["args"]["privkey"];
+					if (postData["function"] == "callruncontracttransaction"){
+						let address = postData["args"]["address"];
 						let tag = postData["args"]["tag"];
 						let FunctionName = postData["args"]["FunctionName"];
 						let FunctionArgs = postData["args"]["FunctionArgs"];
 
 
-						if (!privkey || !tag || !FunctionName || !FunctionArgs){
+						if (!address || !tag || !FunctionName || !FunctionArgs){
 							response.write(JSON.stringify(false));
 							response.end();
 							return 0;
 						}
 
 
-						let result = await TRANSACTIONTOOLS_CONTRACT.SendContractShowFunctionTransaction(privkey,tag,FunctionName,FunctionArgs);
+						let result = await TRANSACTIONTOOLS_CONTRACT.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
 
 
 						response.write(JSON.stringify(result));

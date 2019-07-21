@@ -303,7 +303,7 @@ h2 {
 					],
 					[
 						"button",
-						"TagOrder",
+						"Tag Order",
 						function()
 						{
 							let TopTagOrderForm = new form(
@@ -414,12 +414,12 @@ h2 {
 					],
 					[
 						"button",
-						"Tagreward",
+						"Tag Reward",
 						function()
 						{
 							let TopTagrewardForm = new form(
 								[
-									["title","Tagreward"],
+									["title","Tag Reward"],
 									["text","You can pay reward for node administrator keeping the specified tag."],
 									["input","tag","tag"],
 									["input","amount","amount"],
@@ -511,7 +511,7 @@ h2 {
 																function()
 																{
 																	TopResultForm.DeleteForm();
-																	TopTagOrderForm.DeleteForm();
+																	TopTagrewardForm.DeleteForm();
 																}
 															]
 														],
@@ -540,7 +540,7 @@ h2 {
 						{
 							let TopTagAddpermForm = new form(
 								[
-									["title","Tag add permit"],
+									["title","Tag Add Permit"],
 									["input","tag","tag"],
 									["input","Add address","addaddress"],
 									[
@@ -612,7 +612,7 @@ h2 {
 						"Database",
 						function()
 						{
-							let TopTagrewardForm = new form(
+							let TopDatabaseForm = new form(
 								[
 									["title","Database"],
 									["input","tag","tag"],
@@ -662,7 +662,7 @@ h2 {
 															function()
 															{
 																TopResultForm.DeleteForm();
-																TopTagOrderForm.DeleteForm();
+																TopDatabaseForm.DeleteForm();
 															}
 														]
 													],
@@ -682,8 +682,144 @@ h2 {
 								]
 							);
 						}
-					]
+					],
+					[
+						"button",
+						"Send Set Contract Transaction",
+						function()
+						{
+							let SendSetContractTransactionForm = new form(
+								[
+									["title","Send Set Contract Transaction"],
+									["input","tag","tag"],
+									["input","FunctionName","FunctionName"],
+									["input","CodeType","CodeType"],
+									["textblog","CodeData","CodeData"],
+									[
+										"button",
+										"send",
+										function()
+										{
 
+
+											let tag = document.getElementById("tag").value;
+											let FunctionName = document.getElementById("FunctionName").value;
+											let CodeType = document.getElementById("CodeType").value;
+											let CodeData = document.getElementById("CodeData").value;
+
+
+											//tagrewardのデータ生成
+											let objdata = {
+												"FunctionName":FunctionName,
+												"CodeType":CodeType,
+												"CodeData":CodeData,
+											};
+											let TXDATA = new TRANSACTIONTOOLS_CONTRACT.SetFunctionData("",objdata);
+											let rawdata = TXDATA.GetRawData();
+
+											let result = SendTransaction(111,tag,"0000000000000000000000000000000000000000",0,rawdata);
+
+
+											//送信ロード画面
+											let TopLoadForm = new form(
+												[
+													["title","Sending....."]
+												],
+												"TopLoadForm"
+											);
+
+											result.then(function(TxResult){
+												TopLoadForm.DeleteForm();
+
+												let TopResultForm = new form(
+													[
+														["title","Result"],
+														["head","Result"],
+														["input","result","result"],
+														["head","RawTx"],
+														["input","rawtx","rawtx"],
+														[
+															"button",
+															"Done",
+															function()
+															{
+																TopResultForm.DeleteForm();
+																SendSetContractTransactionForm.DeleteForm();
+															}
+														]
+													],
+													"TopResultForm"
+												);
+
+												document.getElementById("result").value = TxResult["txid"];
+												document.getElementById("rawtx").value = TxResult["rawtx"];
+												
+											}).catch(function(e){
+												console.log(e);
+											});
+
+
+										}
+									]
+								]
+							);
+						}
+					],
+					[
+						"button",
+						"Call Run Contract Transaction",
+						function()
+						{
+							let CallRunContractTransactionForm = new form(
+								[
+									["title","Call Run Contract Transaction"],
+									["input","tag","tag"],
+									["input","FunctionName","FunctionName"],
+									["input","FunctionArgs","FunctionArgs"],
+									[
+										"button",
+										"send",
+										function()
+										{
+											let address = account["address"];
+											let tag = document.getElementById("tag").value;
+											let FunctionName = document.getElementById("FunctionName").value;
+											let FunctionArgs = JSON.parse(document.getElementById("FunctionArgs").value);
+
+
+											let result = TAKA.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
+
+
+											let TopResultForm = new form(
+												[
+													["title","Result"],
+													["head","Result"],
+													["input","result","result"],
+													["head","RawTx"],
+													["input","rawtx","rawtx"],
+													[
+														"button",
+														"Done",
+														function()
+														{
+															TopResultForm.DeleteForm();
+															CallRunContractTransactionForm.DeleteForm();
+														}
+													]
+												],
+												"TopResultForm"
+											);
+
+											document.getElementById("result").value = result;
+											document.getElementById("rawtx").value = "";
+
+
+										}
+									]
+								]
+							);
+						}
+					],
 
 				];
 

@@ -239,8 +239,8 @@ class form {
 				inputele.value = data_text;
 			};
 			if (paradata[0] == "textblog"){
-				inputprintname = paradata[1];
-				inputvaluename = paradata[2];
+				let inputprintname = paradata[1];
+				let inputvaluename = paradata[2];
 				let inputele = element(
 					{
 						"name":inputvaluename,

@@ -73,7 +73,7 @@ exports.RunConsole = function(){
 				let addaddress = commands[3];
 
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagaddpermittx","args":{"privkey":privkey,"tag":tag,"addaddress":addaddress}});
-			}else if (commands[0] == "sendcontractsetfunctiontx"){
+			}else if (commands[0] == "sendsetcontracttransaction"){
 				let privkey = commands[1];
 				let tag = commands[2];
 				let FunctionName = commands[3];
@@ -84,23 +84,23 @@ exports.RunConsole = function(){
 					CodePath = commands[6];
 				};
 
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendcontractsetfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"CodeType":CodeType,"CodeData":CodeData,"CodePath":CodePath}});
-			}else if (commands[0] == "sendcontractrunfunctiontx"){
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendsetcontracttransaction","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"CodeType":CodeType,"CodeData":CodeData,"CodePath":CodePath}});
+			}else if (commands[0] == "sendruncontracttransaction"){
 				let privkey = commands[1];
 				let tag = commands[2];
 				let FunctionName = commands[3];
 				let FunctionArgs = commands[4];
 				FunctionArgs = JSON.parse(FunctionArgs);
 
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendcontractrunfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
-			}else if (commands[0] == "sendcontractshowfunctiontx"){
-				let privkey = commands[1];
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendruncontracttransaction","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+			}else if (commands[0] == "callruncontracttransaction"){
+				let address = commands[1];
 				let tag = commands[2];
 				let FunctionName = commands[3];
 				let FunctionArgs = commands[4];
 				FunctionArgs = JSON.parse(FunctionArgs);
 
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendcontractshowfunctiontx","args":{"privkey":privkey,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"callruncontracttransaction","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
 			};
 
 			resolve(result);

@@ -116,4 +116,19 @@ class TAKAAPIRapper{
 		let result = this.post(args);
 		return result;
 	}
+
+	CallRunContractTransaction(address,tag,FunctionName,FunctionArgs){
+		let args = {
+			"function":"callruncontracttransaction",
+			"args":{
+				"address":address,
+				"tag":tag,
+				"FunctionName":FunctionName,
+				"FunctionArgs":FunctionArgs,
+			}
+		};
+
+		let result = this.post(args);
+		return result;
+	}
 };
