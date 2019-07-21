@@ -61,7 +61,7 @@ exports.RunConsole = function(){
 				let privkey = commands[1];
 				let tag = commands[2];
 				let permissiontype = commands[3];
-				let powtarget = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+				let powtarget = "0000000000000000000000000000000000000000000000000000000000000000"
 				if (commands.length >= 5){
 					powtarget = commands[4];
 				};

@@ -547,8 +547,25 @@ exports.Transaction = class{
 
 	GetPOWTarget(rawtx=this.rawtx){
 		let objtx = this.GetObjTx(rawtx);
+		let txid = this.GetTxid(rawtx);
 
-		if (objtx["tag"] == "pay" || objtx["tag"] == "tagreward"){
+		/* ユーザー定義のtagの場合 */
+		let TagOrderTx = exports.GetTagOrderTx(objtx["tag"]);
+		let target = "";
+		if (TagOrderTx){
+			let TagOrderTxData = TagOrderTx.GetObjTx()["data"];
+			let tagorder = require('./TransactionTools/tagorder.js');
+			let Tagorder = new tagorder.TagOrderData(TagOrderTxData);
+			let TagorderObjData = Tagorder.GetObjData();
+			target = BigInt("0x"+TagorderObjData["powtarget"]);
+		}else{
+			target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+		}
+
+
+
+		/* payまたはtagrewardなど一般的なtagの場合 */
+		if (objtx["tag"] == "pay" || objtx["tag"] == "tagreward" || BigInt(target) == 0){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			let time = objtx["time"];
@@ -569,7 +586,7 @@ exports.Transaction = class{
 
 			let needtime = 60*10 - (time - lasttxtime);
 
-			let target = target_upper;
+			target = target_upper;
 			if (needtime > 0){
 				if (needtime > 60*3){
 					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -581,25 +598,10 @@ exports.Transaction = class{
 					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 				}
 			};
+		};
 
-			return target;
-		}else{
-			let TagOrderTx = exports.GetTagOrderTx(objtx["tag"]);
 
-			if (TagOrderTx){
-				let TagOrderTxData = TagOrderTx.GetObjTx()["data"];
-
-				let tagorder = require('./TransactionTools/tagorder.js');
-				let Tagorder = new tagorder.TagOrderData(TagOrderTxData);
-				let TagorderObjData = Tagorder.GetObjData();
-
-				let target = BigInt("0x"+TagorderObjData["powtarget"]);
-
-				return target;
-			}else{
-				return BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-			}
-		}
+		return target;
 	}
 
 

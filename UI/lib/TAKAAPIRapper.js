@@ -131,4 +131,20 @@ class TAKAAPIRapper{
 		let result = this.post(args);
 		return result;
 	}
+
+
+	RunCode(address,tag,FunctionName,FunctionArgs){
+		let args = {
+			"function":"runcode",
+			"args":{
+				"address":address,
+				"tag":tag,
+				"FunctionName":FunctionName,
+				"FunctionArgs":FunctionArgs,
+			}
+		};
+
+		let result = this.post(args);
+		return result;
+	};
 };

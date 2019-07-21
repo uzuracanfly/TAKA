@@ -279,7 +279,7 @@ exports.SetServer = function(){
 						let tag = postData["args"]["tag"];
 						let permissiontype = postData["args"]["permissiontype"];
 
-						let powtarget = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+						let powtarget = "0000000000000000000000000000000000000000000000000000000000000000";
 						if ("powtarget" in postData["args"] && postData["args"]["powtarget"]){
 							privkey = postData["args"]["privkey"];
 						}
