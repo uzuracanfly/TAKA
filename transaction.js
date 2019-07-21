@@ -443,89 +443,20 @@ exports.Transaction = class{
 					let objdata = new CONTRACT.RunFunctionData(objtx["data"]).GetObjData();
 					let FunctionArgs = objdata["FunctionArgs"];
 					let FunctionName = objdata["FunctionName"];
+					let TxContractResult = objdata["result"];
+					let TxContractSetData = objdata["SetData"];
 
 
-
-					//タグに結び付いた最新の保存データを取得
-					let LoadDataPerTag = {};
-					let tagtxids = exports.GetTagTxids(objtx["tag"]);
-					tagtxids = tagtxids.reverse();
-
-					for (let index in tagtxids){
-						let tagtxid = tagtxids[index];
-						let tagtx = exports.GetTx(tagtxid);
-						let objtagtx = tagtx.GetObjTx();
-
-						if (objtagtx["type"] == 112){
-							let objtagdata = new CONTRACT.RunFunctionData(objtagtx["data"]).GetObjData();
-
-							LoadDataPerTag = objtagdata["SetData"];
-							break;
-						};
-					}
-
-
-
-
-
-
-					if (tagtxids.length <= 0){
-						return 0;
-					}
-
-					//実行するソースのコードをtagのtxidリストから走査
-
-					let ObjCodeTx = false;
-					for (let index in tagtxids){
-						let tagtxid = tagtxids[index];
-
-						let tagtx = exports.GetTx(tagtxid);
-						let objtagtx = tagtx.GetObjTx();
-						if (objtagtx["type"] == 111){
-							let objtagdata = new CONTRACT.SetFunctionData(objtagtx["data"]).GetObjData();
-
-							//ソースコード発見
-							if (objtagdata["FunctionName"] == FunctionName){
-								if (objtagdata["CodeType"] == 1){
-									let CodeData = objtagdata["CodeData"];
-
-									try{
-										FS.mkdirSync("./exec/");
-									}catch(e){
-										console.log("");
-									}
-
-									FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
-
-									let loopindex = 0;
-									while (loopindex < 100){
-										try{
-											FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
-											break;
-										}catch(e){
-											loopindex = loopindex + 1;
-										}
-									}
-
-									ObjCodeTx = objtagdata;
-
-									break;
-								}
-
-							}
-						}
-					}
-
-					if (!ObjCodeTx){
-						return 0;
-					}
-
-					let CodeResult = await CONTRACT.RunCode(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag);
+					let CodeResult = await CONTRACT.RunCode(TargetAccount,objtx["tag"],FunctionName,FunctionArgs);
 					if (!CodeResult){
 						return 0;
 					}
 
 					if (!("result" in CodeResult) || !("SetData" in CodeResult)){
+						return 0;
+					}
+
+					if (TxContractResult != CodeResult["result"] || TxContractSetData != CodeResult["SetData"]){
 						return 0;
 					}
 

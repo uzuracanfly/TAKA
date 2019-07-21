@@ -401,6 +401,29 @@ exports.SetServer = function(){
 
 
 
+					if (postData["function"] == "runcode"){
+						let address = postData["args"]["address"];
+						let tag = postData["args"]["tag"];
+						let FunctionName = postData["args"]["FunctionName"];
+						let FunctionArgs = postData["args"]["FunctionArgs"];
+
+
+						if (!address || !tag || !FunctionName || !FunctionArgs){
+							response.write(JSON.stringify(false));
+							response.end();
+							return 0;
+						}
+
+
+						let result = await TRANSACTIONTOOLS_CONTRACT.RunCode(address,tag,FunctionName,FunctionArgs);
+
+
+						response.write(JSON.stringify(result));
+						response.end();
+
+					};
+
+
 				}catch(e){
 					console.log(e);
 					response.write(JSON.stringify(false));

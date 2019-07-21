@@ -101,6 +101,14 @@ exports.RunConsole = function(){
 				FunctionArgs = JSON.parse(FunctionArgs);
 
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"callruncontracttransaction","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+			}else if (commands[0] == "runcode"){
+				let address = commands[1];
+				let tag = commands[2];
+				let FunctionName = commands[3];
+				let FunctionArgs = commands[4];
+				FunctionArgs = JSON.parse(FunctionArgs);
+
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"runcode","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
 			};
 
 			resolve(result);

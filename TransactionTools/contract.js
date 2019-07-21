@@ -277,10 +277,72 @@ exports.RunFunctionData = class{
 
 
 
-exports.RunCode = async function(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag){
+exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
+
+	//LoadDataPerTagの取得
+	let tagtxids = TRANSACTION.GetTagTxids(tag);
+	tagtxids = tagtxids.reverse();
+	let LoadDataPerTag = {};
+	for (let index in tagtxids){
+		let tagtxid = tagtxids[index];
+
+		let tagtx = TRANSACTION.GetTx(tagtxid);
+		let objtagtx = tagtx.GetObjTx();
+
+		if (objtagtx["type"] == 112){
+			let objtagdata = new exports.RunFunctionData(objtagtx["data"]).GetObjData();
+
+			LoadDataPerTag = objtagdata["SetData"];
+			break;
+		};
+	};
+
+	//ソースコードの保存
+	for (let index in tagtxids){
+		let tagtxid = tagtxids[index];
+
+		let tagtx = TRANSACTION.GetTx(tagtxid);
+		let objtagtx = tagtx.GetObjTx();
+
+		if (objtagtx["type"] == 111){
+			let objtagdata = new exports.SetFunctionData(objtagtx["data"]).GetObjData();
+
+			//ソースコード発見
+			if (objtagdata["FunctionName"] == FunctionName){
+				if (objtagdata["CodeType"] == 1){
+					let CodeData = objtagdata["CodeData"];
+
+					try{
+						FS.mkdirSync("./exec/");
+					}catch(e){
+						console.log("");
+					}
+
+					FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
+
+					let loopindex = 0;
+					while (loopindex < 100){
+						try{
+							FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
+							break;
+						}catch(e){
+							loopindex = loopindex + 1;
+						}
+					}
+
+					break;
+				}
+
+			}
+		};
+	}
+
+
+
+
 	const starttime = Math.floor(Date.now()/1000);
 
-	let child = CP.spawn("node",["./exec/"+ObjCodeTx["FunctionName"]+".js",JSON.stringify(TargetAccount.GetKeys()),JSON.stringify(FunctionArgs),JSON.stringify(LoadDataPerTag)]);
+	let child = CP.spawn("node",["./exec/"+FunctionName+".js",JSON.stringify(TargetAccount.GetKeys()),JSON.stringify(FunctionArgs),JSON.stringify(LoadDataPerTag)]);
 
 	let bPromise = require('bluebird');
 	(function loop(index) {
@@ -322,86 +384,10 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 	/*
 		コントラクト実行
 	*/
-
-	//タグに結び付いた最新の保存データを取得
-	let LoadDataPerTag = {};
-	let tagtxids = TRANSACTION.GetTagTxids(tag);
-	tagtxids = tagtxids.reverse();
-
-	for (let index in tagtxids){
-		let tagtxid = tagtxids[index];
-
-		let tagtx = TRANSACTION.GetTx(tagtxid);
-		let objtagtx = tagtx.GetObjTx();
-
-		if (objtagtx["type"] == 112){
-			let objtagdata = new exports.RunFunctionData(objtagtx["data"]).GetObjData();
-
-			LoadDataPerTag = objtagdata["SetData"];
-			break;
-		};
-	}
-
-
-
-
-	if (tagtxids.length <= 0){
-		return 0;
-	}
-
-	//実行するソースのコードをtagのtxidリストから走査
-
-	let ObjCodeTx = false;
-	for (let index in tagtxids){
-		let tagtxid = tagtxids[index];
-
-		let tagtx = TRANSACTION.GetTx(tagtxid);
-		let objtagtx = tagtx.GetObjTx();
-		if (objtagtx["type"] == 111){
-			let objtagdata = new exports.SetFunctionData(objtagtx["data"]).GetObjData();
-
-			//ソースコード発見
-			if (objtagdata["FunctionName"] == FunctionName){
-				if (objtagdata["CodeType"] == 1){
-					let CodeData = objtagdata["CodeData"];
-
-					try{
-						FS.mkdirSync("./exec/");
-					}catch(e){
-						console.log("");
-					}
-
-					FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
-
-					let loopindex = 0;
-					while (loopindex < 100){
-						try{
-							FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
-							break;
-						}catch(e){
-							loopindex = loopindex + 1;
-						}
-					}
-
-					ObjCodeTx = objtagdata;
-
-					break;
-				}
-
-			}
-		}
-	}
-
-
-	if (!ObjCodeTx){
-		return 0;
-	}
-
-	let CodeResult = await exports.RunCode(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag);
+	let CodeResult = await exports.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
 	if (!CodeResult){
 		return 0;
 	}
-
 
 
 	if (!("result" in CodeResult) || !("SetData" in CodeResult)){
@@ -453,82 +439,7 @@ exports.CallRunContractTransaction = async function(address,tag,FunctionName,Fun
 	/*
 		コントラクト実行
 	*/
-
-	//タグに結び付いた最新の保存データを取得
-	let LoadDataPerTag = {};
-	let tagtxids = TRANSACTION.GetTagTxids(tag);
-	tagtxids = tagtxids.reverse();
-
-	for (let index in tagtxids){
-		let tagtxid = tagtxids[index];
-
-		let tagtx = TRANSACTION.GetTx(tagtxid);
-		let objtagtx = tagtx.GetObjTx();
-
-		if (objtagtx["type"] == 112){
-			let objtagdata = new exports.RunFunctionData(objtagtx["data"]).GetObjData();
-
-			LoadDataPerTag = objtagdata["SetData"];
-			break;
-		};
-	}
-
-
-
-
-	if (tagtxids.length <= 0){
-		return 0;
-	}
-
-	//実行するソースのコードをtagのtxidリストから走査
-
-	let ObjCodeTx = false;
-	for (let index in tagtxids){
-		let tagtxid = tagtxids[index];
-
-		let tagtx = TRANSACTION.GetTx(tagtxid);
-		let objtagtx = tagtx.GetObjTx();
-		if (objtagtx["type"] == 111){
-			let objtagdata = new exports.SetFunctionData(objtagtx["data"]).GetObjData();
-
-			//ソースコード発見
-			if (objtagdata["FunctionName"] == FunctionName){
-				if (objtagdata["CodeType"] == 1){
-					let CodeData = objtagdata["CodeData"];
-
-					try{
-						FS.mkdirSync("./exec/");
-					}catch(e){
-						console.log("");
-					}
-
-					FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
-
-					let loopindex = 0;
-					while (loopindex < 100){
-						try{
-							FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
-							break;
-						}catch(e){
-							loopindex = loopindex + 1;
-						}
-					}
-
-					ObjCodeTx = objtagdata;
-
-					break;
-				}
-
-			}
-		}
-	}
-
-
-	if (!ObjCodeTx){
-		return 0;
-	}
-
-	let CodeResult = await exports.RunCode(ObjCodeTx,TargetAccount,FunctionArgs,LoadDataPerTag);
+	let CodeResult = await exports.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
 	if (!CodeResult){
 		return 0;
 	}
