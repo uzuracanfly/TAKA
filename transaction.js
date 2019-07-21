@@ -456,7 +456,7 @@ exports.Transaction = class{
 						return 0;
 					}
 
-					if (TxContractResult != CodeResult["result"] || TxContractSetData != CodeResult["SetData"]){
+					if (TxContractResult != CodeResult["result"] || JSON.stringify(TxContractSetData) != JSON.stringify(CodeResult["SetData"])){
 						return 0;
 					}
 

@@ -415,7 +415,8 @@ exports.SetServer = function(){
 						}
 
 
-						let result = await TRANSACTIONTOOLS_CONTRACT.RunCode(address,tag,FunctionName,FunctionArgs);
+						let TargetAccount = new ACCOUNT.account(address);
+						let result = await TRANSACTIONTOOLS_CONTRACT.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
 
 
 						response.write(JSON.stringify(result));
