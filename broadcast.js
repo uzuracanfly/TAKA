@@ -133,9 +133,7 @@ exports.SetServer = function(){
 	});
 
 
-	HTTP.listen(CONFIG.broadcast["port"], function(){
-		console.log('listening on *:'+CONFIG.broadcast["port"]);
-	});
+	HTTP.listen(CONFIG.broadcast["port"]);
 }
 
 
@@ -175,7 +173,7 @@ exports.SetClient = async function(){
 
 
 		/* 未承認のトランザクション追加 */
-		broadcast.on('UnconfirmedTransactions', function(data){
+		broadcast.on('UnconfirmedTransactions', async function(data){
 			try{
 				for (let mindex in data){
 					let rawtx = data[mindex];
@@ -192,8 +190,8 @@ exports.SetClient = async function(){
 
 
 					let TargetTransaction = new TRANSACTION.Transaction(rawtx);
-					let txid = TargetTransaction.GetTxid();
-					let objtx = TargetTransaction.GetObjTx();
+					let txid = await TargetTransaction.GetTxid();
+					let objtx = await TargetTransaction.GetObjTx();
 
 					//1分経っていまだに未承認のトランザクションは受け入れない
 					if (objtx["time"]+60*1 < Math.floor(Date.now()/1000)){
@@ -252,7 +250,7 @@ exports.SetClient = async function(){
 
 
 		/* トランザクションデータ到着 */
-		broadcast.on('Transaction', function(data){
+		broadcast.on('Transaction', async function(data){
 			try{
 				if (!data){
 					return 0;
@@ -264,7 +262,7 @@ exports.SetClient = async function(){
 				};
 
 				let TargetTransaction = new TRANSACTION.Transaction(data);
-				let txid = TargetTransaction.GetTxid();
+				let txid = await TargetTransaction.GetTxid();
 
 				let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
 				if (TransactionIdsPerAll.indexOf(txid) >= 0){

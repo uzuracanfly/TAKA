@@ -11,23 +11,13 @@ const FS = require('fs');
 exports.Transaction = class{
 	constructor(rawtx="",privkey="",objtx={}){
 
+		this.rawtx = rawtx;
+		this.objtx = objtx;
 		if (privkey){
 			this.TargetAccount = new ACCOUNT.account(privkey);
 		};
-
-
-		if (rawtx){
-			this.rawtx = rawtx;
-			this.objtx = this.GetObjTx();
-			if (!privkey){
-				this.TargetAccount = new ACCOUNT.account(this.objtx["pubkey"]);
-			};
-		}else{
-			this.objtx = objtx;
-			if (!privkey){
-				this.TargetAccount = new ACCOUNT.account(this.objtx["pubkey"]);
-			};
-			this.rawtx = this.GetRawTx();
+		if (!privkey && objtx){
+			this.TargetAccount = new ACCOUNT.account(this.objtx["pubkey"]);
 		};
 	};
 
@@ -36,7 +26,7 @@ exports.Transaction = class{
 	/*
 		通貨支払い
 
-		pubkey : 2122桁
+		pubkey : 4016桁
 		type : 2桁
 		time : 16桁
 		tag length : 2桁
@@ -52,7 +42,7 @@ exports.Transaction = class{
 		nonce : 16桁
 
 	*/
-	GetRawTx(TargetAccount=this.TargetAccount,objtx=this.objtx,orgonly=false){
+	async GetRawTx(TargetAccount=this.TargetAccount,objtx=this.objtx,orgonly=false){
 
 		let type = objtx["type"].toString(16);
 		let time = Math.floor(objtx["time"]).toString(16);
@@ -67,7 +57,7 @@ exports.Transaction = class{
 
 		let rawtx = "";
 
-		let pubkey_toin = MAIN.GetFillZero(TargetAccount.GetKeys()["pubkey"], 2122);
+		let pubkey_toin = MAIN.GetFillZero((await TargetAccount.GetKeys())["pubkey"], 4016);
 		let type_toin = MAIN.GetFillZero(type, 2);
 		let time_toin = MAIN.GetFillZero(time, 16);
 
@@ -116,9 +106,9 @@ exports.Transaction = class{
 			のsha256d
 			*/
 			let sig = "";
-			if ("privkey" in TargetAccount.GetKeys() && TargetAccount.GetKeys()["privkey"]){
+			if ("privkey" in await TargetAccount.GetKeys() && (await TargetAccount.GetKeys())["privkey"]){
 				let org = new HASHS.hashs().sha256d(rawtx);
-				sig = new CRYPTO.signature().GetSignData(TargetAccount.GetKeys()["privkey"],org);
+				sig = await new CRYPTO.signature().GetSignData((await TargetAccount.GetKeys())["privkey"],org);
 			}
 			if ("sig" in objtx && objtx["sig"]){
 				sig = objtx["sig"];
@@ -138,12 +128,19 @@ exports.Transaction = class{
 			rawtx = rawtx + nonce_toin;
 		};
 
+		this.rawtx = rawtx;
+
 		return rawtx;
 	};
 
 
 
-	GetObjTx(rawtx=this.rawtx){
+	async GetObjTx(rawtx=this.rawtx){
+		if (!rawtx){
+			rawtx = await this.GetRawTx();
+			this.rawtx = rawtx;
+		}
+
 
 		function cut(len){
 			let cuthex = rawtx.slice(0,len);
@@ -161,7 +158,7 @@ exports.Transaction = class{
 			return cuthex
 		};
 
-		let pubkey = cut(2122);
+		let pubkey = cut(4016);
 		let type = parseInt(cut(2),16);
 		let time = parseInt(cut(16),16);
 		let tag = VariableCut(2);
@@ -187,6 +184,8 @@ exports.Transaction = class{
 			"nonce":nonce,
 		};
 
+		this.objtx = objtx;
+
 		return objtx;
 	};
 
@@ -194,7 +193,12 @@ exports.Transaction = class{
 
 
 	//txidの取得
-	GetTxid(rawtx=this.rawtx){
+	async GetTxid(rawtx=this.rawtx){
+		if (!rawtx){
+			rawtx = await this.GetRawTx();
+			this.rawtx = rawtx;
+		}
+
 		let txid = new HASHS.hashs().sha256d(rawtx);
 		return txid;
 	}
@@ -204,8 +208,13 @@ exports.Transaction = class{
 	//トランザクション有効性
 	async Confirmation(rawtx=this.rawtx){
 		try{
+			if (!rawtx){
+				rawtx = await this.GetRawTx();
+				this.rawtx = rawtx;
+			}
 
-			let objtx = this.GetObjTx(rawtx);
+
+			let objtx = await this.GetObjTx(rawtx);
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 
 
@@ -214,8 +223,8 @@ exports.Transaction = class{
 			for (let index in CONFIG.genesistxs){
 				let seedrawtx = CONFIG.genesistxs[index];
 
-				let seedtxid = this.GetTxid(seedrawtx);
-				if (this.GetTxid() == seedtxid){
+				let seedtxid = await this.GetTxid(seedrawtx);
+				if (await this.GetTxid() == seedtxid){
 					return 1;
 				}
 			}
@@ -306,7 +315,7 @@ exports.Transaction = class{
 					};
 
 					let feetx = exports.GetTx(TagorderObjData["feetxid"]);
-					let feetxobj = feetx.GetObjTx();
+					let feetxobj = await feetx.GetObjTx();
 					if (feetxobj["pubkey"] != objtx["pubkey"]){
 						return 0;
 					}
@@ -337,7 +346,7 @@ exports.Transaction = class{
 					let TagaddpermitObjData = Tagaddpermit.GetObjData();
 
 					let TagOrderTx = exports.GetTagOrderTx(objtx["tag"]);
-					if (TagOrderTx.GetObjTx()["pubkey"] != objtx["pubkey"]){
+					if (await TagOrderTx.GetObjTx()["pubkey"] != objtx["pubkey"]){
 						return 0;
 					}
 				}catch(e){
@@ -367,7 +376,7 @@ exports.Transaction = class{
 					let tagordertxid = tagtxids[0];
 
 					let tagordertx = exports.GetTx(tagordertxid);
-					let tagordertxobj = tagordertx.GetObjTx();
+					let tagordertxobj = await tagordertx.GetObjTx();
 					if (tagordertxobj["type"] != 12){
 						return 0;
 					};
@@ -384,7 +393,7 @@ exports.Transaction = class{
 						let TagPermitAddresss = exports.GetTagPermitAddresss(objtx["tag"]);
 
 						//TagAddPermitAddresssの中にトランザクション発行元が許可されているか
-						if (TagPermitAddresss.indexOf(TargetAccount.GetKeys()["address"]) == -1){
+						if (TagPermitAddresss.indexOf((await TargetAccount.GetKeys())["address"]) == -1){
 							return 0;
 						};
 					};
@@ -414,10 +423,10 @@ exports.Transaction = class{
 					let tagtxids = exports.GetTagTxids(objtx["tag"]);
 					let tagordertxid = tagtxids[0];
 					let tagordertx = exports.GetTx(tagordertxid);
-					let tagordertxobj = tagordertx.GetObjTx();
+					let tagordertxobj = await tagordertx.GetObjTx();
 					if (tagordertxobj["pubkey"] != objtx["pubkey"]){
 						let TagPermitAddresss = exports.GetTagPermitAddresss(objtx["tag"]);
-						let keys = TargetAccount.GetKeys();
+						let keys = await TargetAccount.GetKeys();
 						if (!(keys["address"] in TagPermitAddresss)){
 							return 0;
 						};
@@ -479,10 +488,10 @@ exports.Transaction = class{
 
 
 			//原文と署名文の確認
-			let org = this.GetRawTx(TargetAccount,objtx,true);
+			let org = await this.GetRawTx(TargetAccount,objtx,true);
 			org = new HASHS.hashs().sha256d(org);
 			let sig = objtx["sig"];
-			let sigbool = new CRYPTO.signature().ConfirmationSign(org,sig,TargetAccount.GetKeys()["pubkey"]);
+			let sigbool = await new CRYPTO.signature().ConfirmationSign(org,sig,(await TargetAccount.GetKeys())["pubkey"]);
 			if (!sigbool){
 				return 0;
 			};
@@ -490,7 +499,7 @@ exports.Transaction = class{
 
 			//txidとtarget
 			let target = this.GetPOWTarget(rawtx);
-			let numtxid = BigInt("0x"+this.GetTxid(rawtx));
+			let numtxid = BigInt("0x"+await this.GetTxid(rawtx));
 			if (numtxid > target){
 				return 0;
 			};
@@ -498,7 +507,7 @@ exports.Transaction = class{
 
 
 			//MerkleRootとindexsからのMerkleRootの相違
-			let pretxlist = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
+			let pretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
 			let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
 			IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
 			if (IndexMerkleRoot != objtx["MerkleRoot"]){
@@ -514,7 +523,7 @@ exports.Transaction = class{
 
 
 			//トランザクション以前での残高の有無
-			let balance = TargetAccount.GetBalance(undefined,objtx["index"]);
+			let balance = await TargetAccount.GetBalance(undefined,objtx["index"]);
 			if (balance < objtx["amount"]){
 				return 0;
 			}
@@ -545,15 +554,20 @@ exports.Transaction = class{
 
 
 
-	GetPOWTarget(rawtx=this.rawtx){
-		let objtx = this.GetObjTx(rawtx);
-		let txid = this.GetTxid(rawtx);
+	async GetPOWTarget(rawtx=this.rawtx){
+		if (!rawtx){
+			rawtx = await this.GetRawTx();
+			this.rawtx = rawtx;
+		}
+
+		let objtx = await this.GetObjTx(rawtx);
+		let txid = await this.GetTxid(rawtx);
 
 		/* ユーザー定義のtagの場合 */
 		let TagOrderTx = exports.GetTagOrderTx(objtx["tag"]);
 		let target = "";
 		if (TagOrderTx){
-			let TagOrderTxData = TagOrderTx.GetObjTx()["data"];
+			let TagOrderTxData = await TagOrderTx.GetObjTx()["data"];
 			let tagorder = require('./TransactionTools/tagorder.js');
 			let Tagorder = new tagorder.TagOrderData(TagOrderTxData);
 			let TagorderObjData = Tagorder.GetObjData();
@@ -571,7 +585,7 @@ exports.Transaction = class{
 			let time = objtx["time"];
 
 
-			let txids = TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
+			let txids = await TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
 
 			
 			let lasttx = false;
@@ -605,8 +619,13 @@ exports.Transaction = class{
 	}
 
 
-	GetNonce(rawtx=this.rawtx,target=0){
-		let objtx = this.GetObjTx(rawtx);
+	async GetNonce(rawtx=this.rawtx,target=0){
+		if (!rawtx){
+			rawtx = await this.GetRawTx();
+			this.rawtx = rawtx;
+		}
+
+		let objtx = await this.GetObjTx(rawtx);
 
 		let nonce = objtx["nonce"];
 		let outthis = this;
@@ -619,13 +638,13 @@ exports.Transaction = class{
 
 		return new Promise(function (resolve, reject) {
 			let bPromise = require('bluebird');
-			(function loop(nonce) {
+			(async function loop(nonce) {
 
 				let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 
 				objtx["nonce"] = nonce;
-				rawtx = outthis.GetRawTx(TargetAccount,objtx);
-				txid = outthis.GetTxid(rawtx);
+				rawtx = await outthis.GetRawTx(TargetAccount,objtx);
+				txid = await outthis.GetTxid(rawtx);
 				numtxid = BigInt("0x"+txid);
 
 
@@ -643,25 +662,29 @@ exports.Transaction = class{
 	}
 
 
-	commit(rawtx=this.rawtx){
-		let objtx = this.GetObjTx(rawtx);
+	async commit(rawtx=this.rawtx){
+		if (!rawtx){
+			rawtx = await this.GetRawTx();
+		}
+		
+		let objtx = await this.GetObjTx(rawtx);
 
 		let nonce = objtx["nonce"];
 		let outthis = this;
-		let target = this.GetPOWTarget(rawtx);
+		let target = await this.GetPOWTarget(rawtx);
 		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 
 		return new Promise(function (resolve, reject) {
 			let bPromise = require('bluebird');
-			(function loop(nonce) {
+			(async function loop(nonce) {
 
 				let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 				
 				objtx["nonce"] = nonce;
-				rawtx = outthis.GetRawTx(TargetAccount,objtx);
-				txid = outthis.GetTxid(rawtx);
+				rawtx = await outthis.GetRawTx(TargetAccount,objtx);
+				txid = await outthis.GetTxid(rawtx);
 				numtxid = BigInt("0x"+txid);
 
 
@@ -732,16 +755,16 @@ exports.GetTagMerkleRoot = function(tag){
 	return MerkleRoot;
 };
 
-exports.SendPayTransaction = function(privkey,toaddress,amount){
+exports.SendPayTransaction = async function(privkey,toaddress,amount){
 	amount = parseInt(amount);
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
-	let FormTxList = TargetAccount.GetFormTxList(undefined,"pay");
+	let FormTxList = await TargetAccount.GetFormTxList(undefined,"pay");
 	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objtx = {
-		"pubkey":TargetAccount.GetKeys()["pubkey"],
+		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 		"type":1,
 		"time":Math.floor(Date.now()/1000),
 		"tag":"pay",
@@ -769,7 +792,7 @@ exports.GetTagOrderTx = function(tag){
 			if (!tagordertx){
 				return 0;
 			}
-			let tagordertxobj = tagordertx.GetObjTx();
+			let tagordertxobj = await tagordertx.GetObjTx();
 			if (tagordertxobj["type"] != 12){
 				return 0;
 			};
@@ -793,7 +816,7 @@ exports.GetTagPermitAddresss = function(tag){
 		let tagtxid = tagtxids[index];
 
 		let tagtx = exports.GetTx(tagtxid);
-		let tagtxobj = tagtx.GetObjTx();
+		let tagtxobj = await tagtx.GetObjTx();
 		if (tagtxobj["type"] == 13){
 			let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
 			let Tagaddpermit = new tagaddpermit.TagAddPermitData(tagtxobj["data"]);
@@ -828,16 +851,16 @@ exports.GetUnconfirmedTransactions = function(){
 /*
 未確認トランザクションの走査と確認
 */
-exports.RunCommit = function(){
-	function commit(TargetTransaction){
-		DATABASE.add("ConfirmedTransactions",TargetTransaction.GetTxid(),TargetTransaction.rawtx);
+exports.RunCommit = async function(){
+	async function commit(TargetTransaction){
+		DATABASE.add("ConfirmedTransactions",await TargetTransaction.GetTxid(),TargetTransaction.GetRawTx());
 
-		DATABASE.add("TransactionIdsPerTag",TargetTransaction.objtx["tag"],TargetTransaction.GetTxid());
-		DATABASE.add("TransactionIdsPerAccount",TargetTransaction.TargetAccount.GetKeys()["address"],TargetTransaction.GetTxid());
-		DATABASE.add("TransactionIdsPerAccount",TargetTransaction.objtx["toaddress"],TargetTransaction.GetTxid());
-		DATABASE.add("TransactionIdsPerAll","live",TargetTransaction.GetTxid());
+		DATABASE.add("TransactionIdsPerTag",TargetTransaction.objtx["tag"],await TargetTransaction.GetTxid());
+		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],await TargetTransaction.GetTxid());
+		DATABASE.add("TransactionIdsPerAccount",TargetTransaction.objtx["toaddress"],await TargetTransaction.GetTxid());
+		DATABASE.add("TransactionIdsPerAll","live",await TargetTransaction.GetTxid());
 
-		MAIN.note(1,"transaction_RunCommit_commit","[commit transaction] txid : "+TargetTransaction.GetTxid());
+		MAIN.note(1,"transaction_RunCommit_commit","[commit transaction] txid : "+await TargetTransaction.GetTxid());
 		return 1;
 	}
 
@@ -890,7 +913,7 @@ exports.RunCommit = function(){
 
 							let TargetTransaction = new exports.Transaction(rawtx);
 
-							let objtx = TargetTransaction.GetObjTx();
+							let objtx = await TargetTransaction.GetObjTx();
 							if (oldtime >= objtx["time"]){
 								oldtime = objtx["time"];
 								oldrawtx = rawtx;

@@ -46,13 +46,14 @@ exports.SetServer = function(){
 						}
 
 						let TargetAccount = new ACCOUNT.account(key);
+						let keys = await TargetAccount.GetKeys();
 
 
 						let txids = {};
 						let tags = TRANSACTION.GetTags();
 						for (let index in tags){
 							let tag = tags[index];
-							let tagtxs = TargetAccount.GetFormTxList(undefined,tag,LessIndex);
+							let tagtxs = await TargetAccount.GetFormTxList(undefined,tag,LessIndex);
 							let TagMerkleRoot = new HASHS.hashs().GetMarkleroot(tagtxs);
 
 							txids[tag] = {
@@ -62,11 +63,11 @@ exports.SetServer = function(){
 						}
 
 						let callback = {
-							"privkey":TargetAccount.GetKeys()["privkey"],
-							"pubkey":TargetAccount.GetKeys()["pubkey"],
-							"address":TargetAccount.GetKeys()["address"],
+							"privkey":keys["privkey"],
+							"pubkey":keys["pubkey"],
+							"address":keys["address"],
 							"txids":txids,
-							"balance":TargetAccount.GetBalance(undefined,LessIndex),
+							"balance":await TargetAccount.GetBalance(undefined,LessIndex),
 						}
 
 						response.write(JSON.stringify(callback));
@@ -96,7 +97,7 @@ exports.SetServer = function(){
 
 						if (tag != "pay" && tag != "tagreward" && TagTxids.length > 0){
 							let TagOrderTx = new TRANSACTION.GetTagOrderTx(tag);
-							let TagOrderObjTx = TagOrderTx.GetObjTx();
+							let TagOrderObjTx = await TagOrderTx.GetObjTx();
 
 							let TagOrderData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]);
 							let TagOrderObjData = TagOrderData.GetObjData();
@@ -108,7 +109,7 @@ exports.SetServer = function(){
 
 							callback["owner"] = {
 								"pubkey":ownerpubkey,
-								"address":OwnerAccount.GetKeys()["address"]
+								"address":(await OwnerAccount.GetKeys())["address"]
 							};
 							callback["permissiontype"] = TagOrderObjData["permissiontype"];
 							callback["powtarget"] = TagPermitAddresss;
@@ -130,7 +131,7 @@ exports.SetServer = function(){
 						}
 
 						let TargetTransaction = new TRANSACTION.Transaction(rawtx);
-						let result = TargetTransaction.commit();
+						let result = await TargetTransaction.commit();
 
 						result.then(function(value){
 							response.write(JSON.stringify(value));
@@ -155,7 +156,7 @@ exports.SetServer = function(){
 						}
 
 						let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-						let result = TargetTransaction.GetRawTx();
+						let result = await TargetTransaction.GetRawTx();
 
 
 
@@ -223,7 +224,7 @@ exports.SetServer = function(){
 						}
 
 
-						let result = TRANSACTION.GetTx(txid).GetObjTx();
+						let result = await TRANSACTION.GetTx(txid).GetObjTx();
 
 						let callback = {
 							"pubkey":result["pubkey"],

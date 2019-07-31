@@ -54,11 +54,11 @@ exports.TagAddPermitData = class{
 
 
 
-exports.SendTagAddPermitTransaction = function(privkey,tag,addaddress){
+exports.SendTagAddPermitTransaction = async function(privkey,tag,addaddress){
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
-	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
+	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
 	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objdata = {
@@ -68,7 +68,7 @@ exports.SendTagAddPermitTransaction = function(privkey,tag,addaddress){
 	let TagAddPermit = new exports.TagAddPermitData("",objdata);
 
 	let objtx = {
-		"pubkey":TargetAccount.GetKeys()["pubkey"],
+		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 		"type":13,
 		"time":Math.floor(Date.now()/1000),
 		"tag":tag,
@@ -82,7 +82,7 @@ exports.SendTagAddPermitTransaction = function(privkey,tag,addaddress){
 	};
 	//console.log(objtx);
 	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-	let result = TargetTransaction.commit();
+	let result = await TargetTransaction.commit();
 
 	return result;
 };

@@ -9,36 +9,33 @@ const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.databas
 
 exports.account = class{
 	constructor(key=""){
-		if (key){
-			this.key = key;
-		}else{
-			this.key = new CRYPTO.signature().CreatePrivkey();
-		}
+		this.key = key;
 	};
 
 
-	GetKeys(key=this.key){
-		
+	async GetKeys(key=this.key){
+
 		/* キーの識別 */
 		let address = "";
 		let pubkey = "";
 		let privkey = "";
 		if (key.length == 40){
 			address = key;
-		}else if(key.length == 2122){
+		}else if(key.length == 4016){
 			pubkey = key;
-		}else if(key.length == 64){
+		}else if(key.length == 11456){
 			privkey = key;
 		}else{
-			this.key = new CRYPTO.signature().CreatePrivkey();
+			privkey = await new CRYPTO.signature().CreatePrivkey();
 		}
 
 
 		if (privkey){
-			pubkey = new CRYPTO.signature().GetPrivkeyToPubkey(privkey);
+			pubkey = await new CRYPTO.signature().GetPrivkeyToPubkey(privkey);
 		};
 		if (pubkey){
-			address = this.GetAddress(pubkey);
+			address = new HASHS.hashs().sha256(pubkey);
+			address = new HASHS.hashs().ripemd160(address);
 		};
 		let keys = {
 			"privkey":privkey,
@@ -46,20 +43,18 @@ exports.account = class{
 			"address":address,
 		}
 
+		this.key = key;
+
 		return keys;
 	};
 
 
-	GetAddress(pubkey=this.GetKeys()["pubkey"]){
-		let hash = new HASHS.hashs().sha256(pubkey);
-		hash = new HASHS.hashs().ripemd160(hash);
-
-		return hash;
-	};
-
-
 	//アカウントの残高を構成するtxのリスト
-	GetFormTxList(address=this.GetKeys()["address"],tag="",LessIndex=0){
+	async GetFormTxList(address="",tag="",LessIndex=0){
+		if (!address){
+			address = (await this.GetKeys())["address"];
+		}
+
 		let TxidListPerAccount = DATABASE.get("TransactionIdsPerAccount",address);
 
 		let result = [];
@@ -68,7 +63,7 @@ exports.account = class{
 
 			if (tag){
 				let tx = TRANSACTION.GetTx(txid);
-				let ObjTx = tx.GetObjTx();
+				let ObjTx = await tx.GetObjTx();
 				if (ObjTx["tag"] != tag){
 					continue;
 				};
@@ -86,8 +81,12 @@ exports.account = class{
 	};
 
 
-	GetBalance(address=this.GetKeys()["address"],LessIndex=0){
-		let txlist = this.GetFormTxList(address,"pay",LessIndex);
+	async GetBalance(address="",LessIndex=0){
+		if (!address){
+			address = (await this.GetKeys())["address"];
+		}
+
+		let txlist = await this.GetFormTxList(address,"pay",LessIndex);
 
 		let balance = 0;
 		for (let index in txlist){

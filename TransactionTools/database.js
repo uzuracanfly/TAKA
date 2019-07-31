@@ -42,10 +42,10 @@ exports.DatabaseData = class{
 
 
 
-exports.SendDatabaseTransaction = function(privkey,tag,data,commonkey=""){
+exports.SendDatabaseTransaction = async function(privkey,tag,data,commonkey=""){
 	let TargetAccount = new ACCOUNT.account(privkey);
 
-	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
+	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
 	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let DatabaseData = new exports.DatabaseData(commonkey,data);
@@ -56,7 +56,7 @@ exports.SendDatabaseTransaction = function(privkey,tag,data,commonkey=""){
 	}
 
 	let objtx = {
-		"pubkey":TargetAccount.GetKeys()["pubkey"],
+		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 		"type":101,
 		"time":Math.floor(Date.now()/1000),
 		"tag":tag,
@@ -70,7 +70,7 @@ exports.SendDatabaseTransaction = function(privkey,tag,data,commonkey=""){
 	};
 	//console.log(objtx);
 	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-	let result = TargetTransaction.commit();
+	let result = await TargetTransaction.commit();
 
 	return result;
 };

@@ -74,50 +74,66 @@ exports.ChangeMemDatabase = class{
 
 
 
-exports.RunCommit = function(){
+exports.RunCommit = async function(){
 
 
 	function load(database,table,index=""){	
-		try {
-			if (!index){
-				let result = [];
-				let path = "database/"+database+"/"+table+"/";
-				let list = FS.readdirSync(path);
-				for (let index in list){
-					let value = list[index];
+		return new Promise(function (resolve, reject) {
 
-					result.push(value.replace(/.json/g, ''));
-				}
+			(function loop(result) {
+				if (typeof result != "object"){
+					return bPROMISE.delay(10).then(function() {
+						try {
+							if (!index){
+								let result = [];
+								let path = "database/"+database+"/"+table+"/";
+								let list = FS.readdirSync(path);
+								for (let index in list){
+									let value = list[index];
 
-				return result;
-			};
+									result.push(value.replace(/.json/g, ''));
+								}
+
+								return result;
+							};
 
 
-			let path = "database/"+database+"/"+table+"/"+index+".json";
-			FS.statSync(path);
+							let path = "database/"+database+"/"+table+"/"+index+".json";
+							FS.statSync(path);
 
-			let data = FS.readFileSync(path, 'utf8');
-			//暗号化必要性
-			if ("key" in CONFIG.database && CONFIG.database["key"]){
-				const CRYPTO = require('./crypto.js');
-				data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
-			};
-			try{
-				data = JSON.parse(data);
-			}catch(e){
-				console.log(e);
-				return [];
-			}
+							let data = FS.readFileSync(path, 'utf8');
+							//暗号化必要性
+							if ("key" in CONFIG.database && CONFIG.database["key"]){
+								const CRYPTO = require('./crypto.js');
+								data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
+							};
+							try{
+								data = JSON.parse(data);
+							}catch(e){
+								console.log(e);
+								return "";
+							}
 
-			return data;
+							return data;
 
-		}catch (e){
-			if (e.code === 'ENOENT') {
-				return [];
-			} else {
-				console.log(e);
-			}
-		}
+						}catch (e){
+							if (e.code === 'ENOENT') {
+								return [];
+							} else {
+								console.log(e);
+								return "";
+							}
+						};
+					}).then(loop);
+				};
+
+				return bPROMISE.resolve(result);
+
+			})("").then(function(value){
+				resolve(value);
+			});
+
+		});
 	}
 
 
@@ -154,14 +170,14 @@ exports.RunCommit = function(){
 
 	let transactions = [];
 
-	HTTP.createServer(function(request, response) {
+	HTTP.createServer(async function(request, response) {
 		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
 
 		if(request.method === 'POST') {
 			let postData = "";
-			request.on('data', function(chunk) {
+			request.on('data', async function(chunk) {
 				postData += chunk;
-			}).on('end', function() {
+			}).on('end', async function() {
 				postData = JSON.parse(postData);
 
 				if(postData["function"] == "set"){
@@ -221,14 +237,14 @@ exports.RunCommit = function(){
 
 					
 
-					(function loop(i) {
+					(async function loop(i) {
 						if (transactions.length > 0) {
-							return bPROMISE.delay(100).then(function() {
+							return bPROMISE.delay(10).then(async function() {
 								return i+1;
 							}).then(loop);
 						}
 
-						let result = load(database,table,index);
+						let result = await load(database,table,index);
 
 						if (result){
 							response.write(JSON.stringify(result));
@@ -249,6 +265,7 @@ exports.RunCommit = function(){
 
 
 
+
 	setInterval(
 		function(){
 			for (let index in transactions){
@@ -258,16 +275,18 @@ exports.RunCommit = function(){
 					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
 				};
 				if (transaction["function"] == "add"){
-					let data = load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-					data.push(transaction["args"]["data"]);
+					load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]).then(function(data){
+						data.push(transaction["args"]["data"]);
 
-					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+						save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+					});
 				};
 				if (transaction["function"] == "remove"){
-					let data = load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-					data.splice(transaction["args"]["removeindex"], 1);
+					load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]).then(function(data){
+						data.splice(transaction["args"]["removeindex"], 1);
 
-					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+						save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+					});
 				};
 				if (transaction["function"] == "delete"){
 					Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
@@ -277,4 +296,5 @@ exports.RunCommit = function(){
 		},
 		1
 	)
+
 };

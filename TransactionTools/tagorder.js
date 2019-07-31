@@ -66,16 +66,16 @@ exports.TagOrderData = class{
 
 exports.SendTagOrderTransaction = function(privkey,tag,permissiontype,powtarget){
 
-	return new Promise(function (resolve, reject) {
+	return new Promise(async function (resolve, reject) {
 
 		let TargetAccount = new ACCOUNT.account(privkey);
 
 		//tag利用料支払いのトランザクションを発行
-		let result = new TRANSACTION.SendPayTransaction(privkey,MAIN.GetFillZero("", 40),1);
+		let result = await new TRANSACTION.SendPayTransaction(privkey,MAIN.GetFillZero("", 40),1);
 
 
-		result.then(function (paytxid) {
-			let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
+		result.then(async function (paytxid) {
+			let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
 			let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 			let objdata = {
@@ -87,7 +87,7 @@ exports.SendTagOrderTransaction = function(privkey,tag,permissiontype,powtarget)
 			let TagOrder = new exports.TagOrderData("",objdata);
 
 			let objtx = {
-				"pubkey":TargetAccount.GetKeys()["pubkey"],
+				"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 				"type":12,
 				"time":Math.floor(Date.now()/1000),
 				"tag":tag,
@@ -101,7 +101,7 @@ exports.SendTagOrderTransaction = function(privkey,tag,permissiontype,powtarget)
 			};
 			//console.log(objtx);
 			let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-			let result = TargetTransaction.commit();
+			let result = await TargetTransaction.commit();
 
 			result.then(function (txid) {
 				resolve(txid);

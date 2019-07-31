@@ -86,7 +86,7 @@ exports.SetFunctionData = class{
 
 
 
-exports.SendSetContractTransaction = function(privkey,tag,FunctionName,CodeType,CodeData,CodePath=""){
+exports.SendSetContractTransaction = async function(privkey,tag,FunctionName,CodeType,CodeData,CodePath=""){
 	if (CodePath){
 		try{
 			CodeData = FS.readFileSync(CodePath, 'utf8');
@@ -107,7 +107,7 @@ exports.SendSetContractTransaction = function(privkey,tag,FunctionName,CodeType,
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
-	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
+	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
 	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objdata = {
@@ -124,7 +124,7 @@ exports.SendSetContractTransaction = function(privkey,tag,FunctionName,CodeType,
 	}
 
 	let objtx = {
-		"pubkey":TargetAccount.GetKeys()["pubkey"],
+		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 		"type":111,
 		"time":Math.floor(Date.now()/1000),
 		"tag":tag,
@@ -138,7 +138,7 @@ exports.SendSetContractTransaction = function(privkey,tag,FunctionName,CodeType,
 	};
 	//console.log(objtx);
 	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-	let result = TargetTransaction.commit();
+	let result = await TargetTransaction.commit();
 
 	return result;
 };
@@ -287,7 +287,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 		let tagtxid = tagtxids[index];
 
 		let tagtx = TRANSACTION.GetTx(tagtxid);
-		let objtagtx = tagtx.GetObjTx();
+		let objtagtx = await tagtx.GetObjTx();
 
 		if (objtagtx["type"] == 112){
 			let objtagdata = new exports.RunFunctionData(objtagtx["data"]).GetObjData();
@@ -302,7 +302,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 		let tagtxid = tagtxids[index];
 
 		let tagtx = TRANSACTION.GetTx(tagtxid);
-		let objtagtx = tagtx.GetObjTx();
+		let objtagtx = await tagtx.GetObjTx();
 
 		if (objtagtx["type"] == 111){
 			let objtagdata = new exports.SetFunctionData(objtagtx["data"]).GetObjData();
@@ -342,7 +342,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 
 	const starttime = Math.floor(Date.now()/1000);
 
-	let child = CP.spawn("node",["./exec/"+FunctionName+".js",JSON.stringify(TargetAccount.GetKeys()),JSON.stringify(FunctionArgs),JSON.stringify(LoadDataPerTag)]);
+	let child = CP.spawn("node",["./exec/"+FunctionName+".js",JSON.stringify(await TargetAccount.GetKeys()),JSON.stringify(FunctionArgs),JSON.stringify(LoadDataPerTag)]);
 
 	let bPromise = require('bluebird');
 	(function loop(index) {
@@ -377,7 +377,7 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
-	let FormTxList = TargetAccount.GetFormTxList(undefined,tag);
+	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
 	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 
@@ -413,7 +413,7 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 	}
 
 	let objtx = {
-		"pubkey":TargetAccount.GetKeys()["pubkey"],
+		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 		"type":112,
 		"time":Math.floor(Date.now()/1000),
 		"tag":tag,
@@ -427,7 +427,7 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 	};
 	//console.log(objtx);
 	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-	let result = TargetTransaction.commit();
+	let result = await TargetTransaction.commit();
 
 	return result;
 };

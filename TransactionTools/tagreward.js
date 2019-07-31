@@ -67,22 +67,22 @@ exports.TagrewardData = class{
 exports.SendTagrewardTransaction = function(privkey,tag,amount){
 	amount = parseInt(amount);
 
-	return new Promise(function (resolve, reject) {
+	return new Promise(async function (resolve, reject) {
 
 		let TargetAccount = new ACCOUNT.account(privkey);
 
 		let RewardAccount = new ACCOUNT.account();
-		let RewardPrivkey = RewardAccount.GetKeys()["privkey"];
+		let RewardPrivkey = (await RewardAccount.GetKeys())["privkey"];
 		//console.log(RewardPrivkey);
-		let result = new TRANSACTION.SendPayTransaction(privkey,RewardAccount.GetKeys()["address"],amount);
+		let result = new TRANSACTION.SendPayTransaction(privkey,(await RewardAccount.GetKeys())["address"],amount);
 
 
-		result.then(function (paytxid) {
+		result.then(async function (paytxid) {
 			/*
 			報酬トランザクション生成
 			*/
 
-			let FormTxList = TargetAccount.GetFormTxList(undefined,"tagreward");
+			let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagreward");
 			let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 			let TagMerkleRoot = TRANSACTION.GetTagMerkleRoot(tag);
@@ -96,7 +96,7 @@ exports.SendTagrewardTransaction = function(privkey,tag,amount){
 			let Tagreward = new exports.TagrewardData("",objdata);
 			//console.log(Tagreward.GetRawData());
 			let objtx = {
-				"pubkey":TargetAccount.GetKeys()["pubkey"],
+				"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 				"type":11,
 				"time":Math.floor(Date.now()/1000),
 				"tag":"tagreward",
@@ -110,7 +110,7 @@ exports.SendTagrewardTransaction = function(privkey,tag,amount){
 			};
 			//console.log(objtx);
 			let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-			let result = TargetTransaction.commit();
+			let result = await TargetTransaction.commit();
 
 			result.then(function (txid) {
 				resolve(txid);
@@ -131,7 +131,7 @@ exports.SendTagrewardTransaction = function(privkey,tag,amount){
 
 
 exports.RunMining = function(){
-	function mining(){
+	async function mining(){
 		/*
 		tagrewardトランザクションを走査してprivkeyを集める
 		*/
@@ -141,7 +141,7 @@ exports.RunMining = function(){
 			try{
 				let txid = tagrewardtxids[index];
 				let tx = TRANSACTION.GetTx(txid);
-				let tagrewarddata = new exports.TagrewardData(tx.GetObjTx()["data"]);
+				let tagrewarddata = new exports.TagrewardData((await tx.GetObjTx())["data"]);
 
 
 				if (CONFIG.Tagreward["MiningTags"].indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
@@ -185,7 +185,7 @@ exports.RunMining = function(){
 
 			let sendamount = 0;
 			try{
-				sendamount = RewardAccount.GetBalance();
+				sendamount = await RewardAccount.GetBalance();
 			}catch(e){
 				continue;
 			}
@@ -193,7 +193,7 @@ exports.RunMining = function(){
 			if (sendamount > 0 && UsedRewardPrivkey.indexOf(RewardPrivkey) == -1){
 				UsedRewardPrivkey.push(RewardPrivkey);
 				MAIN.note(1,"tagreward_RunMining","[Reward] "+sendamount+" by tag of "+tag);
-				let result = TRANSACTION.SendPayTransaction(RewardPrivkey,CollectAccount.GetKeys()["address"],sendamount);
+				let result = await TRANSACTION.SendPayTransaction(RewardPrivkey,(await CollectAccount.GetKeys())["address"],sendamount);
 			}
 		}
 

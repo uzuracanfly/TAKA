@@ -1,3 +1,6 @@
+const CONFIG = require('./config.js');
+
+
 exports.note = function(stat,title,text){
 	let result = "["+title+"]";
 	if (stat == 1){
@@ -12,7 +15,10 @@ exports.note = function(stat,title,text){
 
 	result = result + text;
 
-	console.log(result);
+
+	if (CONFIG.Note["loglevel"] <= stat){
+		console.log(result);
+	};
 
 	return result;
 }

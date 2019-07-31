@@ -1,4 +1,4 @@
-const READLINESYNC = require('readline-sync');
+const READLINE = require('readline');
 const REQUEST = require('sync-request');
 
 const CONFIG = require('./config.js');
@@ -30,7 +30,10 @@ exports.RunConsole = function(){
 			console.log(commands);
 			let result = false;
 			if (commands[0] == "getaccount"){
-				let key = commands[1];
+				let key = "";
+				if (commands.length >= 2){
+					key = commands[1];
+				};
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getaccount","args":{"key":key}});
 			}else if (commands[0] == "gettag"){
 				let tag = commands[1];
@@ -118,16 +121,21 @@ exports.RunConsole = function(){
 	}
 
 	let Promise = require('bluebird');
+	const RL = READLINE.createInterface({
+		input: process.stdin,
+		output: process.stdout,
+		bufferSize: 102400
+	});
 	Promise.resolve(0).then(function loop(i) {
 		return new Promise(function(resolve, reject) {
-			let commandtext = READLINESYNC.question(Math.floor(Date.now()/1000) + " : ");
-			let commands = commandtext.split(' ')
-			let actionresult = CommandAction(commands);
-			actionresult.then(function(value){
-				console.log(JSON.stringify(value,null,'\t'));
-			});
-
-			resolve(true);
+			RL.question(Math.floor(Date.now()/1000) + " : ", (commandtext) => {
+				let commands = commandtext.split(' ')
+				let actionresult = CommandAction(commands);
+				actionresult.then(function(value){
+					console.log(JSON.stringify(value,null,'\t'));
+					resolve(true);
+				});
+			})
 		}).delay(100).then(loop);
 	});
 };
