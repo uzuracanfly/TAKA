@@ -1,4 +1,6 @@
-﻿const CRYPTO = require('./crypto.js');
+﻿const ZLIB = require('zlib');
+
+const CRYPTO = require('./crypto.js');
 const HASHS = require('./hashs.js');
 const TRANSACTION = require('./transaction.js');
 const CONFIG = require('./config.js');
@@ -14,23 +16,46 @@ exports.account = class{
 
 
 	async GetKeys(key=this.key){
+		// 圧縮関数 (要deflate.js)
+		function deflate(val) {
+			val = encodeURIComponent(val); // UTF16 → UTF8
+			val = ZLIB.deflateRawSync(val); // 圧縮
+			val = val.toString("base64"); // base64エンコード
+		 	return val;
+		}
+
+		// 復号関数 (要inflate.js)
+		function inflate(val) {
+			val = Buffer.from(val,'base64');
+			val = ZLIB.inflateRawSync(val); // 復号
+			val = decodeURIComponent(val); // UTF8 → UTF16
+			return val;
+		}
+
 
 		/* キーの識別 */
 		let address = "";
 		let pubkey = "";
 		let privkey = "";
+		let MinPrivkey = "";
 		if (key.length == 40){
 			address = key;
 		}else if(key.length == 4016){
 			pubkey = key;
 		}else if(key.length == 11456){
 			privkey = key;
+		}else if(key.length > 6600 && key.length < 6700){
+			MinPrivkey = key;
 		}else{
 			privkey = await new CRYPTO.signature().CreatePrivkey();
 		}
 
 
+		if (MinPrivkey){
+			privkey = inflate(MinPrivkey);
+		}
 		if (privkey){
+			MinPrivkey = deflate(privkey)
 			pubkey = await new CRYPTO.signature().GetPrivkeyToPubkey(privkey);
 		};
 		if (pubkey){
@@ -38,6 +63,7 @@ exports.account = class{
 			address = new HASHS.hashs().ripemd160(address);
 		};
 		let keys = {
+			"MinPrivkey":MinPrivkey,
 			"privkey":privkey,
 			"pubkey":pubkey,
 			"address":address,
@@ -99,7 +125,7 @@ exports.account = class{
 			let rawtx = rawtxdata[0];
 			let TargetTransaction = new TRANSACTION.Transaction(rawtx);
 
-			if (TargetTransaction.objtx["toaddress"]==address){balance = balance + TargetTransaction.objtx["amount"]}else{balance = balance - TargetTransaction.objtx["amount"]};
+			if ((await TargetTransaction.GetObjTx())["toaddress"]==address){balance = balance + (await TargetTransaction.GetObjTx())["amount"]}else{balance = balance - (await TargetTransaction.GetObjTx())["amount"]};
 			
 		}
 

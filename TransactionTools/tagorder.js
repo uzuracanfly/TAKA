@@ -64,53 +64,41 @@ exports.TagOrderData = class{
 
 
 
-exports.SendTagOrderTransaction = function(privkey,tag,permissiontype,powtarget){
+exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powtarget){
 
-	return new Promise(async function (resolve, reject) {
+	let TargetAccount = new ACCOUNT.account(privkey);
 
-		let TargetAccount = new ACCOUNT.account(privkey);
-
-		//tag利用料支払いのトランザクションを発行
-		let result = await new TRANSACTION.SendPayTransaction(privkey,MAIN.GetFillZero("", 40),1);
+	//tag利用料支払いのトランザクションを発行
+	let paytxid = await TRANSACTION.SendPayTransaction(privkey,MAIN.GetFillZero("", 40),1);
 
 
-		result.then(async function (paytxid) {
-			let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
-			let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
+	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
+	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
-			let objdata = {
-				"feetxid":paytxid,
-				"permissiontype":permissiontype,
-				"powtarget":powtarget,
-			};
+	let objdata = {
+		"feetxid":paytxid,
+		"permissiontype":permissiontype,
+		"powtarget":powtarget,
+	};
 
-			let TagOrder = new exports.TagOrderData("",objdata);
+	let TagOrder = new exports.TagOrderData("",objdata);
 
-			let objtx = {
-				"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-				"type":12,
-				"time":Math.floor(Date.now()/1000),
-				"tag":tag,
-				"index":FormTxList.length+1,
-				"MerkleRoot":MerkleRoot,
-				"toaddress":"",
-				"amount":0,
-				"data":TagOrder.GetRawData(),
-				"sig":"",
-				"nonce":0
-			};
-			//console.log(objtx);
-			let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-			let result = await TargetTransaction.commit();
+	let objtx = {
+		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
+		"type":12,
+		"time":Math.floor(Date.now()/1000),
+		"tag":tag,
+		"index":FormTxList.length+1,
+		"MerkleRoot":MerkleRoot,
+		"toaddress":"",
+		"amount":0,
+		"data":TagOrder.GetRawData(),
+		"sig":"",
+		"nonce":0
+	};
+	//console.log(objtx);
+	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
+	let txid = await TargetTransaction.commit();
 
-			result.then(function (txid) {
-				resolve(txid);
-			}).catch(function (error) {
-				console.log(error);
-			});
-			
-		}).catch(function (error) {
-			console.log(error);
-		});
-	});
+	return txid;
 };

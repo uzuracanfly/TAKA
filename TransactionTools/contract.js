@@ -1,4 +1,6 @@
 const FS = require('fs');
+const PATH = require('path');
+
 const CONFIG = require('../config.js');
 const MAIN = require('../main.js');
 const HEX = require('../hex.js');
@@ -281,7 +283,6 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 
 	//LoadDataPerTagの取得
 	let tagtxids = TRANSACTION.GetTagTxids(tag);
-	tagtxids = tagtxids.reverse();
 	let LoadDataPerTag = {};
 	for (let index in tagtxids){
 		let tagtxid = tagtxids[index];
@@ -292,12 +293,12 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 		if (objtagtx["type"] == 112){
 			let objtagdata = new exports.RunFunctionData(objtagtx["data"]).GetObjData();
 
-			LoadDataPerTag = objtagdata["SetData"];
-			break;
+			Object.assign(LoadDataPerTag, objtagdata["SetData"]);
 		};
 	};
 
 	//ソースコードの保存
+	tagtxids = tagtxids.reverse();
 	for (let index in tagtxids){
 		let tagtxid = tagtxids[index];
 
@@ -315,7 +316,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 					try{
 						FS.mkdirSync("./exec/");
 					}catch(e){
-						console.log("");
+						//pass
 					}
 
 					FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
@@ -342,24 +343,50 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 
 	const starttime = Math.floor(Date.now()/1000);
 
-	let child = CP.spawn("node",["./exec/"+FunctionName+".js",JSON.stringify(await TargetAccount.GetKeys()),JSON.stringify(FunctionArgs),JSON.stringify(LoadDataPerTag)]);
+	let SendingData = JSON.stringify({"keys":(await TargetAccount.GetKeys()),"args":FunctionArgs,"data":LoadDataPerTag});
+	SendingData = SendingData.replace(/"/g, "@!");
 
-	let bPromise = require('bluebird');
-	(function loop(index) {
-		if (starttime+10 >= Math.floor(Date.now()/1000)) {
-			return bPromise.delay(1).then(function() {
-				return index+1;
-			}).then(loop);
+	let child = "";
+	if (CONFIG.Contract["UsingFirejail"]){
+		try{
+			FS.mkdirSync(process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"] + "/.config/firejail");
+		}catch(e){
+			//pass
 		}
-		//console.log("kill");
-		child.kill('SIGHUP');
-		return bPromise.resolve(index);
-	})(0);
+
+		let profile = FS.readFileSync("./TransactionTools/node.profile", 'utf8');
+		profile = profile.replace('TARGETPATH', PATH.resolve('./'));
+		FS.writeFileSync(process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"] + "/.config/firejail" + "/node.profile", profile, "utf8");
+
+		child = CP.spawn("firejail",["node",PATH.resolve('./')+"/exec/"+FunctionName+".js",SendingData]);
+	}else{
+		child = CP.spawn("node",[PATH.resolve('./')+"/exec/"+FunctionName+".js",SendingData]);
+	};
 
 	return new Promise(function (resolve, reject) {
+		let bPromise = require('bluebird');
+		(function loop(index) {
+			if (starttime+10 >= Math.floor(Date.now()/1000)) {
+				return bPromise.delay(1).then(function() {
+					return index+1;
+				}).then(loop);
+			}
+			//console.log("kill");
+			child.kill('SIGHUP');
+			return bPromise.resolve(index);
+		})(0).then(function(){
+			return resolve(false);
+		})
+
 		child.stdout.on("data", function (data) {
 			//console.log("data : "+data);
-			return resolve(JSON.parse(data));
+			let result = "";
+			try{
+				result = JSON.parse(data);
+				return resolve(result);
+			}catch(e){
+				//pass
+			}
 		});
 		child.on("error", function (e) {
 			console.log("error : "+e.message);
@@ -395,7 +422,9 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 	}
 
 
-
+	if (!CodeResult["result"]){
+		return 0;
+	}
 
 
 	let objdata = {
@@ -448,6 +477,12 @@ exports.CallRunContractTransaction = async function(address,tag,FunctionName,Fun
 	if (!("result" in CodeResult) || !("SetData" in CodeResult)){
 		return 0;
 	}
+
+
+	if (!CodeResult["result"]){
+		return 0;
+	}
+
 
 	return CodeResult["result"];
 };

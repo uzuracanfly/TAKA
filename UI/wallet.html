@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<title>TAKA Wallet | Distributed large capacity database.</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=yes" />
 <meta http-equiv="Pragma" content="no-cache">
@@ -28,7 +29,35 @@
 	width:100%;
 	margin:0 auto;
 }
--->
+
+
+.btn-border-bottom {
+	position: relative;
+	display: inline-block;
+	font-weight: bold;
+	padding: 0.25em 0;
+	text-decoration: none;
+	color: #67c5ff;	
+	background-color: rgba(255,255,255,0.8);
+}
+
+.btn-border-bottom:before {
+	position: absolute;
+	content: '';
+	width: 100%;
+	height: 4px;
+	top:100%;
+	left: 0;
+	border-radius: 3px;
+	background:#67c5ff;
+	transition: .2s;
+}
+
+.btn-border-bottom:hover:before {
+	top: -webkit-calc(100% - 3px);
+	top: calc(100% - 3px);
+}
+
 
 
 h1 {
@@ -41,6 +70,8 @@ h2 {
 	border: solid 3px #364e96;/*線色*/
 	border-radius: 0.5em;/*角丸*/
 }
+
+-->
 </style>
 
 
@@ -85,9 +116,9 @@ h2 {
 
 
 	function SendTransaction(type,tag,toaddress,amount,data,privkey=account["privkey"]){
-		return new Promise(function (resolve, reject) {
+		return new Promise(async function (resolve, reject) {
 
-			let address = new ACCOUNT.account(privkey).GetKeys()["address"];
+			let address = (await new ACCOUNT.account(privkey).GetKeys())["address"];
 
 			let AccountData = TAKA.getaccount(address);
 			let MerkleRoot = "";
@@ -127,19 +158,22 @@ h2 {
 				let objdata = FIRSTTXDATA.GetObjData();
 
 				target = BigInt("0x"+objdata["powtarget"]);
+				if (!target){
+					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+				}
 			}
 
-			let result = TargetTransaction.GetNonce(TargetTransaction.GetRawTx(),target);
-			let objsendtx = TargetTransaction.GetObjTx();
+			let result = TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target);
+			let objsendtx = await TargetTransaction.GetObjTx();
 
 
 
-			result.then(function(nonce){
+			result.then(async function(nonce){
 
 				objsendtx["nonce"] = nonce;
 
 				TargetTransaction = new TRANSACTION.Transaction("",privkey,objsendtx);
-				let rawtx = TargetTransaction.GetRawTx();
+				let rawtx = await TargetTransaction.GetRawTx();
 
 
 				TAKA.sendtx(
@@ -167,60 +201,6 @@ h2 {
 
 
 
-	function Login(){
-		let formargs = [
-			["title","Login"],
-			["input","privkey","privkey"],
-			[
-				"button",
-				"Login",
-				function()
-				{
-					let privkey = document.getElementById("privkey").value;
-
-					let keys = new ACCOUNT.account(privkey).GetKeys();
-
-					account = keys;
-
-					TopForm();
-				}
-			],
-			[
-				"button",
-				"NewAccount",
-				function()
-				{
-					let keys = new ACCOUNT.account().GetKeys();
-
-					let LoginNewAccountForm = new form(
-						[
-							["title","New Account"],
-							["head","Privkey"],
-							["text","SAVE THIS! AND NOT BE SHOWN TO PEOPLE!"],
-							["input","privkey","mprivkey"],
-							["head","Pubkey"],
-							["input","pubkey","pubkey"],
-							["head","Address"],
-							["text","THIS IS USING RECEIVE COINS! YOU CAN SHOW THIS!"],
-							["input","address","address"],
-						],
-						"LoginNewAccountForm"
-					);
-					document.getElementById("privkey").value = keys["privkey"];
-					document.getElementById("mprivkey").value = keys["privkey"];
-					document.getElementById("pubkey").value = keys["pubkey"];
-					document.getElementById("address").value = keys["address"];
-				}
-			],
-		];
-
-		let LoginForm = new form(
-			formargs,
-			"LoginForm"
-		);
-
-		return true;
-	}
 
 
 	function TopForm(){
@@ -537,7 +517,7 @@ h2 {
 					],
 					[
 						"button",
-						"Tag add permit",
+						"Tag Add Permit",
 						function()
 						{
 							let TopTagAddpermForm = new form(
@@ -932,10 +912,120 @@ h2 {
 
 <script>
 	window.onload = function(){
-		let outer=document.getElementById("outer");
-		let inner=document.getElementById("inner");
+
+		let EleLogin = element(
+			{
+				"name":"EleLogin",
+				"attachele":document.body,
+				"type":"div",
+				"height":"50%",
+				"width":"100%",
+				"position":"fixed",
+				"top":"0px",
+				"left":"0px",
+				"color":"rgba(0,0,0,1)",
+				"backgroundColor":"rgba(255,127,0,1)",
+			}
+		);
 
 
-		Login();
+
+
+
+		let EleLoginInner = element(
+			{
+				"name":"EleLoginInner",
+				"attachele":EleLogin,
+				"type":"div",
+				"width":"100%",
+				"maxWidth":"1024px",
+				"position":"relative",
+			}
+		);
+		var IntervalID_EleLoginInner = setInterval(
+			function()
+			{
+				if (document.getElementById("EleLoginInner") == null){clearInterval(IntervalID_EleLoginInner);return 0;};
+
+				EleLogin.style.top = window.innerHeight/2 - EleLogin.clientHeight/2 + "px";
+
+				EleLoginInner.style.top = EleLogin.clientHeight/2 - EleLoginInner.clientHeight/2 + "px";
+				EleLoginInner.style.left = EleLogin.clientWidth/2 - EleLoginInner.clientWidth/2 + "px";
+			},
+			10
+		);
+
+
+
+		let EleInputLogin = element(
+			{
+				"name":"privkey",
+				"attachele":EleLoginInner,
+				"type":"input",
+				"height":"50px",
+				"width":"100%",
+				"placeholder":"MinPrivkey, privkey, pubkey, address",
+				"textAlign":"center",
+			}
+		);
+		let EleButtonLogin = element(
+			{
+				"name":"EleButtonLogin",
+				"attachele":EleLoginInner,
+				"type":"a",
+				"class":"btn-border-bottom",
+				"height":"50px",
+				"width":"100%",
+				"innerHTML":"Login",
+				"textAlign":"center",
+				"clickfunction":async function(){
+					let privkey = document.getElementById("privkey").value;
+
+					let keys = await (new ACCOUNT.account(privkey)).GetKeys();
+
+					account = keys;
+
+					TopForm();
+				}
+			}
+		);
+		let EleButtonNewAccount = element(
+			{
+				"name":"EleButtonNewAccount",
+				"attachele":EleLoginInner,
+				"type":"a",
+				"class":"btn-border-bottom",
+				"height":"50px",
+				"width":"100%",
+				"innerHTML":"NewAccount",
+				"textAlign":"center",
+				"clickfunction":async function(){
+					let keys = await (new ACCOUNT.account()).GetKeys();
+
+					let LoginNewAccountForm = new form(
+						[
+							["title","New Account"],
+							["head","MinPrivkey"],
+							["text","SAVE THIS! AND NOT BE SHOWN TO PEOPLE!"],
+							["input","MinPrivkey","MinPrivkey"],
+							["head","Privkey"],
+							["input","privkey","mprivkey"],
+							["head","Pubkey"],
+							["input","pubkey","pubkey"],
+							["head","Address"],
+							["text","THIS IS USING RECEIVE COINS! YOU CAN SHOW THIS!"],
+							["input","address","address"],
+						],
+						"LoginNewAccountForm"
+					);
+					document.getElementById("MinPrivkey").value = keys["MinPrivkey"];
+					document.getElementById("privkey").value = keys["MinPrivkey"];
+					document.getElementById("mprivkey").value = keys["privkey"];
+					document.getElementById("pubkey").value = keys["pubkey"];
+					document.getElementById("address").value = keys["address"];
+				}
+			}
+		);
 	};
+
 </script>

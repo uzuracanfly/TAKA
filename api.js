@@ -63,6 +63,7 @@ exports.SetServer = function(){
 						}
 
 						let callback = {
+							"MinPrivkey":keys["MinPrivkey"],
 							"privkey":keys["privkey"],
 							"pubkey":keys["pubkey"],
 							"address":keys["address"],
@@ -96,7 +97,7 @@ exports.SetServer = function(){
 
 
 						if (tag != "pay" && tag != "tagreward" && TagTxids.length > 0){
-							let TagOrderTx = new TRANSACTION.GetTagOrderTx(tag);
+							let TagOrderTx = await new TRANSACTION.GetTagOrderTx(tag);
 							let TagOrderObjTx = await TagOrderTx.GetObjTx();
 
 							let TagOrderData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]);
@@ -105,7 +106,7 @@ exports.SetServer = function(){
 							let ownerpubkey = TagOrderObjTx["pubkey"];
 							let OwnerAccount = new ACCOUNT.account(ownerpubkey);
 
-							let TagPermitAddresss = TRANSACTION.GetTagPermitAddresss(tag);
+							let TagPermitAddresss = await TRANSACTION.GetTagPermitAddresss(tag);
 
 							callback["owner"] = {
 								"pubkey":ownerpubkey,
@@ -133,10 +134,10 @@ exports.SetServer = function(){
 						let TargetTransaction = new TRANSACTION.Transaction(rawtx);
 						let result = await TargetTransaction.commit();
 
-						result.then(function(value){
-							response.write(JSON.stringify(value));
-							response.end();
-						});
+
+						response.write(JSON.stringify(result));
+						response.end();
+
 					};
 
 
@@ -392,11 +393,13 @@ exports.SetServer = function(){
 						}
 
 
-						let result = await TRANSACTIONTOOLS_CONTRACT.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
+						let result = TRANSACTIONTOOLS_CONTRACT.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
 
 
-						response.write(JSON.stringify(result));
-						response.end();
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
 
 					};
 
@@ -417,11 +420,13 @@ exports.SetServer = function(){
 
 
 						let TargetAccount = new ACCOUNT.account(address);
-						let result = await TRANSACTIONTOOLS_CONTRACT.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
+						let result = TRANSACTIONTOOLS_CONTRACT.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
 
 
-						response.write(JSON.stringify(result));
-						response.end();
+						result.then(function(value){
+							response.write(JSON.stringify(value));
+							response.end();
+						});
 
 					};
 

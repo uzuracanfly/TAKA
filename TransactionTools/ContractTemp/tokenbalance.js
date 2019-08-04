@@ -1,14 +1,21 @@
-const runnerkeys = JSON.parse(process.argv[2]); //コントラクト実行しているアカウント情報取得
-const args = JSON.parse(process.argv[3]); //引数取得
-const data = JSON.parse(process.argv[4]); //tagに関連したコントラクトのデータをすべて取得
+try{
+	let SendingData = (process.argv).slice(-1)[0];
+	SendingData = JSON.parse(SendingData.replace(/@!/g, '"'));
+
+	const runnerkeys = SendingData["keys"]; //コントラクト実行しているアカウント情報取得
+	const args = SendingData["args"]; //引数取得
+	const data = SendingData["data"]; //tagに関連したコントラクトのデータをすべて取得
 
 
+	let address = runnerkeys["address"];
 
-let address = runnerkeys["address"];
-
-if (!(address in data)){
-	return {"result":0,"SetData":data};
-};
+	if (!(address in data)){
+		return {"result":0,"SetData":data};
+	};
 
 
-console.log( JSON.stringify({"result":data[address]["balance"],"SetData":data}) );
+	console.log( JSON.stringify({"result":data[address]["balance"],"SetData":data}) );
+
+}catch(e){
+	console.log( JSON.stringify({"result":false,"SetData":e.message}) )
+}

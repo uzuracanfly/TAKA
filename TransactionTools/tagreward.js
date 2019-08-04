@@ -64,64 +64,58 @@ exports.TagrewardData = class{
 
 
 
-exports.SendTagrewardTransaction = function(privkey,tag,amount){
-	amount = parseInt(amount);
+exports.SendTagrewardTransaction = async function(privkey,tag,amount){
+	try{
+		amount = parseInt(amount);
 
-	return new Promise(async function (resolve, reject) {
 
 		let TargetAccount = new ACCOUNT.account(privkey);
 
 		let RewardAccount = new ACCOUNT.account();
 		let RewardPrivkey = (await RewardAccount.GetKeys())["privkey"];
 		//console.log(RewardPrivkey);
-		let result = new TRANSACTION.SendPayTransaction(privkey,(await RewardAccount.GetKeys())["address"],amount);
+		let paytxid = await TRANSACTION.SendPayTransaction(privkey,(await RewardAccount.GetKeys())["address"],amount);
+
+		/*
+		報酬トランザクション生成
+		*/
+
+		let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagreward");
+		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
+
+		let TagMerkleRoot = TRANSACTION.GetTagMerkleRoot(tag);
+		let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(TagMerkleRoot,RewardPrivkey);
+
+		let objdata = {
+			"tag":tag,
+			"EncryptoPrivkey":EncryptoPrivkey,
+		};
+
+		let Tagreward = new exports.TagrewardData("",objdata);
+		//console.log(Tagreward.GetRawData());
+		let objtx = {
+			"pubkey":(await TargetAccount.GetKeys())["pubkey"],
+			"type":11,
+			"time":Math.floor(Date.now()/1000),
+			"tag":"tagreward",
+			"index":FormTxList.length+1,
+			"MerkleRoot":MerkleRoot,
+			"toaddress":"",
+			"amount":0,
+			"data":Tagreward.GetRawData(),
+			"sig":"",
+			"nonce":0
+		};
+		//console.log(objtx);
+		let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
+		let txid = await TargetTransaction.commit();
 
 
-		result.then(async function (paytxid) {
-			/*
-			報酬トランザクション生成
-			*/
-
-			let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagreward");
-			let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
-
-			let TagMerkleRoot = TRANSACTION.GetTagMerkleRoot(tag);
-			let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(TagMerkleRoot,RewardPrivkey);
-
-			let objdata = {
-				"tag":tag,
-				"EncryptoPrivkey":EncryptoPrivkey,
-			};
-
-			let Tagreward = new exports.TagrewardData("",objdata);
-			//console.log(Tagreward.GetRawData());
-			let objtx = {
-				"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-				"type":11,
-				"time":Math.floor(Date.now()/1000),
-				"tag":"tagreward",
-				"index":FormTxList.length+1,
-				"MerkleRoot":MerkleRoot,
-				"toaddress":"",
-				"amount":0,
-				"data":Tagreward.GetRawData(),
-				"sig":"",
-				"nonce":0
-			};
-			//console.log(objtx);
-			let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-			let result = await TargetTransaction.commit();
-
-			result.then(function (txid) {
-				resolve(txid);
-			}).catch(function (error) {
-				console.log(error);
-			});
-			
-		}).catch(function (error) {
-			console.log(error);
-		});
-	});
+		return txid;
+	}catch(e){
+		console.log(e);
+		return "";
+	}
 };
 
 

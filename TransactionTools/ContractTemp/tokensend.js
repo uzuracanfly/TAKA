@@ -1,42 +1,70 @@
-const runnerkeys = JSON.parse(process.argv[2]); //コントラクト実行しているアカウント情報取得
-const args = JSON.parse(process.argv[3]); //引数取得
-const data = JSON.parse(process.argv[4]); //tagに関連したコントラクトのデータをすべて取得
+try{
+	let SendingData = (process.argv).slice(-1)[0];
+	SendingData = JSON.parse(SendingData.replace(/@!/g, '"'));
 
-const tokenowner = "610b878b39201535046ded58b8bbd84bd8581745";
-const PremineAmount = 100000000;
-
-
-
-let address = runnerkeys["address"];
-let toaddress = args["toaddress"];
-let amount = args["amount"];
+	const runnerkeys = SendingData["keys"]; //コントラクト実行しているアカウント情報取得
+	const args = SendingData["args"]; //引数取得
+	const data = SendingData["data"]; //tagに関連したコントラクトのデータをすべて取得
 
 
-if (!(address in data)){
-	if (tokenowner == address){
-		data[address] = {
-			"balance":PremineAmount
-		}
+	const tokenowner = "eb86950b214dea4c863d10c5c0fa22fd027647ca";
+	const PremineAmount = 100000000;
+
+
+	let address = runnerkeys["address"];
+	let toaddress = args["toaddress"];
+	let amount = args["amount"];
+
+
+
+
+	let SetData = {};
+	if (!(address in data)){
+		if (tokenowner == address){
+			SetData[address] = {
+				"balance":PremineAmount
+			}
+		}else{
+			SetData[address] = {
+				"balance":0
+			}
+		};
 	}else{
-		data[address] = {
-			"balance":0
-		}
-	};
-}
-if (!(toaddress in data)){
-	data[toaddress] = {
-		"balance":0
+		SetData[address] = {
+			"balance":data[address]["balance"]
+		};
 	}
+
+
+	if (!(toaddress in data)){
+		if (tokenowner == toaddress){
+			SetData[toaddress] = {
+				"balance":PremineAmount
+			}
+		}else{
+			SetData[toaddress] = {
+				"balance":0
+			}
+		};
+	}else{
+		SetData[toaddress] = {
+			"balance":data[toaddress]["balance"]
+		};
+	}
+
+
+	if (SetData[address]["balance"] < amount) {
+		return 0;
+	};
+
+
+
+	SetData[address]["balance"] = SetData[address]["balance"] - amount;
+	SetData[toaddress]["balance"] = SetData[toaddress]["balance"] + amount;
+
+
+
+	console.log( JSON.stringify({"result":true,"SetData":SetData}) );
+}catch(e){
+	console.log( JSON.stringify({"result":false,"SetData":e.message}) )
 }
-
-
-if (data[address]["balance"] < amount) {
-	return 0;
-};
-
-data[address]["balance"] = data[address]["balance"] - amount;
-data[toaddress]["balance"] = data[toaddress]["balance"] + amount;
-
-
-
-console.log( JSON.stringify({"result":true,"SetData":data}) );
