@@ -33,7 +33,7 @@ exports.Tagreward = {
 
 
 exports.Contract = {
-	"banword":["global","Config","YESCRYPT","require"],
+	"banword":["global","require"],
 	"UsingFirejail":false
 }
 

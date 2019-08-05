@@ -299,6 +299,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 
 	//ソースコードの保存
 	tagtxids = tagtxids.reverse();
+	let SourcePath = false;
 	for (let index in tagtxids){
 		let tagtxid = tagtxids[index];
 
@@ -313,18 +314,20 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 				if (objtagdata["CodeType"] == 1){
 					let CodeData = objtagdata["CodeData"];
 
+					SourcePath = PATH.resolve('./')+"/exec/"+objtagtx["tag"]+"_"+objtagdata["FunctionName"]+".js";
+
 					try{
 						FS.mkdirSync("./exec/");
 					}catch(e){
 						//pass
 					}
 
-					FS.writeFileSync("./exec/"+objtagdata["FunctionName"]+".js", CodeData, "utf8");
+					FS.writeFileSync(SourcePath, CodeData, "utf8");
 
 					let loopindex = 0;
 					while (loopindex < 100){
 						try{
-							FS.statSync("./exec/"+objtagdata["FunctionName"]+".js");
+							FS.statSync(SourcePath);
 							break;
 						}catch(e){
 							loopindex = loopindex + 1;
@@ -339,6 +342,9 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 	}
 
 
+	if (!SourcePath){
+		return 0;
+	}
 
 
 	const starttime = Math.floor(Date.now()/1000);
@@ -358,9 +364,9 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 		profile = profile.replace('TARGETPATH', PATH.resolve('./'));
 		FS.writeFileSync(process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"] + "/.config/firejail" + "/node.profile", profile, "utf8");
 
-		child = CP.spawn("firejail",["node",PATH.resolve('./')+"/exec/"+FunctionName+".js",SendingData]);
+		child = CP.spawn("firejail",["node",SourcePath,SendingData]);
 	}else{
-		child = CP.spawn("node",[PATH.resolve('./')+"/exec/"+FunctionName+".js",SendingData]);
+		child = CP.spawn("node",[SourcePath,SendingData]);
 	};
 
 	return new Promise(function (resolve, reject) {
