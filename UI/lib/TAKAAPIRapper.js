@@ -44,12 +44,13 @@ class TAKAAPIRapper{
 	};
 
 
-	getaccount(key,LessIndex=0,callback="",CallbackArgs=""){
+	getaccount(key,LessIndex=0,needs=[],callback="",CallbackArgs=""){
 		let args = {
 			"function":"getaccount",
 			"args":{
 				"key":key,
-				"LessIndex":LessIndex
+				"LessIndex":LessIndex,
+				"needs":needs
 			}
 		};
 

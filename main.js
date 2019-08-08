@@ -5,6 +5,9 @@ exports.note = function(stat,title,text){
 	const CONFIG = require('./config.js');
 	
 	let result = "["+title+"]";
+	if (stat == 0){
+		result = result + "[DEBUG]";
+	}
 	if (stat == 1){
 		result = result + "[INFO]";
 	}
@@ -64,10 +67,11 @@ exports.GetConsole = async function(pretext){
 		const RL = READLINE.createInterface({
 			input: process.stdin,
 			output: process.stdout,
-			bufferSize: 102400
+			bufferSize: 10240
 		});
 
 		RL.question(pretext, (inputtext) => {
+			RL.close();
 			return resolve(inputtext);
 		});
 	});

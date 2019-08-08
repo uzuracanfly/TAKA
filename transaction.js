@@ -307,7 +307,7 @@ exports.Transaction = class{
 					let tagreward = require('./TransactionTools/tagreward.js');
 					let Tagreward = new tagreward.TagrewardData(objtx["data"]);
 					let TagrewardObjData = Tagreward.GetObjData();
-					//console.log(TagrewardObjData);
+
 					if (!("tag" in TagrewardObjData) || !TagrewardObjData["tag"]){
 						return 0;
 					}
@@ -376,7 +376,7 @@ exports.Transaction = class{
 						return 0;
 					}
 				}catch(e){
-					//console.log(e);
+					//MAIN.note(2,"Confirmation",e);
 					return 0;
 				};
 
@@ -469,7 +469,7 @@ exports.Transaction = class{
 						}
 					};
 				}catch(e){
-					console.log(e);
+					MAIN.note(2,"Confirmation",e);
 					return 0;
 				};
 			};
@@ -502,7 +502,7 @@ exports.Transaction = class{
 
 
 				}catch(e){
-					console.log(e);
+					MAIN.note(2,"Confirmation",e);
 					return 0;
 				};
 			};
@@ -577,7 +577,7 @@ exports.Transaction = class{
 			return 1;
 
 		}catch(e){
-			console.log(e);
+			MAIN.note(2,"Confirmation",e);
 			return 0;
 		};
 	};
@@ -686,8 +686,8 @@ exports.Transaction = class{
 					}).then(loop);
 				};
 			})(nonce);
-		}).catch(function (error) {
-			console.log(error);
+		}).catch(function (e) {
+			MAIN.note(2,"GetNonce",e);
 		});
 	}
 
@@ -705,6 +705,10 @@ exports.Transaction = class{
 		let target = await this.GetPOWTarget(rawtx);
 		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
+		if (!objtx["tag"]){
+			return false;
+		}
 
 
 		return new Promise(function (resolve, reject) {
@@ -729,8 +733,8 @@ exports.Transaction = class{
 					}).then(loop);
 				};
 			})(nonce);
-		}).catch(function (error) {
-			console.log(error);
+		}).catch(function (e) {
+			MAIN.note(2,"commit",e);
 		});
 	};
 };
@@ -758,7 +762,7 @@ exports.GetTx = function(txid){
 
 		return TargetTransaction;
 	}catch(e){
-		console.log(e);
+		MAIN.note(2,"GetTx",e);
 		return false;
 	}
 }
@@ -766,7 +770,12 @@ exports.GetTx = function(txid){
 exports.GetTags = function(){
 	let tags = DATABASE.get("UnconfirmedTransactions");
 
-	return tags;
+	//空白は排除
+	let result = tags.filter(function(vars) {
+		return vars;
+	});
+
+	return result;
 };
 
 exports.GetTagTxids = function(tag){
@@ -833,7 +842,7 @@ exports.GetTagOrderTx = async function(tag){
 			return 0;
 		}
 	}catch(e){
-		console.log(e);
+		MAIN.note(2,"GetTagOrderTx",e);
 		return 0;
 	}
 }
@@ -876,6 +885,31 @@ exports.GetUnconfirmedTransactions = function(){
 
 
 
+exports.GetImportTags = async function(){
+	let ImportTags = DATABASE.get("ImportTags","live");
+
+	Array.prototype.push.apply(ImportTags, CONFIG.ImportTags);
+
+	return ImportTags;
+};
+
+
+exports.SetImportTags = async function(type,tag){
+	if (type == "add"){
+		DATABASE.add("ImportTags","live",tag);
+	}else if (type == "remove"){
+		let ImportTags = DATABASE.get("ImportTags","live");
+		let index = ImportTags.indexOf(tag);
+		if (index == -1){
+			return 0;
+		}
+		DATABASE.remove("ImportTags","live",index);
+	};
+	return 1;
+};
+
+
+
 
 
 
@@ -891,7 +925,7 @@ exports.RunCommit = async function(){
 		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.GetObjTx())["toaddress"],(await TargetTransaction.GetTxid()));
 		DATABASE.add("TransactionIdsPerAll","live",await TargetTransaction.GetTxid());
 
-		MAIN.note(1,"transaction_RunCommit_commit","[commit transaction] txid : "+(await TargetTransaction.GetTxid()));
+		MAIN.note(0,"transaction_RunCommit_commit","[commit transaction] txid : "+(await TargetTransaction.GetTxid()));
 		return 1;
 	}
 
@@ -922,7 +956,7 @@ exports.RunCommit = async function(){
 					continue;
 				}
 
-				if (CONFIG.ImportTags.length>0 && (CONFIG.ImportTags).indexOf(tag) == -1){
+				if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(tag) == -1){
 					continue;
 				};
 
@@ -954,7 +988,7 @@ exports.RunCommit = async function(){
 							UnconfirmedTransactionsSort.push(oldrawtx);
 						}
 					}catch(e){
-						console.log(e);
+						MAIN.note(2,"RunCommit",e);
 						continue;
 					}
 				};
@@ -967,16 +1001,16 @@ exports.RunCommit = async function(){
 						let TargetTransaction = new exports.Transaction(rawtx);
 
 
-						MAIN.note(1,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
+						MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 
 						let txbool = await TargetTransaction.Confirmation();
 						if (txbool){
 							await commit(TargetTransaction);
 						}else{
-							MAIN.note(1,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
+							MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
 						}
 					}catch(e){
-						console.log(e);
+						MAIN.note(2,"RunCommit",e);
 						continue;
 					}
 				}

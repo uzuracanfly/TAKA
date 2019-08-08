@@ -112,6 +112,20 @@ exports.RunConsole = function(){
 				FunctionArgs = JSON.parse(FunctionArgs);
 
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"runcode","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+			}else if (commands[0] == "getimporttag"){
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getimporttag","args":{}});
+			}else if (commands[0] == "setimporttag"){
+				let type = commands[1];
+				let tag = commands[2];
+
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"setimporttag","args":{"type":type,"tag":tag}});
+			}else if (commands[0] == "getminingtags"){
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getminingtags","args":{}});
+			}else if (commands[0] == "setminingtags"){
+				let type = commands[1];
+				let tag = commands[2];
+
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"setminingtags","args":{"type":type,"tag":tag}});
 			};
 
 			resolve(result);

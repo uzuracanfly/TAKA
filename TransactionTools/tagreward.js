@@ -7,6 +7,7 @@ const ACCOUNT = require('../account.js');
 const HASHS = require('../hashs.js');
 const TRANSACTION = require('../transaction.js');
 const CRYPTO = require('../crypto.js');
+const DATABASE = new (require('../database.js')).ChangeMemDatabase(CONFIG.database["address"],CONFIG.database["port"],CONFIG.database["database"]);
 
 
 
@@ -119,6 +120,27 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 };
 
 
+exports.GetMiningTags = async function(){
+	let MiningTags = DATABASE.get("MiningTags","live");
+
+	Array.prototype.push.apply(MiningTags, CONFIG.Tagreward["MiningTags"]);
+
+	return MiningTags;
+}
+
+exports.SetMiningTags = async function(type,tag){
+	if (type == "add"){
+		DATABASE.add("MiningTags","live",tag);
+	}else if (type == "remove"){
+		let MiningTags = DATABASE.get("MiningTags","live");
+		let index = MiningTags.indexOf(tag);
+		if (index == -1){
+			return 0;
+		}
+		DATABASE.remove("MiningTags","live",index);
+	};
+	return 1;
+}
 
 
 
@@ -138,7 +160,7 @@ exports.RunMining = function(){
 				let tagrewarddata = new exports.TagrewardData((await tx.GetObjTx())["data"]);
 
 
-				if (CONFIG.Tagreward["MiningTags"].indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
+				if ((await exports.GetMiningTags()).indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
 
 
 				//tagのtxリストから共通鍵作る

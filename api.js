@@ -2,6 +2,7 @@ const FS = require('fs');
 const IP = require("ip");
 
 const CONFIG = require('./config.js');
+const MAIN = require('./main.js');
 const ACCOUNT = require('./account.js');
 const TRANSACTION = require('./transaction.js');
 const HASHS = require('./hashs.js');
@@ -33,6 +34,42 @@ exports.SetServer = function(){
 
 
 
+
+					/*
+					サーバー管理関連コマンド
+					*/
+					if(postData["function"] == "getimporttag"){
+						let callback = await TRANSACTION.GetImportTags();
+
+						response.write(JSON.stringify(callback));
+						response.end();
+					};
+					if(postData["function"] == "setimporttag"){
+						let type = postData["args"]["type"];
+						let tag = postData["args"]["tag"];
+
+						let callback = await TRANSACTION.SetImportTags(type,tag);
+
+						response.write(JSON.stringify(callback));
+						response.end();
+					};
+					if(postData["function"] == "getminingtags"){
+						let callback = await TRANSACTIONTOOLS_TAGREWARD.GetMiningTags();
+
+						response.write(JSON.stringify(callback));
+						response.end();
+					};
+					if(postData["function"] == "setminingtags"){
+						let type = postData["args"]["type"];
+						let tag = postData["args"]["tag"];
+
+						let callback = await TRANSACTIONTOOLS_TAGREWARD.SetMiningTags(type,tag);
+
+						response.write(JSON.stringify(callback));
+						response.end();
+					};
+
+
 					//curl http:/cation/json' -d '{"function":"getaccount","args":{"key":"5f2ba01ab3d8c3a418cf0232f83a0cd18e5a8a09"}}'
 					if(postData["function"] == "getaccount"){
 						let key = "";
@@ -43,6 +80,10 @@ exports.SetServer = function(){
 						let LessIndex = 0;
 						if ("LessIndex" in postData["args"] && postData["args"]["LessIndex"]){
 							LessIndex = postData["args"]["LessIndex"];
+						}
+						let needs = [];
+						if ("needs" in postData["args"] && postData["args"]["needs"]){
+							needs = postData["args"]["needs"];
 						}
 
 						let TargetAccount = new ACCOUNT.account(key);
@@ -64,12 +105,20 @@ exports.SetServer = function(){
 
 						let callback = {
 							"MinPrivkey":keys["MinPrivkey"],
-							"privkey":keys["privkey"],
-							"pubkey":keys["pubkey"],
 							"address":keys["address"],
-							"txids":txids,
 							"balance":await TargetAccount.GetBalance(undefined,LessIndex),
 						}
+
+
+						if (needs.indexOf("privkey") >= 0){
+							callback["privkey"] = keys["privkey"];
+						};
+						if (needs.indexOf("pubkey") >= 0){
+							callback["pubkey"] = keys["pubkey"];
+						};
+						if (needs.indexOf("txids") >= 0){
+							callback["txids"] = txids;
+						};
 
 						response.write(JSON.stringify(callback));
 						response.end();
@@ -97,7 +146,7 @@ exports.SetServer = function(){
 
 
 						if (tag != "pay" && tag != "tagreward" && TagTxids.length > 0){
-							let TagOrderTx = await new TRANSACTION.GetTagOrderTx(tag);
+							let TagOrderTx = await TRANSACTION.GetTagOrderTx(tag);
 							let TagOrderObjTx = await TagOrderTx.GetObjTx();
 
 							let TagOrderData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]);
@@ -432,7 +481,7 @@ exports.SetServer = function(){
 
 
 				}catch(e){
-					console.log(e);
+					MAIN.note(2,"SetServer",e);
 					response.write(JSON.stringify(false));
 					response.end();
 				};

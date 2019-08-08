@@ -39,5 +39,5 @@ exports.Contract = {
 
 
 exports.Note = {
-	"loglevel":2
+	"loglevel":1
 }

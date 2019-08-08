@@ -8,7 +8,7 @@ const CRYPTO = require('./crypto.js');
 	try{
 		const CONFIG = require('./config.js');
 	}catch(e){
-		console.log("None Config!Setup Config!");
+		MAIN.note(1,"init","None Config!Setup Config!");
 
 		/*
 			Configの設定
@@ -61,12 +61,12 @@ const CRYPTO = require('./crypto.js');
 		ConfigData = ConfigData.replace( 'TAGREWARD_MININGTAGS', TAGREWARD_MININGTAGS );
 		ConfigData = ConfigData.replace( 'TAGREWARD_COLLECTPRIVKEY', '"'+TAGREWARD_COLLECTPRIVKEY+'"' );
 
-		FS.writeFile("./config.js", ConfigData, "utf8", (error) => {
-			if (error) {
-				console.log(error.message);
-				throw error;
+		FS.writeFile("./config.js", ConfigData, "utf8", (e) => {
+			if (e) {
+				MAIN.note(2,"init",e);
+				throw e;
 			}
-			console.log("Done!Restart please!");
+			MAIN.note(1,"init","Done!Restart please!");
 			process.exit(0);
 		});
 	}
@@ -106,7 +106,7 @@ const CRYPTO = require('./crypto.js');
 		}
 
 		CLUSTER.on('exit', (worker, code, signal) => {
-			console.log(`worker ${worker.process.pid} died`);
+			MAIN.note(1,"init",`worker ${worker.process.pid} died`);
 		});
 	}else{
 		let worker_id = CLUSTER.worker.id;
@@ -115,7 +115,7 @@ const CRYPTO = require('./crypto.js');
 			{
 				FunctionList[worker_id-1]["function"]();
 
-				console.log(`Worker ${process.pid} to ${FunctionList[worker_id-1]["name"]} started`);
+				MAIN.note(1,"init",`Worker ${process.pid} to ${FunctionList[worker_id-1]["name"]} started`);
 			},
 			FunctionList[worker_id-1]["time"]
 		);

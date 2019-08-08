@@ -120,7 +120,7 @@ h2 {
 
 			let address = (await new ACCOUNT.account(privkey).GetKeys())["address"];
 
-			let AccountData = TAKA.getaccount(address);
+			let AccountData = TAKA.getaccount(address,0,["txids"]);
 			let MerkleRoot = "";
 			let txs = [];
 			if (tag in AccountData["txids"]){
@@ -137,12 +137,12 @@ h2 {
 				"index":index+1,
 				"MerkleRoot":MerkleRoot,
 				"toaddress":toaddress,
-				"amount":amount,
+				"amount":parseInt(amount),
 				"data":data,
 				"sig":"",
 				"nonce":0,
 			};
-
+			//console.log(objtx);
 			let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
 
 
@@ -203,10 +203,20 @@ h2 {
 
 
 
-	function TopForm(){
+	async function TopForm(){
+
+		let LoginLoadForm = new form(
+			[
+				["title","Loading....."]
+			],
+			"LoginLoadForm"
+		);
+
+
 		TAKA.getaccount(
 			account["address"],
 			0,
+			[],
 			function(CallbackResult,CallbackArgs){
 				let formargs = [
 					["head","Address"],
@@ -407,7 +417,7 @@ h2 {
 									[
 										"button",
 										"send",
-										function()
+										async function()
 										{
 											let tag = document.getElementById("tag").value;
 											let amount = document.getElementById("amount").value;
@@ -423,11 +433,8 @@ h2 {
 												);
 											}
 
-											let RewardPrivkeyKeys = new ACCOUNT.account().GetKeys();
+											let RewardPrivkeyKeys = await (new ACCOUNT.account().GetKeys());
 											let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(TagsMerkleRoot,RewardPrivkeyKeys["privkey"]);
-
-											let result = SendTransaction(1,"pay",RewardPrivkeyKeys["address"],amount,"");
-
 
 
 											//送信ロード画面
@@ -437,6 +444,9 @@ h2 {
 												],
 												"TopLoadForm"
 											);
+
+
+											let result = SendTransaction(1,"pay",RewardPrivkeyKeys["address"],amount,"");
 
 
 											result.then(function(FeeTxResult){
@@ -463,17 +473,16 @@ h2 {
 
 
 
-												//TagrewardTx作成
-												let TagrewardResult = SendTransaction(11,"tagreward","0000000000000000000000000000000000000000",0,rawdata);
-
-
-
 												TopLoadForm = new form(
 													[
 														["title","Sending....."]
 													],
 													"TopLoadForm"
 												);
+
+												//TagrewardTx作成
+												let TagrewardResult = SendTransaction(11,"tagreward","0000000000000000000000000000000000000000",0,rawdata);
+
 
 												///Tagrewardの結果発表
 												TagrewardResult.then(function(TagrewardTxResult){
@@ -898,6 +907,8 @@ h2 {
 					formargs,
 					"TopForm"
 				);
+
+				LoginLoadForm.DeleteForm();
 			},
 			{}
 		);

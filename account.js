@@ -1,5 +1,6 @@
 ﻿const ZLIB = require('zlib');
 
+const MAIN = require('./main.js');
 const CRYPTO = require('./crypto.js');
 const HASHS = require('./hashs.js');
 const TRANSACTION = require('./transaction.js');
@@ -12,10 +13,31 @@ const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.databas
 exports.account = class{
 	constructor(key=""){
 		this.key = key;
+		this.setupbool = false;
 	};
 
 
+	async SetUpClass(){
+		if (this.setupbool){
+			return 0;
+		}
+		this.setupbool = true;
+
+		if (!this.key){
+			this.key = await new CRYPTO.signature().CreatePrivkey();
+		};
+
+		return 1;
+	}
+
+
 	async GetKeys(key=this.key){
+		await this.SetUpClass();
+		if (!key){
+			key = this.key;
+		}
+
+
 		// 圧縮関数 (要deflate.js)
 		function deflate(val) {
 			val = encodeURIComponent(val); // UTF16 → UTF8
@@ -69,14 +91,13 @@ exports.account = class{
 			"address":address,
 		}
 
-		this.key = key;
-
 		return keys;
 	};
 
 
 	//アカウントの残高を構成するtxのリスト
 	async GetFormTxList(address="",tag="",LessIndex=0){
+		await this.SetUpClass();
 		if (!address){
 			address = (await this.GetKeys())["address"];
 		}
@@ -108,6 +129,7 @@ exports.account = class{
 
 
 	async GetBalance(address="",LessIndex=0){
+		await this.SetUpClass();
 		if (!address){
 			address = (await this.GetKeys())["address"];
 		}

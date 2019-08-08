@@ -76,7 +76,7 @@ exports.SetServer = function(){
 
 				socket.emit('NodeList', nodelist);
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"SetServer",e);
 			}
 		});
 
@@ -87,7 +87,7 @@ exports.SetServer = function(){
 
 				socket.emit('TransactionIdsPerAll', txids);
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"SetServer",e);
 			}
 		});
 
@@ -116,7 +116,7 @@ exports.SetServer = function(){
 
 				socket.emit('UnconfirmedTransactions', txs);
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"SetServer",e);
 			}
 		});
 
@@ -127,7 +127,7 @@ exports.SetServer = function(){
 
 				socket.emit('Transaction', txs[0]);
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"SetServer",e);
 			}
 		});
 	});
@@ -166,7 +166,7 @@ exports.SetClient = async function(){
 					exports.SetNode(maddress);
 				};
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"SetClient",e);
 			}
 		});
 
@@ -210,7 +210,7 @@ exports.SetClient = async function(){
 					TargetTransaction.commit();
 				};
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"SetClient",e);
 			}
 		});
 
@@ -243,7 +243,7 @@ exports.SetClient = async function(){
 					MyNodeGetPlanTxids.push(txid);
 				};
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"SetClient",e);
 			}
 		});
 
@@ -273,7 +273,7 @@ exports.SetClient = async function(){
 					MyNodeGetPlanTxids = MyNodeGetPlanTxids.filter(n => n !== txid);
 				});
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"SetClient",e);
 			}
 		});
 
@@ -325,7 +325,7 @@ exports.SetClient = async function(){
 
 				await MAIN.sleep(1);
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"SetClient",e);
 				continue;
 			};
 		};
@@ -365,7 +365,7 @@ exports.SetClient = async function(){
 			await MAIN.sleep(10);
 
 		}catch(e){
-			console.log(e);
+			MAIN.note(2,"SetClient",e);
 			continue;
 		};
 

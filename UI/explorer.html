@@ -175,12 +175,12 @@ h2 {
 
 	function TxForm(txid){
 		let TxData = TAKA.gettx(txid);
-		let AccountData = TAKA.getaccount(TxData["pubkey"]);
+		let AccountData = TAKA.getaccount(TxData["pubkey"],0,["pubkey"]);
 
 		let args = [
 			["title","Transaction ID : "+txid],
 			["head","Sender"],
-			["text","Pubkey : "+AccountData["pubkey"]],
+			//["text","Pubkey : "+AccountData["pubkey"]],
 			["button",AccountData["address"],function(){AccountForm(this.value);}],
 			["head","Type : "+TxData["type"]],
 			["head","Time : "+TxData["time"]],
