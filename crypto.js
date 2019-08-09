@@ -2,7 +2,6 @@
 const HAX = require('./hex.js');
 let SPHINCS = require("supersphincs");
 const SR = require('secure-random');
-const ECDSA = require('secp256k1');
 const MAIN = require('./main.js');
 
 /*

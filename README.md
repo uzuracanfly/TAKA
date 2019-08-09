@@ -23,11 +23,32 @@ After installation
 ### Access Web GUI
 
 	http://127.0.0.1/wallet
+	http://127.0.0.1/explorer
 
 
 ## Install
+You need Node.js version 10 or higher.
+
+	https://nodejs.org/ja/
+
+Install TAKA.
+
+	git clone https://github.com/uzuracanfly/TAKA.git
+
+Start TAKA node.
+
+	node init.js
+
 
 ## Contribution
+
+	https://github.com/emn178/js-sha256
+
+	https://github.com/emn178/js-sha512
+
+	https://github.com/ricmoo/aes-js
+
+	https://github.com/cyph/supersphincs
 
 ## Licence
 
