@@ -1,11 +1,29 @@
 TAKA
 ====
 
-Overview
+Distributed large capacity database.
 
 ## Description
+This is the source code for managing large volumes of data with P2P.
+・ Original currency function
+・ Database function
+・ Smart contract function
 
 ## Usage
+After installation
+
+# Generate Account In the API
+
+    sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{"key":""}}'
+
+# Show Account In the API
+
+    sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{"key":"eb86950b214dea4c863d10c5c0fa22fd027647ca"}}'
+
+# Access Web GUI
+
+	http://127.0.0.1/wallet
+
 
 ## Install
 
