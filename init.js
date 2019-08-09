@@ -8,7 +8,7 @@ const CRYPTO = require('./crypto.js');
 	try{
 		const CONFIG = require('./config.js');
 	}catch(e){
-		MAIN.note(1,"init","None Config!Setup Config!");
+		console.log("None Config!Setup Config!");
 
 		/*
 			Configの設定
@@ -63,10 +63,10 @@ const CRYPTO = require('./crypto.js');
 
 		FS.writeFile("./config.js", ConfigData, "utf8", (e) => {
 			if (e) {
-				MAIN.note(2,"init",e);
+				console.log(e);
 				throw e;
 			}
-			MAIN.note(1,"init","Done!Restart please!");
+			console.log("Done!Restart please!");
 			process.exit(0);
 		});
 	}
@@ -78,8 +78,7 @@ const CRYPTO = require('./crypto.js');
 	let FunctionList = [
 		{"name":"DatabaseRunCommit","function":function(){let Database = require('./database.js');Database.RunCommit()},"time":0},
 		{"name":"TransactionRunCommit","function":function(){let Transaction = require('./transaction.js');Transaction.RunCommit()},"time":1000},
-		{"name":"BroadcastSetServer","function":function(){let Broadcast = require('./broadcast.js');Broadcast.SetServer()},"time":1000},
-		{"name":"BroadcastSetClient","function":function(){let Broadcast = require('./broadcast.js');Broadcast.SetClient()},"time":1000},
+		{"name":"BroadcastSetServer","function":function(){let Broadcast = require('./broadcast.js');Broadcast.SetP2P()},"time":1000},
 		{"name":"APISetServer","function":function(){let API = require('./api.js');API.SetServer()},"time":1000},
 		{"name":"TagrewardRunMining","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()},"time":1000},
 		{"name":"console","function":function(){let Console = require('./console.js');Console.RunConsole()},"time":1000},

@@ -53,7 +53,7 @@ exports.SetNode = function(address,type,state){
 
 	MAIN.note(1,"SetNode",address+" state:"+state);
 
-	DATABASE.add("nodelist",address,{"type":type,"state":state});
+	DATABASE.set("nodelist",address,{"type":type,"state":state});
 
 	return 1;
 }
@@ -69,7 +69,7 @@ function SetActionEvents(socket){
 
 			socket.emit('NodeList', nodelist);
 		}catch(e){
-			MAIN.note(2,"SetServer",e);
+			MAIN.note(2,"SetActionEvents",e);
 		}
 	});
 
@@ -80,7 +80,7 @@ function SetActionEvents(socket){
 
 			socket.emit('TransactionIdsPerAll', txids);
 		}catch(e){
-			MAIN.note(2,"SetServer",e);
+			MAIN.note(2,"SetActionEvents",e);
 		}
 	});
 
@@ -109,7 +109,7 @@ function SetActionEvents(socket){
 
 			socket.emit('UnconfirmedTransactions', txs);
 		}catch(e){
-			MAIN.note(2,"SetServer",e);
+			MAIN.note(2,"SetActionEvents",e);
 		}
 	});
 
@@ -120,7 +120,7 @@ function SetActionEvents(socket){
 
 			socket.emit('Transaction', txs[0]);
 		}catch(e){
-			MAIN.note(2,"SetServer",e);
+			MAIN.note(2,"SetActionEvents",e);
 		}
 	});
 
@@ -138,7 +138,7 @@ function SetActionEvents(socket){
 				exports.SetNode(maddress,"",0);
 			};
 		}catch(e){
-			MAIN.note(2,"SetClient",e);
+			MAIN.note(2,"SetActionEvents",e);
 		}
 	});
 
@@ -180,7 +180,7 @@ function SetActionEvents(socket){
 				TargetTransaction.commit();
 			};
 		}catch(e){
-			MAIN.note(2,"SetClient",e);
+			MAIN.note(2,"SetActionEvents",e);
 		}
 	});
 
@@ -212,7 +212,7 @@ function SetActionEvents(socket){
 				MyNodeGetPlanTxids.push(txid);
 			};
 		}catch(e){
-			MAIN.note(2,"SetClient",e);
+			MAIN.note(2,"SetActionEvents",e);
 		}
 	});
 
@@ -241,7 +241,7 @@ function SetActionEvents(socket){
 				MyNodeGetPlanTxids = MyNodeGetPlanTxids.filter(n => n !== txid);
 			});
 		}catch(e){
-			MAIN.note(2,"SetClient",e);
+			MAIN.note(2,"SetActionEvents",e);
 		}
 	});
 };
@@ -288,9 +288,26 @@ exports.SetServer = function(){
 		address = address.replace(/^.*:/, '');
 
 
-		/* データを求める */
+		/* すでにこちらがサーバー側またはクライアント側として接続済み */
+		let nodedata = exports.GetNode(address);
+		if (nodedata){
+			if (nodedata["state"] == 1){
+				return false;
+			};
+		}
 		exports.SetNode(address,"server",1);
 
+
+
+		MAIN.note(1,"SetServer_connect","Connect Node : "+address);
+		SetActionEvents(socket);
+
+
+		socket.on('disconnect', async function(socket){
+			MAIN.note(1,"SetServer_disconnect","Disconnect Node : "+address);
+
+			exports.SetNode(address,"server",0);
+		});
 
 
 		/* 接続ノードに対してデータの要求 */
@@ -321,17 +338,6 @@ exports.SetServer = function(){
 				continue;
 			};
 		};
-
-
-		SetActionEvents(socket);
-	});
-
-
-
-	IO.on('disconnect', async function(socket){
-		MAIN.note(1,"SetServer_disconnect","Disconnect Node : "+address);
-
-		exports.SetNode(address,"server",0);
 	});
 
 
@@ -356,12 +362,22 @@ exports.SetClient = async function(){
 
 		let socket = IO('http://'+address+':'+CONFIG.broadcast["port"]);
 
+
 		SetActionEvents(socket);
 
-		socket.on('connect', async function(){
-			MAIN.note(1,"SetClient_connect","Connect Node : "+address);
 
+		socket.on('connect', async function(){
+			/* すでにこちらがサーバー側またはクライアント側として接続済み */
+			let nodedata = exports.GetNode(address);
+			if (nodedata){
+				if (nodedata["state"] == 1){
+					return false;
+				};
+			}
 			exports.SetNode(address,"client",1);
+
+
+			MAIN.note(1,"SetClient_connect","Connect Node : "+address);
 
 
 			/* 接続ノードに対してデータの要求 */
@@ -408,11 +424,7 @@ exports.SetClient = async function(){
 
 
 
-	for (let index in exports.GetNodeList()){
-		let address = exports.GetNodeList()[index];
 
-		exports.SetNode(address,"server",0);
-	};
 
 	//アクション設定が完了したノードリスト
 	let SetActionAddressList = [];
@@ -444,3 +456,18 @@ exports.SetClient = async function(){
 
 	};
 }
+
+
+
+
+exports.SetP2P = async function(){
+	/* ノードリストのリセット */
+	for (let index in exports.GetNodeList()){
+		let address = exports.GetNodeList()[index];
+
+		exports.SetNode(address,"",0);
+	};
+
+	exports.SetServer();
+	exports.SetClient();
+};
