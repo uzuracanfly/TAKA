@@ -528,7 +528,7 @@ exports.Transaction = class{
 
 
 			//txidとtarget
-			let target = this.GetPOWTarget(rawtx);
+			let target = await this.GetPOWTarget(rawtx);
 			let numtxid = BigInt("0x"+await this.GetTxid(rawtx));
 			if (numtxid > target){
 				return 0;
@@ -660,7 +660,7 @@ exports.Transaction = class{
 		let nonce = objtx["nonce"];
 		let outthis = this;
 		if (!target){
-			target = this.GetPOWTarget(rawtx);
+			target = await this.GetPOWTarget(rawtx);
 		}
 		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -921,6 +921,8 @@ exports.RunCommit = async function(){
 		DATABASE.add("ConfirmedTransactions",(await TargetTransaction.GetTxid()),(await TargetTransaction.GetRawTx()));
 
 		DATABASE.add("TransactionIdsPerTag",(await TargetTransaction.GetObjTx())["tag"],(await TargetTransaction.GetTxid()));
+		DATABASE.add("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+(await TargetTransaction.GetObjTx())["tag"],(await TargetTransaction.GetTxid()));
+		DATABASE.add("TransactionIdsPerAccountAndTag",(await TargetTransaction.GetObjTx())["toaddress"]+"_"+(await TargetTransaction.GetObjTx())["tag"],(await TargetTransaction.GetTxid()));
 		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],(await TargetTransaction.GetTxid()));
 		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.GetObjTx())["toaddress"],(await TargetTransaction.GetTxid()));
 		DATABASE.add("TransactionIdsPerAll","live",await TargetTransaction.GetTxid());

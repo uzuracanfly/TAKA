@@ -141,10 +141,28 @@ h2 {
 
 
 
+	async function SelectPage(){
+		let page = GetGetVar("page");
+
+		if (page == "account"){
+			let address = GetGetVar("address");
+			AccountForm(address);
+		};
+		if (page == "tx"){
+			let txid = GetGetVar("txid");
+			TxForm(txid);
+		};
+		if (page == "tag"){
+			let tag = GetGetVar("tag");
+			TagForm(tag);
+		};
+	};
 
 
-	function AccountForm(address){
-		let AccountData = TAKA.getaccount(address);
+
+
+	async function AccountForm(address){
+		let AccountData = TAKA.getaccount(address,0);
 
 		let args = [
 			["title","Address : "+address],
@@ -159,7 +177,7 @@ h2 {
 			for (let index in txids){
 				let txid = txids[index];
 
-				args.push(["button",txid,function(){TxForm(this.value);}]);
+				args.push(["button",txid,async function(){await TxForm(this.value);}]);
 			};
 		};
 
@@ -173,36 +191,44 @@ h2 {
 
 
 
-	function TxForm(txid){
+	async function TxForm(txid){
 		let TxData = TAKA.gettx(txid);
-		let AccountData = TAKA.getaccount(TxData["pubkey"],0,["pubkey"]);
+		let AccountData = TAKA.getaccount(TxData["pubkey"],0);
 
-		let args = [
-			["title","Transaction ID : "+txid],
-			["head","Sender"],
-			//["text","Pubkey : "+AccountData["pubkey"]],
-			["button",AccountData["address"],function(){AccountForm(this.value);}],
-			["head","Type : "+TxData["type"]],
-			["head","Time : "+TxData["time"]],
-			["head","Tag : "+TxData["tag"]],
-			["head","Index : "+TxData["index"]],
-			["head","MerkleRoot : "+TxData["MerkleRoot"]],
-			["head","To Address"],
-			["button",TxData["toaddress"],function(){AccountForm(this.value);}],
-			["head","Amount : "+TxData["amount"]],
-			["head","Data"],
-		];
+		let args = [];
+		if (TxData){
+			args = [
+				["title","Transaction ID : "+txid],
+				["head","Sender"],
+				//["text","Pubkey : "+AccountData["pubkey"]],
+				["button",AccountData["address"],async function(){await AccountForm(this.value);}],
+				["head","Type : "+TxData["type"]],
+				["head","Time : "+TxData["time"]],
+				["head","Tag : "+TxData["tag"]],
+				["head","Index : "+TxData["index"]],
+				["head","MerkleRoot : "+TxData["MerkleRoot"]],
+				["head","To Address"],
+				["button",TxData["toaddress"],async function(){await AccountForm(this.value);}],
+				["head","Amount : "+TxData["amount"]],
+				["head","Data"],
+			];
 
-		let ObjData = GetObjData(TxData["type"],TxData["data"]);
-		for (let key in ObjData){
-			let value = ObjData[key];
+			let ObjData = GetObjData(TxData["type"],TxData["data"]);
+			for (let key in ObjData){
+				let value = ObjData[key];
 
-			args.push(["text",key+" : "+value]);
+				args.push(["text",key+" : "+value]);
+			}
+
+
+			//args.push(["head","Sig : "+TxData["sig"]]);
+			args.push(["head","Nonce : "+TxData["nonce"]]);
+
+		}else{
+			args = [
+				["title","None"],
+			];
 		}
-
-
-		args.push(["head","Sig : "+TxData["sig"]]);
-		args.push(["head","Nonce : "+TxData["nonce"]]);
 
 		let result = new form(
 			args,
@@ -214,7 +240,7 @@ h2 {
 
 
 
-	function TagForm(tag){
+	async function TagForm(tag){
 		let TagData = TAKA.gettag(tag);
 
 		if (!TagData){
@@ -224,8 +250,8 @@ h2 {
 		let args = [
 			["title","Tag : "+tag],
 			["head","Owner"],
-			["text","Pubkey : "+TagData["owner"]["pubkey"]],
-			["text","Address : "+TagData["owner"]["address"]],
+			//["text","Pubkey : "+TagData["owner"]["pubkey"]],
+			["button",TagData["owner"]["address"],async function(){await AccountForm(this.value);}],
 			["head","Permission Type : "+TagData["permissiontype"]],
 			["head","Permit Addresss"],
 		];
@@ -244,7 +270,7 @@ h2 {
 		for (let index in txids){
 			let txid = txids[index];
 
-			args.push(["button",txid,function(){TxForm(this.value);}]);
+			args.push(["button",txid,async function(){await TxForm(this.value);}]);
 		};
 
 		let result = new form(
@@ -261,7 +287,7 @@ h2 {
 
 
 <script>
-	window.onload = function(){
+	window.onload = async function(){
 		let outer=document.getElementById("outer");
 		let inner=document.getElementById("inner");
 
@@ -330,15 +356,15 @@ h2 {
 				"width":"100%",
 				"innerHTML":"Search",
 				"textAlign":"center",
-				"clickfunction":function(){
+				"clickfunction":async function(){
 					let value = document.getElementById("EleInputSearch").value;
 
 					if (value.length == 40){
-						AccountForm(value);
+						await AccountForm(value);
 					}else if (value.length == 64){
-						TxForm(value);
+						await TxForm(value);
 					}else{
-						if (!TagForm(value)){
+						if (!await TagForm(value)){
 							Notification.notification(
 								[
 									["text","none."]
@@ -415,13 +441,15 @@ h2 {
 					"width":"100%",
 					"value":txid,
 					"textAlign":"center",
-					"clickfunction":function(){
-						TxForm(this.value);
+					"clickfunction":async function(){
+						await TxForm(this.value);
 					}
 				}
 			);
 			EleNewTagrewardSeedButton.type = "button";
 
 		};
+
+		SelectPage();
 	};
 </script>

@@ -34,7 +34,11 @@ exports.RunConsole = function(){
 				if (commands.length >= 2){
 					key = commands[1];
 				};
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getaccount","args":{"key":key}});
+				let LessIndex = 0;
+				if (commands.length >= 3){
+					LessIndex = parseInt(commands[2]);
+				};
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getaccount","args":{"key":key,"LessIndex":LessIndex}});
 			}else if (commands[0] == "gettag"){
 				let tag = commands[1];
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettag","args":{"tag":tag}});

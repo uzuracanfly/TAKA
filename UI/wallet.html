@@ -120,7 +120,7 @@ h2 {
 
 			let address = (await new ACCOUNT.account(privkey).GetKeys())["address"];
 
-			let AccountData = TAKA.getaccount(address,0,["txids"]);
+			let AccountData = TAKA.getaccount(address,0);
 			let MerkleRoot = "";
 			let txs = [];
 			if (tag in AccountData["txids"]){
@@ -216,7 +216,6 @@ h2 {
 		TAKA.getaccount(
 			account["address"],
 			0,
-			[],
 			function(CallbackResult,CallbackArgs){
 				let formargs = [
 					["head","Address"],
@@ -263,6 +262,14 @@ h2 {
 													["title","Result"],
 													["head","Result"],
 													["input","result","result"],
+													[
+														"button",
+														"State",
+														function()
+														{
+															window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+														}
+													],
 													["head","RawTx"],
 													["input","rawtx","rawtx"],
 													[
@@ -365,7 +372,7 @@ h2 {
 													"TopLoadForm"
 												);
 
-												TagOrderResult.then(function(TagOrderTxResult){
+												TagOrderResult.then(function(TxResult){
 													TopLoadForm.DeleteForm();
 
 													let TopResultForm = new form(
@@ -373,6 +380,14 @@ h2 {
 															["title","Result"],
 															["head","Result"],
 															["input","result","result"],
+															[
+																"button",
+																"State",
+																function()
+																{
+																	window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+																}
+															],
 															["head","RawTx"],
 															["input","rawtx","rawtx"],
 															[
@@ -388,8 +403,8 @@ h2 {
 														"TopResultForm"
 													);
 
-													document.getElementById("result").value = TagOrderTxResult["txid"];
-													document.getElementById("rawtx").value = TagOrderTxResult["rawtx"];
+													document.getElementById("result").value = TxResult["txid"];
+													document.getElementById("rawtx").value = TxResult["rawtx"];
 												}).catch(function(e){
 													console.log(e);
 												});
@@ -485,7 +500,7 @@ h2 {
 
 
 												///Tagrewardの結果発表
-												TagrewardResult.then(function(TagrewardTxResult){
+												TagrewardResult.then(function(TxResult){
 													TopLoadForm.DeleteForm();
 
 													let TopResultForm = new form(
@@ -493,6 +508,14 @@ h2 {
 															["title","Result"],
 															["head","Result"],
 															["input","result","result"],
+															[
+																"button",
+																"State",
+																function()
+																{
+																	window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+																}
+															],
 															["head","RawTx"],
 															["input","rawtx","rawtx"],
 															[
@@ -508,8 +531,8 @@ h2 {
 														"TopResultForm"
 													);
 
-													document.getElementById("result").value = TagrewardTxResult["txid"];
-													document.getElementById("rawtx").value = TagrewardTxResult["rawtx"];
+													document.getElementById("result").value = TxResult["txid"];
+													document.getElementById("rawtx").value = TxResult["rawtx"];
 												}).catch(function(e){
 													console.log(e);
 												});
@@ -569,6 +592,14 @@ h2 {
 														["title","Result"],
 														["head","Result"],
 														["input","result","result"],
+														[
+															"button",
+															"State",
+															function()
+															{
+																window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+															}
+														],
 														["head","RawTx"],
 														["input","rawtx","rawtx"],
 														[
@@ -646,6 +677,14 @@ h2 {
 														["title","Result"],
 														["head","Result"],
 														["input","result","result"],
+														[
+															"button",
+															"State",
+															function()
+															{
+																window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+															}
+														],
 														["head","RawTx"],
 														["input","rawtx","rawtx"],
 														[
@@ -729,6 +768,14 @@ h2 {
 														["title","Result"],
 														["head","Result"],
 														["input","result","result"],
+														[
+															"button",
+															"State",
+															function()
+															{
+																window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+															}
+														],
 														["head","RawTx"],
 														["input","rawtx","rawtx"],
 														[
@@ -869,6 +916,14 @@ h2 {
 														["title","Result"],
 														["head","Result"],
 														["input","result","result"],
+														[
+															"button",
+															"State",
+															function()
+															{
+																window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+															}
+														],
 														["head","RawTx"],
 														["input","rawtx","rawtx"],
 														[

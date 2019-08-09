@@ -101,20 +101,15 @@ exports.account = class{
 		if (!address){
 			address = (await this.GetKeys())["address"];
 		}
+		if (!tag){
+			tag = "pay"
+		}
 
-		let TxidListPerAccount = DATABASE.get("TransactionIdsPerAccount",address);
+		let TransactionIdsPerAccountAndTag = DATABASE.get("TransactionIdsPerAccountAndTag",address+"_"+tag);
 
 		let result = [];
-		for (let index in TxidListPerAccount){
-			let txid = TxidListPerAccount[index];
-
-			if (tag){
-				let tx = TRANSACTION.GetTx(txid);
-				let ObjTx = await tx.GetObjTx();
-				if (ObjTx["tag"] != tag){
-					continue;
-				};
-			}
+		for (let index in TransactionIdsPerAccountAndTag){
+			let txid = TransactionIdsPerAccountAndTag[index];
 
 			if (LessIndex && result.length-1 >= LessIndex){
 				break;
