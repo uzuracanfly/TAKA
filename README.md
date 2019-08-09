@@ -5,6 +5,7 @@ Distributed large capacity database.
 
 ## Description
 This is the source code for managing large volumes of data with P2P.
+
 	・ Original currency function
 	・ Database function
 	・ Smart contract function
