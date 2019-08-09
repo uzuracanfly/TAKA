@@ -29,7 +29,7 @@ After installation
 ## Install
 You need Node.js version 10 or higher.
 
-	https://nodejs.org/ja/
+	https://nodejs.org/
 
 Install TAKA.
 
@@ -42,9 +42,13 @@ Start TAKA node.
 
 ## Contribution
 
+### Hash
+
 	https://github.com/emn178/js-sha256
 
 	https://github.com/emn178/js-sha512
+
+### Signature OR Encryption
 
 	https://github.com/ricmoo/aes-js
 
