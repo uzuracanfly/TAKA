@@ -11,7 +11,7 @@ This is the source code for managing large volumes of data with P2P.
 	・ Smart contract function
 
 ## Usage
-After installation
+After installation and node start.
 
 ### Generate Account In the API
 
@@ -37,7 +37,7 @@ Install TAKA.
 	git clone https://github.com/uzuracanfly/TAKA.git
 
 Start TAKA node.
-
+	cd TAKA
 	node init.js
 
 
@@ -49,11 +49,15 @@ Start TAKA node.
 
 	https://github.com/emn178/js-sha512
 
-### Signature OR Encryption
+### Signature
+
+	https://github.com/cyph/supersphincs
+
+### Encryption
 
 	https://github.com/ricmoo/aes-js
 
-	https://github.com/cyph/supersphincs
+
 
 ## Licence
 
