@@ -4,7 +4,7 @@ TAKA
 Distributed large capacity database.
 
 ## Description
-This is the source code for managing large volumes of data with P2P.
+TAKA is a P2P network for managing big data in a distributed manner.
 
 	・ Original currency function
 	・ Database function
@@ -32,12 +32,14 @@ You need Node.js version 10 or higher.
 
 	https://nodejs.org/
 
-Install TAKA.
+Download TAKA.
 
 	git clone https://github.com/uzuracanfly/TAKA.git
 
 Start TAKA node.
+
 	cd TAKA
+	npm install
 	node init.js
 
 
