@@ -1,5 +1,7 @@
 const CLUSTER = require('cluster');
 const FS = require('fs');
+const SR = require('secure-random');
+
 
 const MAIN = require('./main.js');
 const CRYPTO = require('./crypto.js');
@@ -8,7 +10,7 @@ const CRYPTO = require('./crypto.js');
 	try{
 		const CONFIG = require('./config.js');
 	}catch(e){
-		console.log("None Config!Setup Config!");
+		console.log("None Config!Setup Config!"+" : "+e);
 
 		/*
 			Configの設定
@@ -33,6 +35,21 @@ const CRYPTO = require('./crypto.js');
 		if (!API_PORT){
 			API_PORT = "80";
 		};
+		let API_EXCHANGE_ETHERSCANAPI_APIKEY = await MAIN.GetConsole('[API] Exchange Etherscan API Key () : ');
+		if (!API_EXCHANGE_ETHERSCANAPI_APIKEY){
+			API_EXCHANGE_ETHERSCANAPI_APIKEY = "";
+		}
+		let API_EXCHANGE_ETAKAPRIVKEY = await MAIN.GetConsole('[API] Exchange Privkey To ETAKA () : ');
+		if (!API_EXCHANGE_ETAKAPRIVKEY){
+			let key = SR.randomBuffer(32);
+			API_EXCHANGE_ETAKAPRIVKEY = key.toString('hex');
+		}
+		let API_EXCHANGE_TAKAPrivkey = await MAIN.GetConsole('[API] Exchange Privkey To TAKA () : ');
+		if (!API_EXCHANGE_TAKAPrivkey){
+			API_EXCHANGE_TAKAPrivkey = await new CRYPTO.signature().CreatePrivkey();
+		}
+
+
 		let IMPORTTAGS = await MAIN.GetConsole('[ImportTags] (["pay","tagreward"]) : ');
 		if (!IMPORTTAGS){
 			IMPORTTAGS = "[]";
@@ -55,6 +72,10 @@ const CRYPTO = require('./crypto.js');
 		ConfigData = ConfigData.replace( 'DATABASE_KEY', '"'+DATABASE_KEY+'"' );
 		ConfigData = ConfigData.replace( 'API_ADDRESS', '"'+API_ADDRESS+'"' );
 		ConfigData = ConfigData.replace( 'API_PORT', API_PORT );
+
+		ConfigData = ConfigData.replace( 'API_EXCHANGE_ETHERSCANAPI_APIKEY', '"'+API_EXCHANGE_ETHERSCANAPI_APIKEY+'"' );
+		ConfigData = ConfigData.replace( 'API_EXCHANGE_ETAKAPRIVKEY', '"'+API_EXCHANGE_ETAKAPRIVKEY+'"' );
+		ConfigData = ConfigData.replace( 'API_EXCHANGE_TAKAPrivkey', '"'+API_EXCHANGE_TAKAPrivkey+'"' );
 
 		ConfigData = ConfigData.replace( 'IMPORTTAGS', IMPORTTAGS );
 
@@ -82,6 +103,7 @@ const CRYPTO = require('./crypto.js');
 		{"name":"APISetServer","function":function(){let API = require('./api.js');API.SetServer()},"time":1000},
 		{"name":"TagrewardRunMining","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()},"time":1000},
 		{"name":"console","function":function(){let Console = require('./console.js');Console.RunConsole()},"time":1000},
+		{"name":"exchange","function":function(){let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()},"time":1000},
 		{
 			"name":"TEST",
 			"function":function(){

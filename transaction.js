@@ -273,7 +273,9 @@ exports.Transaction = class{
 			
 
 
-
+			/*
+			Pay関連
+			*/
 			if (objtx["type"] == 1 && objtx["tag"] != "pay"){
 				return 0;
 			};
@@ -291,11 +293,19 @@ exports.Transaction = class{
 
 
 
+			/*
+			Pay以外はtoaddressに指定できない
+			*/
+			if (objtx["type"] != 1 && objtx["toaddress"] != MAIN.GetFillZero("", 40)){
+				return 0;
+			};
+
+
+
 
 			/*
 			Tagreward関連
 			*/
-
 			if (objtx["type"] == 11 && objtx["tag"] != "tagreward"){
 				return 0;
 			};

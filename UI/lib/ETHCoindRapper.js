@@ -1,0 +1,1 @@
+global.ETHCOINd = require('../../ETHCoind.js');

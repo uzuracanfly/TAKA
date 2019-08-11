@@ -12,6 +12,8 @@ const TRANSACTIONTOOLS_TAGORDER = require('./TransactionTools/tagorder.js');
 const TRANSACTIONTOOLS_TAGADDPERMIT = require('./TransactionTools/tagaddpermit.js');
 const TRANSACTIONTOOLS_CONTRACT = require('./TransactionTools/contract.js');
 
+const ETHCOIND = require('./ETHCoind.js');
+
 
 //API Server
 exports.SetServer = function(){
@@ -469,6 +471,19 @@ exports.SetServer = function(){
 						};
 
 
+						if (postData["function"] == "exchange"){
+							let type = postData["args"]["type"];
+							let PayTxid = postData["args"]["PayTxid"];
+							let ReceiverAddress = postData["args"]["ReceiverAddress"];
+							let amount = postData["args"]["amount"];
+
+							DATABASE.add("ExchangeOrders","live",{"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount});
+
+							response.write(JSON.stringify(true));
+							response.end();
+						};
+
+
 					}catch(e){
 						MAIN.note(2,"SetServer",e);
 						response.write(JSON.stringify(false));
@@ -483,6 +498,7 @@ exports.SetServer = function(){
 					"basicfunctions":FS.readFileSync('UI/lib/basicfunctions.js'),
 					"TAKAAPIRapper":FS.readFileSync('UI/lib/TAKAAPIRapper.js'),
 					"TAKALIBRapper":FS.readFileSync('UI/lib/TAKALIBRapper_bundle.js'),
+					"ETHCoindRapper":FS.readFileSync('UI/lib/ETHCoindRapper_bundle.js'),
 				};
 
 				let ExplorerHtml = FS.readFileSync('UI/explorer.html');
@@ -503,6 +519,8 @@ exports.SetServer = function(){
 					ExplorerHtml = ExplorerHtml.toString();
 					ExplorerHtml = ExplorerHtml.replace( "MYIPADDRESS", IP.address() );
 					ExplorerHtml = ExplorerHtml.replace( "MYPORT", CONFIG.API["port"] );
+					ExplorerHtml = ExplorerHtml.replace( "PAYTAKAADDRESS", (await new ACCOUNT.account(CONFIG.API.exchange["TAKAPrivkey"]).GetKeys())["address"] );
+					ExplorerHtml = ExplorerHtml.replace( "PAYETAKAADDRESS", (await new ETHCOIND.ETHCoind(CONFIG.API.exchange["ETHPrivkey"]).GetKeys())["address"] );
 					ExplorerHtml = Buffer.from(ExplorerHtml, 'utf-8');
 					response.writeHead(200, {'Content-Type': 'text/html'});
 					response.end(ExplorerHtml);

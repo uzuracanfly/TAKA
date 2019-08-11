@@ -103,6 +103,7 @@ h2 {
 <script src="lib/form"></script>
 <script src="lib/notification"></script>
 <script src="lib/TAKALIBRapper"></script>
+<script src="lib/ETHCoindRapper"></script>
 
 <script>
 	const TAKA = new TAKAAPIRapper("MYIPADDRESS","MYPORT");
@@ -186,6 +187,34 @@ h2 {
 		});
 	};
 
+
+
+
+	async function ExchangeETAKAToTAKA(privkey,amount){
+		let COIND = ETHCOINd.ETHCoind(privkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
+		let paytxid = await COIND.SendToken("PAYETAKAADDRESS",amount);
+
+		if (!paytxid){
+			return false;
+		}
+
+		let bool = TAKA.exchange("buy",paytxid,account["address"],amount);
+
+		return bool;
+	};
+
+
+	async function ExchangeTAKAToETAKA(privkey,amount){
+		let paytxid = await SendTransaction(1,"pay","PAYTAKAADDRESS",amount,"",privkey);
+
+		if (!paytxid){
+			return false;
+		}
+
+		let bool = TAKA.exchange("sell",paytxid,account["address"],amount);
+
+		return bool;
+	};
 
 
 

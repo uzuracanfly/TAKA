@@ -147,4 +147,20 @@ class TAKAAPIRapper{
 		let result = this.post(args);
 		return result;
 	};
+
+
+	exchange(type,PayTxid,ReceiverAddress,amount){
+		let args = {
+			"function":"exchange",
+			"args":{
+				"type":type,
+				"PayTxid":PayTxid,
+				"ReceiverAddress":ReceiverAddress,
+				"amount":amount,
+			}
+		};
+
+		let result = this.post(args);
+		return result;
+	};
 };
