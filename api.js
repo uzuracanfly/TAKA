@@ -12,6 +12,7 @@ const TRANSACTIONTOOLS_TAGORDER = require('./TransactionTools/tagorder.js');
 const TRANSACTIONTOOLS_TAGADDPERMIT = require('./TransactionTools/tagaddpermit.js');
 const TRANSACTIONTOOLS_CONTRACT = require('./TransactionTools/contract.js');
 
+const EXCHANGE = require('./exchange.js');
 const ETHCOIND = require('./ETHCoind.js');
 
 
@@ -477,10 +478,12 @@ exports.SetServer = function(){
 							let ReceiverAddress = postData["args"]["ReceiverAddress"];
 							let amount = postData["args"]["amount"];
 
-							DATABASE.add("ExchangeOrders","live",{"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount});
+							let result = EXCHANGE.SetExchangeOrder(type,PayTxid,ReceiverAddress,amount);
 
-							response.write(JSON.stringify(true));
-							response.end();
+							result.then(function(value){
+								response.write(JSON.stringify(value));
+								response.end();
+							});
 						};
 
 
@@ -499,6 +502,7 @@ exports.SetServer = function(){
 					"TAKAAPIRapper":FS.readFileSync('UI/lib/TAKAAPIRapper.js'),
 					"TAKALIBRapper":FS.readFileSync('UI/lib/TAKALIBRapper_bundle.js'),
 					"ETHCoindRapper":FS.readFileSync('UI/lib/ETHCoindRapper_bundle.js'),
+					"HashsRapper":FS.readFileSync('UI/lib/HashsRapper_bundle.js'),
 				};
 
 				let ExplorerHtml = FS.readFileSync('UI/explorer.html');
@@ -519,8 +523,6 @@ exports.SetServer = function(){
 					ExplorerHtml = ExplorerHtml.toString();
 					ExplorerHtml = ExplorerHtml.replace( "MYIPADDRESS", IP.address() );
 					ExplorerHtml = ExplorerHtml.replace( "MYPORT", CONFIG.API["port"] );
-					ExplorerHtml = ExplorerHtml.replace( "PAYTAKAADDRESS", (await new ACCOUNT.account(CONFIG.API.exchange["TAKAPrivkey"]).GetKeys())["address"] );
-					ExplorerHtml = ExplorerHtml.replace( "PAYETAKAADDRESS", (await new ETHCOIND.ETHCoind(CONFIG.API.exchange["ETHPrivkey"]).GetKeys())["address"] );
 					ExplorerHtml = Buffer.from(ExplorerHtml, 'utf-8');
 					response.writeHead(200, {'Content-Type': 'text/html'});
 					response.end(ExplorerHtml);
@@ -529,6 +531,8 @@ exports.SetServer = function(){
 					WalletHtml = WalletHtml.toString();
 					WalletHtml = WalletHtml.replace( "MYIPADDRESS", IP.address() );
 					WalletHtml = WalletHtml.replace( "MYPORT", CONFIG.API["port"] );
+					WalletHtml = WalletHtml.replace( /PAYTAKAADDRESS/g, (await new ACCOUNT.account(CONFIG.API.exchange["TAKAPrivkey"]).GetKeys())["address"] );
+					WalletHtml = WalletHtml.replace( /PAYETAKAADDRESS/g, (await new ETHCOIND.ETHCoind(CONFIG.API.exchange["ETHPrivkey"]).GetKeys())["address"] );
 					WalletHtml = Buffer.from(WalletHtml, 'utf-8');
 					response.writeHead(200, {'Content-Type': 'text/html'});
 					response.end(WalletHtml);

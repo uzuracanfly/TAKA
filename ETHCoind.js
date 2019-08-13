@@ -132,10 +132,10 @@ class APIRapper_etherscan{
 
 
 exports.ETHCoind = class{
-	constructor(key="",ContractAddress="",fee=0.001){
+	constructor(key="",ContractAddress="",fee=parseInt(0.001*(10**18))){
 		this.key = key;
 		this.ContractAddress = ContractAddress;
-		this.fee = fee;
+		this.fee = parseInt(fee);
 		this.setupbool = false;
 		this.api = new APIRapper_etherscan(CONFIG.API.exchange.EtherscanAPI["URL"],CONFIG.API.exchange.EtherscanAPI["APIKEY"]);
 	};
@@ -264,7 +264,7 @@ exports.ETHCoind = class{
 
 		let keys = await this.GetKeys(key);
 		let balance = (await this.api.GetBalance(keys["address"]))["result"];
-		balance = BigInt(balance);
+		balance = parseInt(balance);
 
 		return balance
 	};
@@ -285,9 +285,9 @@ exports.ETHCoind = class{
 
 		let balance = (await this.api.GetCall(this.ContractAddress,data))["result"];
 		if (balance == "0x"){
-			return BigInt(0);
+			return parseInt(0);
 		}else{
-			return BigInt(balance);
+			return parseInt(balance);
 		};
 	};
 
@@ -297,7 +297,7 @@ exports.ETHCoind = class{
 			key = this.key;
 		}
 
-		amount = BigInt(amount);
+		amount = parseInt(amount);
 
 		let keys = await this.GetKeys();
 
@@ -348,7 +348,7 @@ exports.ETHCoind = class{
 		}
 
 
-		amount = BigInt(amount);
+		amount = parseInt(amount);
 
 		let keys = await this.GetKeys();
 

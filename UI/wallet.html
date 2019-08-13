@@ -104,6 +104,7 @@ h2 {
 <script src="lib/notification"></script>
 <script src="lib/TAKALIBRapper"></script>
 <script src="lib/ETHCoindRapper"></script>
+<script src="lib/HashsRapper"></script>
 
 <script>
 	const TAKA = new TAKAAPIRapper("MYIPADDRESS","MYPORT");
@@ -112,6 +113,7 @@ h2 {
 
 
 
+	//TAKA.exchange("sell","0047933be15e76002ef3ae8f1e722465aea86c0ce70c0369bffe80b7ef4cc2d5","0xfab5600CAf07EAeABb55305B1E559a7a5aeEbA60",1300);
 
 
 
@@ -190,12 +192,20 @@ h2 {
 
 
 
-	async function ExchangeETAKAToTAKA(privkey,amount){
-		let COIND = ETHCOINd.ETHCoind(privkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
+	async function ExchangeETAKAToTAKA(amount){
+		let ETHPrivkey = new HASHS.hashs().sha256(account["privkey"]);
+		let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
+
+		/* ノードに指定分の通貨が用意されているか */
+		let PayTAKABalance = TAKA.getaccount("PAYTAKAADDRESS");
+		if (PayTAKABalance < amount){
+			return 2;
+		}
+
 		let paytxid = await COIND.SendToken("PAYETAKAADDRESS",amount);
 
 		if (!paytxid){
-			return false;
+			return 3;
 		}
 
 		let bool = TAKA.exchange("buy",paytxid,account["address"],amount);
@@ -204,16 +214,258 @@ h2 {
 	};
 
 
-	async function ExchangeTAKAToETAKA(privkey,amount){
-		let paytxid = await SendTransaction(1,"pay","PAYTAKAADDRESS",amount,"",privkey);
+	async function ExchangeTAKAToETAKA(amount){
+		let ETHPrivkey = new HASHS.hashs().sha256(account["privkey"]);
+		let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
 
-		if (!paytxid){
-			return false;
+		/* ノードに指定分の通貨が用意されているか */
+		let PayETAKABalance = COIND.GetBalanceToken("PAYETAKAADDRESS");
+		if (PayETAKABalance < amount){
+			return 2;
+		}
+		let PayETHBalance = COIND.GetBalanceCoin("PAYETAKAADDRESS");
+		if (PayETHBalance < 0.001*(10**18)){
+			return 2;
 		}
 
-		let bool = TAKA.exchange("sell",paytxid,account["address"],amount);
+		let result = await SendTransaction(1,"pay","PAYTAKAADDRESS",amount,"");
+
+		if (!result){
+			return 3;
+		}
+
+		let bool = TAKA.exchange("sell",result["txid"],(await COIND.GetKeys())["address"],amount);
 
 		return bool;
+	};
+
+
+	async function GetETHAccount(){
+		let ETHPrivkey = new HASHS.hashs().sha256(account["privkey"]);
+		let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
+
+		let Callback = {
+			"privkey":ETHPrivkey,
+			"address":(await COIND.GetKeys())["address"],
+			"ETHBalance":(await COIND.GetBalanceCoin()),
+			"ETAKABalance":(await COIND.GetBalanceToken())
+		}
+
+		return Callback;
+	}
+
+
+
+	async function ExchangeForm(TAKABalance){
+		let ETHAccountData = await GetETHAccount();
+
+		let formargs = [
+			["head","ETH and ETAKA Address"],
+			["text",ETHAccountData["address"]],
+			["head","ETH Balance"],
+			["text",parseInt(ETHAccountData["ETHBalance"])/(10**18)],
+			["head","ETAKA Balance"],
+			["text",ETHAccountData["ETAKABalance"]],
+			[
+				"button",
+				"ETAKA => TAKA",
+				async function()
+				{
+					let ETAKAToTAKAForm = new form(
+						[
+							["title","ETAKA => TAKA"],
+							["input","amount","amount"],
+							[
+								"button",
+								"Done",
+								async function()
+								{
+
+									let result = await ExchangeETAKAToTAKA(ETHAccountData["ETAKABalance"]);
+									if (result == 1){
+										let TopLoadForm = new form(
+											[
+												["title","Ordered."],
+												[
+													"button",
+													"Done",
+													function()
+													{
+														TopLoadForm.DeleteForm();
+													}
+												]
+											],
+											"TopLoadForm"
+										);
+									}else if (result == 2){
+										let TopLoadForm = new form(
+											[
+												["title","Error."],
+												["text","The currency to be exchanged is not prepared."],
+												[
+													"button",
+													"Done",
+													function()
+													{
+														TopLoadForm.DeleteForm();
+													}
+												]
+											],
+											"TopLoadForm"
+										);
+									}else if (result == 3){
+										let TopLoadForm = new form(
+											[
+												["title","Error."],
+												["text","Low ETH or ETAKA."],
+												[
+													"button",
+													"Done",
+													function()
+													{
+														TopLoadForm.DeleteForm();
+													}
+												]
+											],
+											"TopLoadForm"
+										);
+									};
+
+								}
+							],
+						],
+						"ETAKAToTAKAForm"
+					);
+
+				}
+			],
+			[
+				"button",
+				"TAKA => ETAKA",
+				async function()
+				{
+					let TAKAToETAKAForm = new form(
+						[
+							["title","TAKA => ETAKA"],
+							["input","amount","amount"],
+							[
+								"button",
+								"Done",
+								async function()
+								{
+									let result = await ExchangeTAKAToETAKA(TAKABalance);
+									if (result == 1){
+										let TopLoadForm = new form(
+											[
+												["title","Ordered."],
+												[
+													"button",
+													"Done",
+													function()
+													{
+														TopLoadForm.DeleteForm();
+													}
+												]
+											],
+											"TopLoadForm"
+										);
+									}else if (result == 2){
+										let TopLoadForm = new form(
+											[
+												["title","Error."],
+												["text","The currency to be exchanged is not prepared."],
+												[
+													"button",
+													"Done",
+													function()
+													{
+														TopLoadForm.DeleteForm();
+													}
+												]
+											],
+											"TopLoadForm"
+										);
+									}else if (result == 3){
+										let TopLoadForm = new form(
+											[
+												["title","Error."],
+												["text","Low TAKA."],
+												[
+													"button",
+													"Done",
+													function()
+													{
+														TopLoadForm.DeleteForm();
+													}
+												]
+											],
+											"TopLoadForm"
+										);
+									};
+								}
+							],
+						],
+						"TAKAToETAKAForm"
+					);
+
+				}
+			],
+			[
+				"button",
+				"Withdraw ETAKA",
+				async function()
+				{
+					let WithdrawETAKAForm = new form(
+						[
+							["title","Withdraw ETAKA"],
+							["input","toaddress","toaddress"],
+							["input","amount","amount"],
+							[
+								"button",
+								"Done",
+								async function()
+								{
+									let toaddress = document.getElementById("toaddress").value;
+									let amount = document.getElementById("amount").value;
+									amount = parseInt(amount);
+
+									let ETHPrivkey = new HASHS.hashs().sha256(account["privkey"]);
+									let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
+
+									let txid = await COIND.SendToken(toaddress,amount);
+
+									let ResultForm = new form(
+										[
+											["title","Result"],
+											["input",txid],
+											[
+												"button",
+												"Done",
+												function()
+												{
+													ResultForm.DeleteForm();
+													WithdrawETAKAForm.DeleteForm();
+												}
+											]
+										],
+										"ResultForm"
+									);
+								}
+							],
+						],
+						"WithdrawETAKAForm"
+					);
+				}
+			],
+			["head","TAKA Balance"],
+			["text",TAKABalance],
+		];
+
+
+		let ExchangeFormIndex = new form(
+			formargs,
+			"ExchangeFormIndex"
+		);
 	};
 
 
@@ -245,13 +497,21 @@ h2 {
 		TAKA.getaccount(
 			account["address"],
 			0,
-			function(CallbackResult,CallbackArgs){
+			async function(CallbackResult,CallbackArgs){
 				let formargs = [
 					["head","Address"],
 					["text",account["address"]],
 					["head","Balance"],
 					["text",CallbackResult["balance"]],
 					["head","Action"],
+					[
+						"button",
+						"Exchange ETAKA <=> TAKA",
+						async function()
+						{
+							ExchangeForm(CallbackResult["balance"]);
+						}
+					],
 					[
 						"button",
 						"Withdraw",
