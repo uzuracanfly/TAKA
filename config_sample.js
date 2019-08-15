@@ -20,6 +20,7 @@ exports.genesistxs = [
 exports.API = {
 	"address":API_ADDRESS,
 	"port":API_PORT,
+	"AccessPoint":API_ACCESSPOINT,
 	"exchange":{
 		"EtherscanAPI":{"URL":"https://api.etherscan.io/api","APIKEY":API_EXCHANGE_ETHERSCANAPI_APIKEY}
 		"ETHPrivkey":API_EXCHANGE_ETAKAPRIVKEY,

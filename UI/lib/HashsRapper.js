@@ -1,1 +1,0 @@
-global.HASHS = require('../../hashs.js');

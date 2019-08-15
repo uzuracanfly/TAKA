@@ -1,5 +1,4 @@
 const FS = require('fs');
-const IP = require("ip");
 
 const CONFIG = require('./config.js');
 const MAIN = require('./main.js');
@@ -499,10 +498,8 @@ exports.SetServer = function(){
 					"form":FS.readFileSync('UI/lib/MessagerLib/form.js'),
 					"notification":FS.readFileSync('UI/lib/MessagerLib/notification.js'),
 					"basicfunctions":FS.readFileSync('UI/lib/basicfunctions.js'),
-					"TAKAAPIRapper":FS.readFileSync('UI/lib/TAKAAPIRapper.js'),
-					"TAKALIBRapper":FS.readFileSync('UI/lib/TAKALIBRapper_bundle.js'),
+					"TAKALibRapper":FS.readFileSync('UI/lib/TAKALibRapper_bundle.js'),
 					"ETHCoindRapper":FS.readFileSync('UI/lib/ETHCoindRapper_bundle.js'),
-					"HashsRapper":FS.readFileSync('UI/lib/HashsRapper_bundle.js'),
 				};
 
 				let ExplorerHtml = FS.readFileSync('UI/explorer.html');
@@ -521,16 +518,14 @@ exports.SetServer = function(){
 
 				if ((request.url).indexOf("/explorer") != -1){
 					ExplorerHtml = ExplorerHtml.toString();
-					ExplorerHtml = ExplorerHtml.replace( "MYIPADDRESS", IP.address() );
-					ExplorerHtml = ExplorerHtml.replace( "MYPORT", CONFIG.API["port"] );
+					ExplorerHtml = ExplorerHtml.replace( "MYURL", CONFIG.API["AccessPoint"] );
 					ExplorerHtml = Buffer.from(ExplorerHtml, 'utf-8');
 					response.writeHead(200, {'Content-Type': 'text/html'});
 					response.end(ExplorerHtml);
 				};
 				if (request.url == "/wallet"){
 					WalletHtml = WalletHtml.toString();
-					WalletHtml = WalletHtml.replace( "MYIPADDRESS", IP.address() );
-					WalletHtml = WalletHtml.replace( "MYPORT", CONFIG.API["port"] );
+					WalletHtml = WalletHtml.replace( "MYURL", CONFIG.API["AccessPoint"] );
 					WalletHtml = WalletHtml.replace( /PAYTAKAADDRESS/g, (await new ACCOUNT.account(CONFIG.API.exchange["TAKAPrivkey"]).GetKeys())["address"] );
 					WalletHtml = WalletHtml.replace( /PAYETAKAADDRESS/g, (await new ETHCOIND.ETHCoind(CONFIG.API.exchange["ETHPrivkey"]).GetKeys())["address"] );
 					WalletHtml = Buffer.from(WalletHtml, 'utf-8');

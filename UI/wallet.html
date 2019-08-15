@@ -99,21 +99,20 @@ h2 {
 <script src="//cdn.jsdelivr.net/clipboard.js/1.5.3/clipboard.min.js"></script>
 
 <script src="lib/basicfunctions"></script>
-<script src="lib/TAKAAPIRapper"></script>
 <script src="lib/form"></script>
 <script src="lib/notification"></script>
-<script src="lib/TAKALIBRapper"></script>
+
 <script src="lib/ETHCoindRapper"></script>
-<script src="lib/HashsRapper"></script>
+<script src="lib/TAKALibRapper"></script>
 
 <script>
-	const TAKA = new TAKAAPIRapper("MYIPADDRESS","MYPORT");
+	const TAKAAPI = new TAKA.API("MYURL");
 	let Notification = new notification();
 	let account = {};
 
 
 
-	//TAKA.exchange("sell","0047933be15e76002ef3ae8f1e722465aea86c0ce70c0369bffe80b7ef4cc2d5","0xfab5600CAf07EAeABb55305B1E559a7a5aeEbA60",1300);
+	//TAKAAPI.exchange("sell","0047933be15e76002ef3ae8f1e722465aea86c0ce70c0369bffe80b7ef4cc2d5","0xfab5600CAf07EAeABb55305B1E559a7a5aeEbA60",1300);
 
 
 
@@ -121,9 +120,9 @@ h2 {
 	function SendTransaction(type,tag,toaddress,amount,data,privkey=account["privkey"]){
 		return new Promise(async function (resolve, reject) {
 
-			let address = (await new ACCOUNT.account(privkey).GetKeys())["address"];
+			let address = (await new TAKA.ACCOUNT.account(privkey).GetKeys())["address"];
 
-			let AccountData = TAKA.getaccount(address,0);
+			let AccountData = TAKAAPI.getaccount(address,0);
 			let MerkleRoot = "";
 			let txs = [];
 			if (tag in AccountData["txids"]){
@@ -146,7 +145,7 @@ h2 {
 				"nonce":0,
 			};
 			//console.log(objtx);
-			let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
+			let TargetTransaction = new TAKA.TRANSACTION.Transaction("",privkey,objtx);
 
 
 
@@ -155,9 +154,9 @@ h2 {
 				target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			}
 			if (tag != "pay" && tag != "tagreward" && index > 0){
-				let objfirsttx = TAKA.gettx(txs[0]);
+				let objfirsttx = TAKAAPI.gettx(txs[0]);
 
-				let FIRSTTXDATA = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
+				let FIRSTTXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
 				let objdata = FIRSTTXDATA.GetObjData();
 
 				target = BigInt("0x"+objdata["powtarget"]);
@@ -175,11 +174,11 @@ h2 {
 
 				objsendtx["nonce"] = nonce;
 
-				TargetTransaction = new TRANSACTION.Transaction("",privkey,objsendtx);
+				TargetTransaction = new TAKA.TRANSACTION.Transaction("",privkey,objsendtx);
 				let rawtx = await TargetTransaction.GetRawTx();
 
 
-				TAKA.sendtx(
+				TAKAAPI.sendtx(
 					rawtx,
 					function(CallbackResult,CallbackArgs){
 						return resolve({"txid":CallbackResult,"rawtx":rawtx});
@@ -193,11 +192,11 @@ h2 {
 
 
 	async function ExchangeETAKAToTAKA(amount){
-		let ETHPrivkey = new HASHS.hashs().sha256(account["privkey"]);
+		let ETHPrivkey = new TAKA.HASHS.hashs().sha256(account["privkey"]);
 		let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
 
 		/* ノードに指定分の通貨が用意されているか */
-		let PayTAKABalance = TAKA.getaccount("PAYTAKAADDRESS");
+		let PayTAKABalance = TAKAAPI.getaccount("PAYTAKAADDRESS");
 		if (PayTAKABalance < amount){
 			return 2;
 		}
@@ -208,14 +207,14 @@ h2 {
 			return 3;
 		}
 
-		let bool = TAKA.exchange("buy",paytxid,account["address"],amount);
+		let bool = TAKAAPI.exchange("buy",paytxid,account["address"],amount);
 
 		return bool;
 	};
 
 
 	async function ExchangeTAKAToETAKA(amount){
-		let ETHPrivkey = new HASHS.hashs().sha256(account["privkey"]);
+		let ETHPrivkey = new TAKA.HASHS.hashs().sha256(account["privkey"]);
 		let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
 
 		/* ノードに指定分の通貨が用意されているか */
@@ -234,14 +233,14 @@ h2 {
 			return 3;
 		}
 
-		let bool = TAKA.exchange("sell",result["txid"],(await COIND.GetKeys())["address"],amount);
+		let bool = TAKAAPI.exchange("sell",result["txid"],(await COIND.GetKeys())["address"],amount);
 
 		return bool;
 	};
 
 
 	async function GetETHAccount(){
-		let ETHPrivkey = new HASHS.hashs().sha256(account["privkey"]);
+		let ETHPrivkey = new TAKA.HASHS.hashs().sha256(account["privkey"]);
 		let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
 
 		let Callback = {
@@ -429,7 +428,7 @@ h2 {
 									let amount = document.getElementById("amount").value;
 									amount = parseInt(amount);
 
-									let ETHPrivkey = new HASHS.hashs().sha256(account["privkey"]);
+									let ETHPrivkey = new TAKA.HASHS.hashs().sha256(account["privkey"]);
 									let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
 
 									let txid = await COIND.SendToken(toaddress,amount);
@@ -494,7 +493,7 @@ h2 {
 		);
 
 
-		TAKA.getaccount(
+		TAKAAPI.getaccount(
 			account["address"],
 			0,
 			async function(CallbackResult,CallbackArgs){
@@ -556,7 +555,7 @@ h2 {
 														"State",
 														function()
 														{
-															window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+															window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 														}
 													],
 													["head","RawTx"],
@@ -646,7 +645,7 @@ h2 {
 													"powtarget":powtarget,
 												};
 
-												let TXDATA = new TRANSACTIONTOOLS_TAGORDER.TagOrderData("",objdata);
+												let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData("",objdata);
 												let rawdata = TXDATA.GetRawData();
 
 
@@ -674,7 +673,7 @@ h2 {
 																"State",
 																function()
 																{
-																	window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+																	window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 																}
 															],
 															["head","RawTx"],
@@ -726,7 +725,7 @@ h2 {
 											let tag = document.getElementById("tag").value;
 											let amount = document.getElementById("amount").value;
 
-											let TagData = TAKA.gettag(tag);
+											let TagData = TAKAAPI.gettag(tag);
 											let TagsMerkleRoot = TagData["MerkleRoot"];
 											if (!TagsMerkleRoot){
 												let TopFailForm = new form(
@@ -737,8 +736,8 @@ h2 {
 												);
 											}
 
-											let RewardPrivkeyKeys = await (new ACCOUNT.account().GetKeys());
-											let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(TagsMerkleRoot,RewardPrivkeyKeys["privkey"]);
+											let RewardPrivkeyKeys = await (new TAKA.ACCOUNT.account().GetKeys());
+											let EncryptoPrivkey = new TAKA.CRYPTO.common().GetEncryptedData(TagsMerkleRoot,RewardPrivkeyKeys["privkey"]);
 
 
 											//送信ロード画面
@@ -772,7 +771,7 @@ h2 {
 													"EncryptoPrivkey":EncryptoPrivkey,
 												};
 
-												let TXDATA = new TRANSACTIONTOOLS_TAGREWARD.TagrewardData("",objdata);
+												let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGREWARD.TagrewardData("",objdata);
 												let rawdata = TXDATA.GetRawData();
 
 
@@ -802,7 +801,7 @@ h2 {
 																"State",
 																function()
 																{
-																	window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+																	window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 																}
 															],
 															["head","RawTx"],
@@ -859,7 +858,7 @@ h2 {
 												"address":addaddress,
 											};
 
-											let TXDATA = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData("",objdata);
+											let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
 											let result = SendTransaction(13,tag,"0000000000000000000000000000000000000000",0,rawdata);
@@ -886,7 +885,7 @@ h2 {
 															"State",
 															function()
 															{
-																window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 															}
 														],
 														["head","RawTx"],
@@ -943,7 +942,7 @@ h2 {
 
 
 											if (commonkey){
-												data = new CRYPTO.common().GetEncryptedData(commonkey,data);
+												data = new TAKA.CRYPTO.common().GetEncryptedData(commonkey,data);
 											}
 
 
@@ -971,7 +970,7 @@ h2 {
 															"State",
 															function()
 															{
-																window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 															}
 														],
 														["head","RawTx"],
@@ -1035,7 +1034,7 @@ h2 {
 												"CodeType":CodeType,
 												"CodeData":CodeData,
 											};
-											let TXDATA = new TRANSACTIONTOOLS_CONTRACT.SetFunctionData("",objdata);
+											let TXDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.SetFunctionData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
 											let result = SendTransaction(111,tag,"0000000000000000000000000000000000000000",0,rawdata);
@@ -1062,7 +1061,7 @@ h2 {
 															"State",
 															function()
 															{
-																window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 															}
 														],
 														["head","RawTx"],
@@ -1117,7 +1116,7 @@ h2 {
 											let FunctionArgs = JSON.parse(document.getElementById("FunctionArgs").value);
 
 
-											let result = TAKA.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
+											let result = TAKAAPI.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
 
 
 											let TopResultForm = new form(
@@ -1173,7 +1172,7 @@ h2 {
 											let FunctionArgs = JSON.parse(document.getElementById("FunctionArgs").value);
 
 
-											let ResultPlan = TAKA.RunCode(address,tag,FunctionName,FunctionArgs)
+											let ResultPlan = TAKAAPI.RunCode(address,tag,FunctionName,FunctionArgs)
 
 
 											//tagrewardのデータ生成
@@ -1183,7 +1182,7 @@ h2 {
 												"result":ResultPlan["result"],
 												"SetData":ResultPlan["SetData"],
 											};
-											let TXDATA = new TRANSACTIONTOOLS_CONTRACT.RunFunctionData("",objdata);
+											let TXDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.RunFunctionData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
 											let result = SendTransaction(112,tag,"0000000000000000000000000000000000000000",0,rawdata);
@@ -1210,7 +1209,7 @@ h2 {
 															"State",
 															function()
 															{
-																window.open('http://133.18.169.253/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 															}
 														],
 														["head","RawTx"],
@@ -1336,7 +1335,7 @@ h2 {
 				"clickfunction":async function(){
 					let privkey = document.getElementById("privkey").value;
 
-					let keys = await (new ACCOUNT.account(privkey)).GetKeys();
+					let keys = await (new TAKA.ACCOUNT.account(privkey)).GetKeys();
 
 					account = keys;
 
@@ -1355,7 +1354,7 @@ h2 {
 				"innerHTML":"NewAccount",
 				"textAlign":"center",
 				"clickfunction":async function(){
-					let keys = await (new ACCOUNT.account()).GetKeys();
+					let keys = await (new TAKA.ACCOUNT.account()).GetKeys();
 
 					let LoginNewAccountForm = new form(
 						[

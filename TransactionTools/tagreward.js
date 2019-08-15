@@ -160,7 +160,7 @@ exports.RunMining = function(){
 				let tagrewarddata = new exports.TagrewardData((await tx.GetObjTx())["data"]);
 
 
-				if ((await exports.GetMiningTags()).indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
+				if ((await exports.GetMiningTags()).length>0 && (await exports.GetMiningTags()).indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
 
 
 				//tagのtxリストから共通鍵作る

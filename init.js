@@ -1,6 +1,7 @@
 const CLUSTER = require('cluster');
 const FS = require('fs');
 const SR = require('secure-random');
+const IP = require('ip');
 
 
 const MAIN = require('./main.js');
@@ -34,6 +35,10 @@ const CRYPTO = require('./crypto.js');
 		let API_PORT = await MAIN.GetConsole("[API] Use Port (80) : ");
 		if (!API_PORT){
 			API_PORT = "80";
+		};
+		let API_ACCESSPOINT = await MAIN.GetConsole("[API] ACCESS POINT TO API (http://127.0.0.1) : ");
+		if (!API_ACCESSPOINT){
+			API_ACCESSPOINT = "http://"+IP.address()+":"+API_PORT;
 		};
 		let API_EXCHANGE_ETHERSCANAPI_APIKEY = await MAIN.GetConsole('[API] Exchange Etherscan API Key () : ');
 		if (!API_EXCHANGE_ETHERSCANAPI_APIKEY){
@@ -70,8 +75,10 @@ const CRYPTO = require('./crypto.js');
 		ConfigData = ConfigData.replace( 'DATABASE_ADDRESS', '"'+DATABASE_ADDRESS+'"' );
 		ConfigData = ConfigData.replace( 'DATABASE_PORT', DATABASE_PORT );
 		ConfigData = ConfigData.replace( 'DATABASE_KEY', '"'+DATABASE_KEY+'"' );
+
 		ConfigData = ConfigData.replace( 'API_ADDRESS', '"'+API_ADDRESS+'"' );
 		ConfigData = ConfigData.replace( 'API_PORT', API_PORT );
+		ConfigData = ConfigData.replace( 'API_ACCESSPOINT', API_ACCESSPOINT );
 
 		ConfigData = ConfigData.replace( 'API_EXCHANGE_ETHERSCANAPI_APIKEY', '"'+API_EXCHANGE_ETHERSCANAPI_APIKEY+'"' );
 		ConfigData = ConfigData.replace( 'API_EXCHANGE_ETAKAPRIVKEY', '"'+API_EXCHANGE_ETAKAPRIVKEY+'"' );

@@ -104,15 +104,14 @@ h2 {
 <script src="//cdn.jsdelivr.net/clipboard.js/1.5.3/clipboard.min.js"></script>
 
 <script src="lib/basicfunctions"></script>
-<script src="lib/TAKAAPIRapper"></script>
 <script src="lib/form"></script>
 <script src="lib/notification"></script>
-<script src="lib/TAKALIBRapper"></script>
+<script src="lib/TAKALibRapper"></script>
 
 
 
 <script>
-	const TAKA = new TAKAAPIRapper("MYIPADDRESS","MYPORT");
+	const TAKAAPI = new TAKA.API("MYURL");
 	let Notification = new notification();
 
 
@@ -122,17 +121,17 @@ h2 {
 	function GetObjData(type,rawdata){
 		let objdata = {}
 		if (type == 11){
-			objdata = new TRANSACTIONTOOLS_TAGREWARD.TagrewardData(rawdata).GetObjData();
+			objdata = new TAKA.TRANSACTIONTOOLS_TAGREWARD.TagrewardData(rawdata).GetObjData();
 		}else if (type == 101){
-			objdata = new TRANSACTIONTOOLS_DATABASE.DatabaseData("",rawdata).GetOrgData();
+			objdata = new TAKA.TRANSACTIONTOOLS_DATABASE.DatabaseData("",rawdata).GetOrgData();
 		}else if (type == 12){
-			objdata = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(rawdata).GetObjData();
+			objdata = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(rawdata).GetObjData();
 		}else if (type == 13){
-			objdata = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(rawdata).GetObjData();
+			objdata = new TAKA.TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(rawdata).GetObjData();
 		}else if (type == 111){
-			objdata = new TRANSACTIONTOOLS_CONTRACT.SetFunctionData(rawdata).GetObjData();
+			objdata = new TAKA.TRANSACTIONTOOLS_CONTRACT.SetFunctionData(rawdata).GetObjData();
 		}else if (type == 112){
-			objdata = new TRANSACTIONTOOLS_CONTRACT.RunFunctionData(rawdata).GetObjData();
+			objdata = new TAKA.TRANSACTIONTOOLS_CONTRACT.RunFunctionData(rawdata).GetObjData();
 		};
 
 		return objdata;
@@ -162,7 +161,7 @@ h2 {
 
 
 	async function AccountForm(address){
-		let AccountData = TAKA.getaccount(address,0);
+		let AccountData = TAKAAPI.getaccount(address,0);
 
 		let args = [
 			["title","Address : "+address],
@@ -192,8 +191,8 @@ h2 {
 
 
 	async function TxForm(txid){
-		let TxData = TAKA.gettx(txid);
-		let AccountData = TAKA.getaccount(TxData["pubkey"],0);
+		let TxData = TAKAAPI.gettx(txid);
+		let AccountData = TAKAAPI.getaccount(TxData["pubkey"],0);
 
 		let args = [];
 		if (TxData){
@@ -241,7 +240,7 @@ h2 {
 
 
 	async function TagForm(tag){
-		let TagData = TAKA.gettag(tag);
+		let TagData = TAKAAPI.gettag(tag);
 
 		if (!TagData){
 			return 0;
@@ -416,7 +415,7 @@ h2 {
 		);
 
 
-		let tagdata = TAKA.gettag("tagreward");
+		let tagdata = TAKAAPI.gettag("tagreward");
 		let tagtxids = tagdata["txids"];
 		tagtxids = tagtxids.reverse();
 
