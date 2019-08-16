@@ -3,6 +3,8 @@ const HAX = require('./hex.js');
 let SPHINCS = require("supersphincs");
 const SR = require('secure-random');
 const MAIN = require('./main.js');
+const AES = require('aes-js');
+const RSA = require('node-rsa');
 
 /*
 
@@ -109,13 +111,11 @@ exports.signature = class{
 
 exports.common = class{
 	constructor (){
-		this.aesjs = require('aes-js');
-		this.sr = require('secure-random');
 	};
 
 
 	CreateKey(){
-		let key = this.sr.randomBuffer(32);
+		let key = SR.randomBuffer(32);
 
 		return key.toString('hex');
 	};
@@ -123,22 +123,75 @@ exports.common = class{
 
 	GetEncryptedData(key,data){
 		key = Buffer.from(key, 'hex');
-		data = this.aesjs.utils.utf8.toBytes(data);
+		data = AES.utils.utf8.toBytes(data);
 
-		let aesCtr = new this.aesjs.ModeOfOperation.ctr(key, new this.aesjs.Counter(5));
+		let aesCtr = new AES.ModeOfOperation.ctr(key, new AES.Counter(5));
 		data = aesCtr.encrypt(data);
 
-		return this.aesjs.utils.hex.fromBytes(data);
+		return AES.utils.hex.fromBytes(data);
 	};
 
 
 	GetDecryptedData(key,data){
 		key = Buffer.from(key, 'hex');
-		data = this.aesjs.utils.hex.toBytes(data);
+		data = AES.utils.hex.toBytes(data);
 
-		let aesCtr = new this.aesjs.ModeOfOperation.ctr(key, new this.aesjs.Counter(5));
+		let aesCtr = new AES.ModeOfOperation.ctr(key, new AES.Counter(5));
 		data = aesCtr.decrypt(data);
 
-		return this.aesjs.utils.utf8.fromBytes(data);
+		return AES.utils.utf8.fromBytes(data);
 	};
 };
+
+
+
+
+
+exports.PublicKeyCrypto = class{
+	constructor (keysize=2048){
+		this.keysize = keysize;
+	};
+
+
+	CreateKey(){
+		let key = new RSA({b: this.keysize});
+		let privateDer = key.exportKey('pkcs1-der');
+
+		return privateDer.toString('hex');
+	};
+
+
+	GetPrivkeyToPubkey(privkey){
+		privkey = Buffer.from(privkey, 'hex');
+
+		let key = new RSA({b: this.keysize});
+		key.importKey(privkey,"pkcs1-der");
+
+		let publicDer = key.exportKey('pkcs1-public-der');
+		return publicDer.toString('hex');
+	};
+
+
+	GetEncryptedData(pubkey,data){
+		pubkey = Buffer.from(pubkey, 'hex');
+		data = Buffer.from(data, 'hex');
+
+		let key = new RSA({b: this.keysize});
+		key.importKey(pubkey,"pkcs1-public-der");
+
+		let cipher = key.encrypt(data, "hex");
+		return cipher;
+	}
+
+
+	GetDecryptedData(privkey,cipher){
+		privkey = Buffer.from(privkey, 'hex');
+		cipher = Buffer.from(cipher, 'hex');
+
+		let key = new RSA({b: this.keysize});
+		key.importKey(privkey,"pkcs1-der");
+
+		let data = key.decrypt(cipher, 'hex');
+		return data;
+	};
+}
