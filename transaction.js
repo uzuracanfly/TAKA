@@ -52,7 +52,7 @@ exports.Transaction = class{
 		pubkey : 4016桁
 		type : 2桁
 		time : 16桁
-		tag length : 2桁
+		tag length : 4桁
 		tag : tag length 桁
 		index : 16桁
 		MerkleRoot : 64桁
@@ -99,7 +99,7 @@ exports.Transaction = class{
 			tag_toin = "0" + tag;
 		}
 		let taglen_toin = (tag_toin.length).toString(16);
-		taglen_toin = MAIN.GetFillZero(taglen_toin, 2);
+		taglen_toin = MAIN.GetFillZero(taglen_toin, 4);
 
 		let index_toin = MAIN.GetFillZero(index, 16);
 		let MerkleRoot_toin = MAIN.GetFillZero(MerkleRoot, 64);
@@ -189,7 +189,7 @@ exports.Transaction = class{
 		let pubkey = cut(4016);
 		let type = parseInt(cut(2),16);
 		let time = parseInt(cut(16),16);
-		let tag = VariableCut(2);
+		let tag = VariableCut(4);
 		let index = parseInt(cut(16),16);
 		let MerkleRoot = cut(64);
 		let toaddress = cut(40);
@@ -296,9 +296,11 @@ exports.Transaction = class{
 			/*
 			Pay以外はtoaddressに指定できない
 			*/
+			/*
 			if (objtx["type"] != 1 && objtx["toaddress"] != MAIN.GetFillZero("", 40)){
 				return 0;
 			};
+			*/
 
 
 
@@ -594,7 +596,7 @@ exports.Transaction = class{
 
 
 
-	async GetPOWTarget(rawtx=this.rawtx){
+	async GetPOWTarget(rawtx=this.rawtx,powtarget="",lasttxtime=0){
 		await this.SetUpClass();
 		if (!rawtx){
 			rawtx=this.rawtx;
@@ -604,14 +606,19 @@ exports.Transaction = class{
 		let txid = await this.GetTxid(rawtx);
 
 		/* ユーザー定義のtagの場合 */
-		let TagOrderTx = await exports.GetTagOrderTx(objtx["tag"]);
 		let target = "";
-		if (TagOrderTx){
-			let TagOrderTxData = (await TagOrderTx.GetObjTx())["data"];
-			let tagorder = require('./TransactionTools/tagorder.js');
-			let Tagorder = new tagorder.TagOrderData(TagOrderTxData);
-			let TagorderObjData = Tagorder.GetObjData();
-			target = BigInt("0x"+TagorderObjData["powtarget"]);
+		if (!powtarget){
+			let TagOrderTx = await exports.GetTagOrderTx(objtx["tag"]);
+			if (TagOrderTx){
+				let TagOrderTxData = (await TagOrderTx.GetObjTx())["data"];
+				let tagorder = require('./TransactionTools/tagorder.js');
+				let Tagorder = new tagorder.TagOrderData(TagOrderTxData);
+				let TagorderObjData = Tagorder.GetObjData();
+				powtarget = TagorderObjData["powtarget"];
+			};
+		};
+		if (powtarget){
+			target = BigInt("0x"+powtarget);
 		}else{
 			target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		}
@@ -625,17 +632,19 @@ exports.Transaction = class{
 			let time = objtx["time"];
 
 
-			let txids = await TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
+			if (!lasttxtime){
+				let txids = await TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
 
-			
-			let lasttx = false;
-			if (txids.length > 0){
-				lasttx  = exports.GetTx(txids.slice(-1)[0]);
-			}
-			let lasttxtime = time - 60*10;
-			if (lasttx){
-				lasttxtime = (await lasttx.GetObjTx())["time"];
-			}
+				
+				let lasttx = false;
+				if (txids.length > 0){
+					lasttx  = exports.GetTx(txids.slice(-1)[0]);
+				}
+				lasttxtime = time - 60*10;
+				if (lasttx){
+					lasttxtime = (await lasttx.GetObjTx())["time"];
+				}
+			};
 
 
 			let needtime = 60*10 - (time - lasttxtime);
@@ -643,13 +652,13 @@ exports.Transaction = class{
 			target = target_upper;
 			if (needtime > 0){
 				if (needtime > 60*3){
-					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+					target = BigInt("0x000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 				}
 				if (needtime > 60*6){
-					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+					target = BigInt("0x00000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 				}
 				if (needtime > 60*9){
-					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+					target = BigInt("0x0000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 				}
 			};
 		};
@@ -778,7 +787,7 @@ exports.GetTx = function(txid){
 }
 
 exports.GetTags = function(){
-	let tags = DATABASE.get("UnconfirmedTransactions");
+	let tags = DATABASE.get("TransactionIdsPerTag");
 
 	//空白は排除
 	let result = tags.filter(function(vars) {
@@ -880,10 +889,10 @@ exports.GetTagPermitAddresss = async function(tag){
 
 
 
-exports.GetUnconfirmedTransactions = function(){
+exports.GetUnconfirmedTransactions = async function(){
 	rawtxs = [];
 
-	let tags = exports.GetTags();
+	let tags = DATABASE.get("UnconfirmedTransactions");
 	for (let index in tags){
 		let tag = tags[index];
 
@@ -959,8 +968,22 @@ exports.RunCommit = async function(){
 
 	setInterval(
 		async function(){
+			function TagCompare(TagA, TagB){
+				let comparison = 0;
+
+				if (TagA == "pay"){
+					comparison = -1;
+				}else{
+					comparison = 1;
+				}
+
+				return comparison;
+			}
+
+
 
 			let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
+			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(TagCompare);
 			for (let index in UnconfirmedTransactionsTags){
 				let tag = UnconfirmedTransactionsTags[index];
 

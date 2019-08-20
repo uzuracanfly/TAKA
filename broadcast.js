@@ -153,7 +153,7 @@ function SetActionEvents(socket){
 				}
 
 
-				let UnconfirmedTransactions = TRANSACTION.GetUnconfirmedTransactions();
+				let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
 				if (UnconfirmedTransactions.indexOf(rawtx) >= 0){
 					continue;
 				};
@@ -224,7 +224,7 @@ function SetActionEvents(socket){
 				return 0;
 			}
 
-			let UnconfirmedTransactions = TRANSACTION.GetUnconfirmedTransactions();
+			let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
 			if (UnconfirmedTransactions.indexOf(data) >= 0){
 				return 0;
 			};

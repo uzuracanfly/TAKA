@@ -130,11 +130,12 @@ h2 {
 				txs = AccountData["txids"][tag]["txs"];
 			}
 			let index = txs.length;
+			let time = Math.floor(Date.now()/1000);
 
 			let objtx = {
 				"pubkey":account["pubkey"],
 				"type":type,
-				"time":Math.floor(Date.now()/1000),
+				"time":time,
 				"tag":tag,
 				"index":index+1,
 				"MerkleRoot":MerkleRoot,
@@ -149,21 +150,30 @@ h2 {
 
 
 
+			/* Targetの取得 */
 			let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-			if (tag == "pay" || tag == "tagreward"){
-				target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
+			//最後のトランザクションの時間を取得
+			let lasttxid = txs.slice(-1)[0];
+			let LASTTX  = TAKA.TRANSACTION.GetTx(lasttxid);
+			let lasttxtime = time - 60*10;
+			if (LASTTX){
+				lasttxtime = (await LASTTX.GetObjTx())["time"];
 			}
-			if (tag != "pay" && tag != "tagreward" && index > 0){
+
+			if (tag != "pay" && tag != "tagreward"){
 				let objfirsttx = TAKAAPI.gettx(txs[0]);
 
 				let FIRSTTXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
 				let objdata = FIRSTTXDATA.GetObjData();
 
-				target = BigInt("0x"+objdata["powtarget"]);
-				if (!target){
-					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-				}
+				target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),objdata["powtarget"],lasttxtime);
+			}else{
+				target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),null,lasttxtime);
 			}
+
+
+
 
 			let result = TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target);
 			let objsendtx = await TargetTransaction.GetObjTx();
@@ -503,6 +513,13 @@ h2 {
 					["head","Balance"],
 					["text",CallbackResult["balance"]],
 					["head","Action"],
+					[
+						"download",
+						"Save KeyFile",
+						"TAKA_KeyFile_"+account["address"]+".json",
+						"text/plain",
+						JSON.stringify(account)
+					],
 					[
 						"button",
 						"Exchange ETAKA <=> TAKA",
@@ -1343,6 +1360,40 @@ h2 {
 				}
 			}
 		);
+		let EleButtonKeyFileLoad = element(
+			{
+				"name":"EleButtonKeyFileLoad",
+				"attachele":EleLoginInner,
+				"type":"a",
+				"class":"btn-border-bottom",
+				"height":"50px",
+				"width":"100%",
+				"innerHTML":"KeyFile Load",
+				"textAlign":"center",
+				"clickfunction":async function(){
+					let FORMACTION = new form(
+						[
+							["title","Load KeyFile"],
+							["file","FileData"],
+							[
+								"button",
+								"Done",
+								async function(){
+									let FileData = document.getElementById("FileData").value;
+									let data = (FileData.split(',')).slice(-1)[0];
+									data = window.atob(data);
+									data = JSON.parse(data);
+
+									document.getElementById("privkey").value = data["MinPrivkey"];
+									FORMACTION.DeleteForm();
+								}
+							]
+						],
+						"FORMACTION"
+					);
+				}
+			}
+		);
 		let EleButtonNewAccount = element(
 			{
 				"name":"EleButtonNewAccount",
@@ -1359,6 +1410,13 @@ h2 {
 					let LoginNewAccountForm = new form(
 						[
 							["title","New Account"],
+							[
+								"download",
+								"Save KeyFile",
+								"TAKA_KeyFile_"+keys["address"]+".json",
+								"text/plain",
+								JSON.stringify(keys)
+							],
 							["head","MinPrivkey"],
 							["text","SAVE THIS! AND NOT BE SHOWN TO PEOPLE!"],
 							["input","MinPrivkey","MinPrivkey"],

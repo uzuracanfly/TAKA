@@ -192,11 +192,12 @@ global.TAKA = {
 					txs = AccountData["txids"][tag]["txs"];
 				}
 				let index = txs.length;
+				let time = Math.floor(Date.now()/1000);
 
 				let objtx = {
 					"pubkey":keys["pubkey"],
 					"type":type,
-					"time":Math.floor(Date.now()/1000),
+					"time":time,
 					"tag":tag,
 					"index":index+1,
 					"MerkleRoot":MerkleRoot,
@@ -211,21 +212,29 @@ global.TAKA = {
 
 
 
+				/* Targetの取得 */
 				let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-				if (tag == "pay" || tag == "tagreward"){
-					target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
+				//最後のトランザクションの時間を取得
+				let lasttxid = txs.slice(-1)[0];
+				let LASTTX  = TAKA.TRANSACTION.GetTx(lasttxid);
+				let lasttxtime = time - 60*10;
+				if (LASTTX){
+					lasttxtime = (await LASTTX.GetObjTx())["time"];
 				}
-				if (tag != "pay" && tag != "tagreward" && index > 0){
+
+				if (tag != "pay" && tag != "tagreward"){
 					let objfirsttx = outthis.TAKAAPI.gettx(txs[0]);
 
 					let FIRSTTXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
 					let objdata = FIRSTTXDATA.GetObjData();
 
-					target = BigInt("0x"+objdata["powtarget"]);
-					if (!target){
-						target = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-					}
+					target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),objdata["powtarget"],lasttxtime);
+				}else{
+					target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),null,lasttxtime);
 				}
+
+
 
 				let result = TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target);
 				let objsendtx = await TargetTransaction.GetObjTx();

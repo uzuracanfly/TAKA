@@ -66,7 +66,7 @@ exports.account = class{
 			pubkey = key;
 		}else if(key.length == 11456){
 			privkey = key;
-		}else if(key.length > 6600 && key.length < 6700){
+		}else if(key.length > 4016 && key.length < 11456){
 			MinPrivkey = key;
 		}else{
 			privkey = await new CRYPTO.signature().CreatePrivkey();

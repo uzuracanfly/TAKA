@@ -393,6 +393,34 @@ class form {
 					}
 				},false);
 			};
+			if (paradata[0] == "download"){
+				let printname = paradata[1];
+				let filename = paradata[2];
+				let filetype = paradata[3];
+				let filedata = paradata[4];
+
+
+				let buttonele = element(
+					{
+						"name":"download",
+						"attachele":this.formInner,
+						"type":"input",
+						"fontSize":"20px",
+						"value":printname,
+						"clickfunction":function(){
+							var downLoadLink = document.createElement("a");
+							downLoadLink.download = filename;
+							downLoadLink.href = URL.createObjectURL(new Blob([filedata], {type: filetype}));
+							downLoadLink.dataset.downloadurl = [filetype, downLoadLink.download, downLoadLink.href].join(":");
+							downLoadLink.click();
+						},
+						"width":"100%",
+						"textAlign":"center",
+					}
+				);
+				buttonele.type = "button";
+				buttonele.download = filename;
+			};
 			if (paradata[0] == "color"){
 				let name = paradata[1];
 				let DefaultColor = paradata[2];

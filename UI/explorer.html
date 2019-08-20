@@ -242,26 +242,38 @@ h2 {
 	async function TagForm(tag){
 		let TagData = TAKAAPI.gettag(tag);
 
-		if (!TagData){
-			return 0;
-		}
 
 		let args = [
 			["title","Tag : "+tag],
-			["head","Owner"],
-			//["text","Pubkey : "+TagData["owner"]["pubkey"]],
-			["button",TagData["owner"]["address"],async function(){await AccountForm(this.value);}],
-			["head","Permission Type : "+TagData["permissiontype"]],
-			["head","Permit Addresss"],
 		];
 
-		for (let index in TagData["PermitAddresss"]){
-			let PermitAddress = TagData["PermitAddresss"][index];
+		if ("owner" in TagData){
+			Array.prototype.push.apply(
+				args,
+				[
+					["head","Owner"],
+					//["text","Pubkey : "+TagData["owner"]["pubkey"]],
+					["button",TagData["owner"]["address"],async function(){await AccountForm(this.value);}],
+				]
+			);
+			Array.prototype.push.apply(
+				args,
+				[
+					["head","Permission Type : "+TagData["permissiontype"]],
+					["head","Permit Addresss"],
+				]
+			);
 
-			args.push(["text",PermitAddress]);
-		}
+			for (let index in TagData["PermitAddresss"]){
+				let PermitAddress = TagData["PermitAddresss"][index];
 
-		args.push(["head","PoW Target : "+TagData["powtarget"]]);
+				args.push(["text",PermitAddress]);
+			}
+
+			args.push(["head","PoW Target : "+TagData["powtarget"]]);
+		};
+
+
 		args.push(["head","txids"]);
 
 		let txids = TagData["txids"].reverse();
@@ -271,6 +283,11 @@ h2 {
 
 			args.push(["button",txid,async function(){await TxForm(this.value);}]);
 		};
+
+		args.push(["head","MerkleRoot"]);
+		args.push(["text",TagData["MerkleRoot"]]);
+
+
 
 		let result = new form(
 			args,
