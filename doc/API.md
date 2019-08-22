@@ -2,6 +2,7 @@ TAKA API method
 ====
 
 Parameters Information
+
 	Required Parameters : <>
 	Option Parameters : []
 
