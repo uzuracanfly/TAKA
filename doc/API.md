@@ -1,4 +1,4 @@
-TAKA API method
+TAKA API or console method
 ====
 
 Parameters Information
