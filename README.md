@@ -42,7 +42,7 @@ Start TAKA node.
 	npm install
 	node init.js
 
-###[OPTION] Using Firejail
+### [OPTION] Using Firejail
 
 	apt-get install firejail
 
