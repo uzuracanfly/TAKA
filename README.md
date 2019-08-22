@@ -46,8 +46,8 @@ Start TAKA node.
 
 	apt-get install firejail
 
-Open and edit config.js
-	
+And open and edit config.js
+
 	"UsingFirejail":false
 
 To
