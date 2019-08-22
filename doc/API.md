@@ -126,7 +126,7 @@ Show account data.
 ## sendtagordertx
 
 ### parameters
-	sendtagordertx <key> <tag> <permissiontype>
+	sendtagordertx <key> <tag> <permissiontype> [powtarget]
 
 ### example
 
@@ -162,7 +162,7 @@ Show account data.
 ## callruncontracttransaction
 
 ### parameters
-	callruncontracttransaction <key> <tag> <FunctionName> <FunctionArgs>
+	callruncontracttransaction <address> <tag> <FunctionName> <FunctionArgs>
 
 ### example
 
@@ -171,7 +171,7 @@ Show account data.
 ## runcode
 
 ### parameters
-	runcode <key> <tag> <FunctionName> <FunctionArgs>
+	runcode <address> <tag> <FunctionName> <FunctionArgs>
 
 ### example
 

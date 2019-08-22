@@ -191,12 +191,12 @@ exports.SetServer = function(){
 								return 0;
 							}
 
-							let privkey = "";
-							if ("privkey" in postData["args"] && postData["args"]["privkey"]){
-								privkey = postData["args"]["privkey"];
+							let key = "";
+							if ("key" in postData["args"] && postData["args"]["key"]){
+								key = postData["args"]["key"];
 							}
 
-							let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
+							let TargetTransaction = new TRANSACTION.Transaction("",key,objtx);
 							let result = await TargetTransaction.GetRawTx();
 
 
@@ -208,19 +208,19 @@ exports.SetServer = function(){
 
 
 						if (postData["function"] == "sendpaytx"){
-							let privkey = postData["args"]["privkey"];
+							let key = postData["args"]["key"];
 							let toaddress = postData["args"]["toaddress"];
 							let amount = postData["args"]["amount"];
 
 
-							if (!privkey || !toaddress || !amount){
+							if (!key || !toaddress || !amount){
 								response.write(JSON.stringify(false));
 								response.end();
 								return 0;
 							}
 
 
-							let result = TRANSACTION.SendPayTransaction(privkey,toaddress,amount);
+							let result = TRANSACTION.SendPayTransaction(key,toaddress,amount);
 
 
 							result.then(function(value){
@@ -232,19 +232,19 @@ exports.SetServer = function(){
 
 
 						if (postData["function"] == "sendtagrewardtx"){
-							let privkey = postData["args"]["privkey"];
+							let key = postData["args"]["key"];
 							let tag = postData["args"]["tag"];
 							let amount = postData["args"]["amount"];
 
 
-							if (!privkey || !tag || !amount){
+							if (!key || !tag || !amount){
 								response.write(JSON.stringify(false));
 								response.end();
 								return 0;
 							}
 
 
-							let result = TRANSACTIONTOOLS_TAGREWARD.SendTagrewardTransaction(privkey,tag,amount);
+							let result = TRANSACTIONTOOLS_TAGREWARD.SendTagrewardTransaction(key,tag,amount);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));
@@ -288,7 +288,7 @@ exports.SetServer = function(){
 
 
 						if (postData["function"] == "senddatabasetx"){
-							let privkey = postData["args"]["privkey"];
+							let key = postData["args"]["key"];
 							let tag = postData["args"]["tag"];
 							let data = postData["args"]["data"];
 
@@ -298,7 +298,7 @@ exports.SetServer = function(){
 							};
 
 
-							if (!privkey || !tag || !data){
+							if (!key || !tag || !data){
 								response.write(JSON.stringify(false));
 								response.end();
 								return 0;
@@ -306,7 +306,7 @@ exports.SetServer = function(){
 
 
 
-							let result = TRANSACTIONTOOLS_DATABASE.SendDatabaseTransaction(privkey,tag,data,commonkey);
+							let result = TRANSACTIONTOOLS_DATABASE.SendDatabaseTransaction(key,tag,data,commonkey);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));
@@ -317,23 +317,23 @@ exports.SetServer = function(){
 
 
 						if (postData["function"] == "sendtagordertx"){
-							let privkey = postData["args"]["privkey"];
+							let key = postData["args"]["key"];
 							let tag = postData["args"]["tag"];
 							let permissiontype = postData["args"]["permissiontype"];
 
 							let powtarget = "0000000000000000000000000000000000000000000000000000000000000000";
 							if ("powtarget" in postData["args"] && postData["args"]["powtarget"]){
-								privkey = postData["args"]["privkey"];
+								powtarget = postData["args"]["powtarget"];
 							}
 
 
-							if (!privkey || !tag || !permissiontype){
+							if (!key || !tag || !permissiontype){
 								response.write(JSON.stringify(false));
 								response.end();
 								return 0;
 							}
 
-							let result = TRANSACTIONTOOLS_TAGORDER.SendTagOrderTransaction(privkey,tag,permissiontype,powtarget);
+							let result = TRANSACTIONTOOLS_TAGORDER.SendTagOrderTransaction(key,tag,permissiontype,powtarget);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));
@@ -344,19 +344,19 @@ exports.SetServer = function(){
 
 
 						if (postData["function"] == "sendtagaddpermittx"){
-							let privkey = postData["args"]["privkey"];
+							let key = postData["args"]["key"];
 							let tag = postData["args"]["tag"];
 							let addaddress = postData["args"]["addaddress"];
 
 
-							if (!privkey || !tag || !addaddress){
+							if (!key || !tag || !addaddress){
 								response.write(JSON.stringify(false));
 								response.end();
 								return 0;
 							}
 
 
-							let result = TRANSACTIONTOOLS_TAGADDPERMIT.SendTagAddPermitTransaction(privkey,tag,addaddress);
+							let result = TRANSACTIONTOOLS_TAGADDPERMIT.SendTagAddPermitTransaction(key,tag,addaddress);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));
@@ -367,7 +367,7 @@ exports.SetServer = function(){
 
 
 						if (postData["function"] == "sendsetcontracttransaction"){
-							let privkey = postData["args"]["privkey"];
+							let key = postData["args"]["key"];
 							let tag = postData["args"]["tag"];
 							let FunctionName = postData["args"]["FunctionName"];
 							let CodeType = postData["args"]["CodeType"];
@@ -378,14 +378,14 @@ exports.SetServer = function(){
 							};
 
 
-							if (!privkey || !tag || !FunctionName || !CodeType || !CodeData){
+							if (!key || !tag || !FunctionName || !CodeType || !CodeData){
 								response.write(JSON.stringify(false));
 								response.end();
 								return 0;
 							}
 
 
-							let result = TRANSACTIONTOOLS_CONTRACT.SendSetContractTransaction(privkey,tag,FunctionName,CodeType,CodeData,CodePath);
+							let result = TRANSACTIONTOOLS_CONTRACT.SendSetContractTransaction(key,tag,FunctionName,CodeType,CodeData,CodePath);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));
@@ -396,20 +396,20 @@ exports.SetServer = function(){
 
 
 						if (postData["function"] == "sendruncontracttransaction"){
-							let privkey = postData["args"]["privkey"];
+							let key = postData["args"]["key"];
 							let tag = postData["args"]["tag"];
 							let FunctionName = postData["args"]["FunctionName"];
 							let FunctionArgs = postData["args"]["FunctionArgs"];
 
 
-							if (!privkey || !tag || !FunctionName || !FunctionArgs){
+							if (!key || !tag || !FunctionName || !FunctionArgs){
 								response.write(JSON.stringify(false));
 								response.end();
 								return 0;
 							}
 
 
-							let result = TRANSACTIONTOOLS_CONTRACT.SendRunContractTransaction(privkey,tag,FunctionName,FunctionArgs);
+							let result = TRANSACTIONTOOLS_CONTRACT.SendRunContractTransaction(key,tag,FunctionName,FunctionArgs);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));
