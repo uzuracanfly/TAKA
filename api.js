@@ -504,6 +504,7 @@ exports.SetServer = function(){
 
 				let ExplorerHtml = FS.readFileSync('UI/explorer.html');
 				let WalletHtml = FS.readFileSync('UI/wallet.html');
+				let IntroHtml = FS.readFileSync('UI/intro.html');
 
 
 				//GETメゾット
@@ -523,7 +524,7 @@ exports.SetServer = function(){
 					response.writeHead(200, {'Content-Type': 'text/html'});
 					response.end(ExplorerHtml);
 				};
-				if (request.url == "/wallet"){
+				if ((request.url).indexOf("/wallet") != -1){
 					WalletHtml = WalletHtml.toString();
 					WalletHtml = WalletHtml.replace( "MYURL", CONFIG.API["AccessPoint"] );
 					WalletHtml = WalletHtml.replace( /PAYTAKAADDRESS/g, (await new ACCOUNT.account(CONFIG.API.exchange["TAKAPrivkey"]).GetKeys())["address"] );
@@ -531,6 +532,10 @@ exports.SetServer = function(){
 					WalletHtml = Buffer.from(WalletHtml, 'utf-8');
 					response.writeHead(200, {'Content-Type': 'text/html'});
 					response.end(WalletHtml);
+				};
+				if ((request.url).indexOf("/intro") != -1){
+					response.writeHead(200, {'Content-Type': 'text/html'});
+					response.end(IntroHtml);
 				};
 			}
 		})();

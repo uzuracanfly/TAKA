@@ -66,6 +66,21 @@ class form {
 					"fontSize":"20px",
 				}
 			);
+
+			this.formClose=element(
+				{
+					"name":index,
+					"type":"div",
+					"attachele":this.formOuter,
+					"textAlign":"center",
+					"fontSize":"30px",
+					"float":"right",
+					"innerHTML":"×",
+					"clickfunction":function(){
+						document.getElementById("formOuter"+this.name).parentNode.removeChild(document.getElementById("formOuter"+this.name));
+					}
+				}
+			);
 		}else{
 			this.formOuter = attachinner;
 
@@ -75,11 +90,6 @@ class form {
 					"type":"div",
 					"attachele":this.formOuter,
 					"width":"100%",
-					"position":"absolute",
-					"top":"0px",
-					"bottom":"0px",
-					"left":"0px",
-					"right":"0px",
 					"margin":"auto",
 					"overflow":"auto",
 					"wordBreak":"break-all",
@@ -89,22 +99,6 @@ class form {
 			);
 		};
 
-
-
-		this.formClose=element(
-			{
-				"name":index,
-				"type":"div",
-				"attachele":this.formOuter,
-				"textAlign":"center",
-				"fontSize":"30px",
-				"float":"right",
-				"innerHTML":"×",
-				"clickfunction":function(){
-					document.getElementById("formOuter"+this.name).parentNode.removeChild(document.getElementById("formOuter"+this.name));
-				}
-			}
-		);
 
 		this.SetForm(para);
 	};
