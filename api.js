@@ -153,7 +153,9 @@ exports.SetServer = function(){
 									"address":(await OwnerAccount.GetKeys())["address"]
 								};
 								callback["permissiontype"] = TagOrderObjData["permissiontype"];
-								callback["powtarget"] = TagPermitAddresss;
+								callback["powtarget"] = TagOrderObjData["powtarget"];
+								callback["DataMaxSizeInByte"] = TagOrderObjData["DataMaxSizeInByte"];
+								callback["TagPermitAddresss"] = TagPermitAddresss;
 							};
 
 							response.write(JSON.stringify(callback));
@@ -326,6 +328,10 @@ exports.SetServer = function(){
 								powtarget = postData["args"]["powtarget"];
 							}
 
+							let DataMaxSizeInByte = 1000;
+							if ("DataMaxSizeInByte" in postData["args"] && postData["args"]["DataMaxSizeInByte"]){
+								DataMaxSizeInByte = postData["args"]["DataMaxSizeInByte"];
+							}
 
 							if (!key || !tag || !permissiontype){
 								response.write(JSON.stringify(false));
@@ -333,7 +339,7 @@ exports.SetServer = function(){
 								return 0;
 							}
 
-							let result = TRANSACTIONTOOLS_TAGORDER.SendTagOrderTransaction(key,tag,permissiontype,powtarget);
+							let result = TRANSACTIONTOOLS_TAGORDER.SendTagOrderTransaction(key,tag,permissiontype,powtarget,DataMaxSizeInByte);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));

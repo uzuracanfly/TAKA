@@ -360,11 +360,11 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 			//pass
 		}
 
-		let profile = FS.readFileSync("./TransactionTools/node.profile", 'utf8');
+		let profile = FS.readFileSync("./TransactionTools/TAKA.profile", 'utf8');
 		profile = profile.replace('TARGETPATH', PATH.resolve('./'));
-		FS.writeFileSync(process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"] + "/.config/firejail" + "/node.profile", profile, "utf8");
+		FS.writeFileSync(process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"] + "/.config/firejail" + "/TAKA.profile", profile, "utf8");
 
-		child = CP.spawn("firejail",["node",SourcePath,SendingData]);
+		child = CP.spawn("firejail",["--profile="+process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"]+"/.config/firejail"+"/TAKA.profile","node",SourcePath,SendingData]);
 	}else{
 		child = CP.spawn("node",[SourcePath,SendingData]);
 	};

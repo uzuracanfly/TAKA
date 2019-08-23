@@ -72,8 +72,12 @@ exports.RunConsole = function(){
 				if (commands.length >= 5){
 					powtarget = commands[4];
 				};
+				let DataMaxSizeInByte = 1000;
+				if (commands.length >= 6){
+					DataMaxSizeInByte = commands[5];
+				};
 
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagordertx","args":{"key":key,"tag":tag,"permissiontype":permissiontype,"powtarget":powtarget}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagordertx","args":{"key":key,"tag":tag,"permissiontype":permissiontype,"powtarget":powtarget,"DataMaxSizeInByte":DataMaxSizeInByte}});
 			}else if (commands[0] == "sendtagaddpermittx"){
 				let key = commands[1];
 				let tag = commands[2];

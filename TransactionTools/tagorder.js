@@ -23,7 +23,11 @@ exports.TagOrderData = class{
 
 		let powtarget = MAIN.GetFillZero(objdata["powtarget"], 64);
 
-		let data = feetxid + permissiontype + powtarget;
+		let DataMaxSizeInByte = objdata["DataMaxSizeInByte"].toString(16);
+		DataMaxSizeInByte = MAIN.GetFillZero(DataMaxSizeInByte, 16);
+
+
+		let data = feetxid + permissiontype + powtarget + DataMaxSizeInByte;
 
 		return data;
 	};
@@ -48,11 +52,13 @@ exports.TagOrderData = class{
 		let feetxid = cut(64);
 		let permissiontype = parseInt(cut(2),16);
 		let powtarget = cut(64);
+		let DataMaxSizeInByte = parseInt(cut(16),16);
 
 		let objdata = {
 			"feetxid":feetxid,
 			"permissiontype":permissiontype,
 			"powtarget":powtarget,
+			"DataMaxSizeInByte":DataMaxSizeInByte,
 		};
 
 		return objdata;
@@ -64,7 +70,7 @@ exports.TagOrderData = class{
 
 
 
-exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powtarget){
+exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powtarget,DataMaxSizeInByte){
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
@@ -79,6 +85,7 @@ exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powt
 		"feetxid":paytxid,
 		"permissiontype":permissiontype,
 		"powtarget":powtarget,
+		"DataMaxSizeInByte":parseInt(DataMaxSizeInByte),
 	};
 
 	let TagOrder = new exports.TagOrderData("",objdata);

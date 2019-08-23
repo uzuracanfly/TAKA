@@ -615,6 +615,7 @@ h2 {
 									["input","tag","tag"],
 									["input","Permission Type","permissiontype"],
 									["input","Pow Target","powtarget"],
+									["input","Data MaxSize In Byte","DataMaxSizeInByte"],
 									[
 										"button",
 										"send",
@@ -623,10 +624,15 @@ h2 {
 											let tag = document.getElementById("tag").value;
 											let permissiontype = document.getElementById("permissiontype").value;
 											let powtarget = document.getElementById("powtarget").value;
+											let DataMaxSizeInByte = document.getElementById("DataMaxSizeInByte").value;
 
 											if (!powtarget){
 												powtarget = "0000000000000000000000000000000000000000000000000000000000000000";
 											};
+
+											if (!DataMaxSizeInByte){
+												DataMaxSizeInByte = 1000;
+											}
 
 
 											//FeeTx作成
@@ -660,6 +666,7 @@ h2 {
 													"feetxid":FeeTxResult["txid"],
 													"permissiontype":permissiontype,
 													"powtarget":powtarget,
+													"DataMaxSizeInByte":DataMaxSizeInByte,
 												};
 
 												let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData("",objdata);

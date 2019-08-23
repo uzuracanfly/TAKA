@@ -435,6 +435,12 @@ exports.Transaction = class{
 							return 0;
 						};
 					};
+
+
+					//dataサイズが上限を超えていないか
+					if (TagorderObjData["DataMaxSizeInByte"] < objtx["data"].length/2){
+						return 0;
+					};
 				}else{
 					return 0;
 				}
