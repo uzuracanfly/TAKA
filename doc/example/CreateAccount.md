@@ -6,8 +6,11 @@ Goal
 	Create Account.
 
 # Using console
+### Node Start.
 
-### type and response.
+	node init.js
+
+### And type and response.
 
 	> getaccount
 	{
