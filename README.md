@@ -9,8 +9,35 @@ TAKA is a P2P network for managing big data in a distributed manner.
 	・ Smart contract function
 
 
-## Install & Usage
-[Document](https://github.com/uzuracanfly/TAKA/blob/master/doc/index.md)
+## Install
+[Ubuntu 16.04](https://github.com/uzuracanfly/TAKA/blob/master/doc/install/ubuntu1604.md)
+
+## Usage
+
+### Web GUI
+	http://127.0.0.1/wallet
+	http://127.0.0.1/explorer
+
+### Console
+	Type command after "node init.js"
+
+### API
+	sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{}}'
+
+### Library
+	<script src="https://neko.taka.site/lib/TAKALibRapper"></script>
+
+or
+
+Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA/blob/master/UI/lib/TAKALibRapper_bundle.js)
+
+
+## example
+[CreateAccount](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/CreateAccount.md) : Create new account.<br>
+[SendPayTx](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/SendPayTx.md) : Send TAKA to other account.
+
+## dictionary
+[API](https://github.com/uzuracanfly/TAKA/blob/master/doc/dictionary/API.md) : TAKA API and console method.
 
 
 ## Licence
