@@ -27,6 +27,10 @@ After installation and node start.
 	http://127.0.0.1/explorer
 
 
+[Document](https://github.com/uzuracanfly/TAKA/blob/master/doc/index.md)
+
+
+
 ## Install
 You need Node.js version 10 or higher.
 
