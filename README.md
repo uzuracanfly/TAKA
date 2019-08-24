@@ -32,11 +32,11 @@ or
 Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA/blob/master/UI/lib/TAKALibRapper_bundle.js)
 
 
-## example
+## Example
 [CreateAccount](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/CreateAccount.md) : Create new account.<br>
 [SendPayTx](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/SendPayTx.md) : Send TAKA to other account.
 
-## dictionary
+## Dictionary
 [API](https://github.com/uzuracanfly/TAKA/blob/master/doc/dictionary/API.md) : TAKA API and console method.
 
 
