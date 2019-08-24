@@ -19,7 +19,8 @@ TAKA is a P2P network for managing big data in a distributed manner.
 	http://127.0.0.1/explorer
 
 ### Console
-	Type command after "node init.js"
+	node init.js
+And type command
 
 ### API
 	sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{}}'
