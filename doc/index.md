@@ -18,7 +18,7 @@ TAKA Documents
 
 or
 
-	Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA/blob/master/UI/lib/TAKALibRapper_bundle.js)
+Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA/blob/master/UI/lib/TAKALibRapper_bundle.js)
 
 
 # examples

@@ -9,7 +9,7 @@ exports.broadcast = {
 	"address":"0.0.0.0",
 	"port":20196,
 	"seed":[
-		"133.18.203.72"
+		"neko.taka.site"
 	]
 }
 
