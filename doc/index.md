@@ -15,7 +15,7 @@ TAKA Documents
 	Type command after "node init.js"
 
 ### API
-	sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{"key":""}}'
+	sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{}}'
 
 ### Library
 	<script src="https://neko.taka.site/lib/TAKALibRapper"></script>

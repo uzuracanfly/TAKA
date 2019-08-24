@@ -11,7 +11,7 @@ TAKA is a P2P network for managing big data in a distributed manner.
 	・ Smart contract function
 
 
-## Usage
+## Install & Usage
 [Document](https://github.com/uzuracanfly/TAKA/blob/master/doc/index.md)
 
 
