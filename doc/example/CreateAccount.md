@@ -8,9 +8,8 @@ Goal
 # method 1
 Using console.
 
-	node init.js
 
-### after
+### type and response.
 
 	> getaccount
 	{
