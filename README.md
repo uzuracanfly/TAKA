@@ -1,8 +1,6 @@
 TAKA
 ====
 
-Distributed large capacity database.
-
 ## Description
 TAKA is a P2P network for managing big data in a distributed manner.
 
