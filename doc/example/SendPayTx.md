@@ -22,9 +22,7 @@ Account A
 	}
 
 
-# method 1
-Using console.
-
+# Using console
 
 ### type and response.
 
@@ -35,8 +33,7 @@ Check with [explorer](https://neko.taka.site/explorer) if it is sent properly.
 
 
 
-# method 2
-Using library.
+# Using library
 
 ### load library.
 

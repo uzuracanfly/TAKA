@@ -5,9 +5,7 @@ Goal
 
 	Create Account.
 
-# method 1
-Using console.
-
+# Using console
 
 ### type and response.
 
@@ -27,8 +25,7 @@ Using console.
 	}
 
 
-# method 2
-Using library.
+# Using library
 
 ### load library.
 
