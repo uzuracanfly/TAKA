@@ -7,7 +7,7 @@ Parameters Information
 	Option Parameters : []
 
 
-## getaccount
+# getaccount
 
 ### parameters
 	getaccount [key] [LessIndex]
@@ -23,7 +23,7 @@ Show account data.
 
 
 
-## gettag
+# gettag
 
 ### parameters
 	gettag <tag>
@@ -33,7 +33,7 @@ Show account data.
 
 
 
-## getrawtx
+# getrawtx
 
 	objtx to rawtx.
 	objtx is Human-friendly shape.
@@ -64,7 +64,7 @@ objtxJSON example
 
 
 
-## gettx
+# gettx
 
 ### parameters
 	gettx <txid>
@@ -73,7 +73,7 @@ objtxJSON example
 
 
 
-## getimporttag
+# getimporttag
 
 ### parameters
 	getimporttag
@@ -82,7 +82,7 @@ objtxJSON example
 
 
 
-## setimporttag
+# setimporttag
 
 ### parameters
 	setimporttag <type> <tag>
@@ -91,7 +91,7 @@ objtxJSON example
 
 
 
-## getminingtags
+# getminingtags
 
 ### parameters
 	getminingtags
@@ -100,7 +100,7 @@ objtxJSON example
 
 
 
-## setminingtags
+# setminingtags
 
 ### parameters
 	setminingtags <type> <tag>
@@ -109,7 +109,7 @@ objtxJSON example
 
 
 
-## sendtx
+# sendtx
 
 ### parameters
 	sendtx <rawtx>
@@ -118,7 +118,7 @@ objtxJSON example
 
 
 
-## sendpaytx
+# sendpaytx
 
 ### parameters
 	sendpaytx <key> <toaddress> <amount>
@@ -127,7 +127,7 @@ objtxJSON example
 
 
 
-## sendtagrewardtx
+# sendtagrewardtx
 
 ### parameters
 	sendtagrewardtx <key> <tag> <amount>
@@ -136,7 +136,7 @@ objtxJSON example
 
 
 
-## senddatabasetx
+# senddatabasetx
 
 ### parameters
 	senddatabasetx <key> <tag> <data>
@@ -145,7 +145,7 @@ objtxJSON example
 
 
 
-## sendtagordertx
+# sendtagordertx
 
 ### parameters
 	sendtagordertx <key> <tag> <permissiontype> [powtarget]
@@ -154,7 +154,7 @@ objtxJSON example
 
 
 
-## sendtagaddpermittx
+# sendtagaddpermittx
 
 ### parameters
 	sendtagaddpermittx <key> <tag> <addaddress>
@@ -163,7 +163,7 @@ objtxJSON example
 
 
 
-## sendsetcontracttransaction
+# sendsetcontracttransaction
 
 ### parameters
 	sendsetcontracttransaction <key> <tag> <FunctionName> <CodeType> <CodeData> [CodePath]
@@ -172,7 +172,7 @@ objtxJSON example
 
 
 
-## sendruncontracttransaction
+# sendruncontracttransaction
 
 ### parameters
 	sendruncontracttransaction <key> <tag> <FunctionName> <FunctionArgs>
@@ -181,7 +181,7 @@ objtxJSON example
 
 
 
-## callruncontracttransaction
+# callruncontracttransaction
 
 ### parameters
 	callruncontracttransaction <address> <tag> <FunctionName> <FunctionArgs>
@@ -190,7 +190,7 @@ objtxJSON example
 
 
 
-## runcode
+# runcode
 
 ### parameters
 	runcode <address> <tag> <FunctionName> <FunctionArgs>
@@ -199,7 +199,7 @@ objtxJSON example
 
 
 
-## exchange
+# exchange
 
 ### parameters
 	exchange <type> <PayTxid> <ReceiverAddress> <amount>
