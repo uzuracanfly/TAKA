@@ -10,37 +10,10 @@ TAKA is a P2P network for managing big data in a distributed manner.
 	・ Database function
 	・ Smart contract function
 
+
 ## Usage
 [Document](https://github.com/uzuracanfly/TAKA/blob/master/doc/index.md)
 
-
-
-## Install
-You need Node.js version 10 or higher.
-
-	https://nodejs.org/
-
-Download TAKA.
-
-	git clone https://github.com/uzuracanfly/TAKA.git
-
-Start TAKA node.
-
-	cd TAKA
-	npm install
-	node init.js
-
-### [OPTION] Using Firejail
-
-	apt-get install firejail
-
-And open and edit config.js
-
-	"UsingFirejail":false
-
-To
-
-	"UsingFirejail":true
 
 
 ## Contribution

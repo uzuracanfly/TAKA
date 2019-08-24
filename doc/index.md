@@ -1,6 +1,10 @@
 TAKA Documents
 ====
 
+# Install
+[Ubuntu 16.04](https://github.com/uzuracanfly/TAKA/blob/master/doc/install/ubuntu1604.md)
+
+
 # Access Methods
 
 ### Web GUI
