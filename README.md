@@ -11,22 +11,6 @@ TAKA is a P2P network for managing big data in a distributed manner.
 	・ Smart contract function
 
 ## Usage
-After installation and node start.
-
-### Generate Account In the API
-
-    sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{"key":""}}'
-
-### Show Account In the API
-
-    sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{"key":"eb86950b214dea4c863d10c5c0fa22fd027647ca"}}'
-
-### Access Web GUI
-
-	http://127.0.0.1/wallet
-	http://127.0.0.1/explorer
-
-
 [Document](https://github.com/uzuracanfly/TAKA/blob/master/doc/index.md)
 
 
