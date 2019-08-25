@@ -1,6 +1,8 @@
 TAKA
 ====
 
+![TAKA ICON](https://github.com/uzuracanfly/TAKA/blob/master/doc/img/TAKAICON.png)
+
 ## Description
 Distributed large capacity database.
 
