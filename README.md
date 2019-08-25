@@ -2,7 +2,7 @@ TAKA
 ====
 
 ## Description
-TAKA is a P2P network for managing big data in a distributed manner.
+Distributed large capacity database.
 
 	・ Original currency function
 	・ Database function
