@@ -288,10 +288,18 @@ window.onload = async function(){
 							await GetLangText("NEKOノードのWALLET","Wallet of NEKO Node"),
 							function()
 							{
+								window.open('https://neko.taka.site/wallet', '_blank');
+							}
+						],
+						["text",await GetLangText("・使用するタグ(保存領域)をノードのWALLETまたはコマンドから1TAKAを使用して申請します。(tagorder)","・Apply for the tag (storage area) to be used using 1TAKA from the node WALLET or command. (tagorder)")],
+						[
+							"button",
+							await GetLangText("WALLET","WALLET"),
+							function()
+							{
 								window.open(location.protocol+'//'+location.hostname+'/wallet', '_blank');
 							}
 						],
-						["text",await GetLangText("・使用するタグ(保存領域)を'NEKOノード'のWALLETまたはノードのコマンドから1TAKAを使用して申請します。(tagorder)","・Apply tags(storage area) to be used using WALLET of 'NEKO node' or 1TAKA from node command. (tagorder)")],
 						["text",await GetLangText("・TAKAのGithubページを参考にアプリを開発します。","・Develop apps with reference to TAKA's Github page.")],
 						[
 							"button",
@@ -425,10 +433,10 @@ window.onload = async function(){
 						],
 						["head",await GetLangText("ノード管理方法","Node management method")],
 						["text",await GetLangText("多くのノード維持の報酬を受け取るには多くのタグをノードに指定する必要があります。しかしその分容量が多くなります。","To receive many node maintenance rewards, you need to specify many tags for the node. However, the capacity increases accordingly.")],
-						["text",await GetLangText("・タグに入っているデータ容量とタグに対して払われている報酬の量が妥当かどうかを確認するためにNEKOノードのEXPLORERを確認してください。","・Check the NEKO node EXPLORER to see if the amount of data contained in the tag and the amount of rewards paid for the tag is reasonable.")],
+						["text",await GetLangText("・タグに入っているデータ容量とタグに対して払われている報酬の量が妥当かどうかを確認するためにEXPLORERを確認してください。","・Check the EXPLORER to see if the amount of data contained in the tag and the amount of rewards paid for the tag is reasonable.")],
 						[
 							"button",
-							await GetLangText("NEKOノードのEXPLORER","EXPLORER of NEKO Node"),
+							await GetLangText("EXPLORER","EXPLORER"),
 							function()
 							{
 								window.open(location.protocol+'//'+location.hostname+'/explorer', '_blank');
