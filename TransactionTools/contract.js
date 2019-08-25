@@ -279,10 +279,15 @@ exports.RunFunctionData = class{
 
 
 
-exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
+exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs,usingkeys=[]){
 
 	//LoadDataPerTagの取得
-	let tagtxids = TRANSACTION.GetTagTxids(tag);
+	let tagtxids = [];
+	Array.prototype.push(tagtxids,(await TargetAccount.GetFormTxList(undefined,tag)));
+	for (let usingkey in usingkeys){
+		let USINGACCOUNT = new ACCOUNT.account(usingkey);
+		Array.prototype.push(tagtxids,(await USINGACCOUNT.GetFormTxList(undefined,tag)));
+	}
 	let LoadDataPerTag = {};
 	for (let index in tagtxids){
 		let tagtxid = tagtxids[index];
@@ -406,7 +411,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs){
 
 
 
-exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,FunctionArgs){
+exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,FunctionArgs,usingkeys=[]){
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
@@ -417,7 +422,7 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 	/*
 		コントラクト実行
 	*/
-	let CodeResult = await exports.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
+	let CodeResult = await exports.RunCode(TargetAccount,tag,FunctionName,FunctionArgs,usingkeys);
 	if (!CodeResult){
 		return 0;
 	}
@@ -468,13 +473,13 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 };
 
 
-exports.CallRunContractTransaction = async function(address,tag,FunctionName,FunctionArgs){
+exports.CallRunContractTransaction = async function(address,tag,FunctionName,FunctionArgs,usingkeys=[]){
 	let TargetAccount = new ACCOUNT.account(address);
 
 	/*
 		コントラクト実行
 	*/
-	let CodeResult = await exports.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
+	let CodeResult = await exports.RunCode(TargetAccount,tag,FunctionName,FunctionArgs,usingkeys);
 	if (!CodeResult){
 		return 0;
 	}

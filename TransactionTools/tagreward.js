@@ -84,7 +84,7 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagreward");
 		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
-		let TagMerkleRoot = TRANSACTION.GetTagMerkleRoot(tag);
+		let TagMerkleRoot = await TargetAccount.GetFormTxList(undefined,tag);
 		let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(TagMerkleRoot,RewardPrivkey);
 
 		let objdata = {
@@ -146,8 +146,11 @@ exports.SetMiningTags = async function(type,tag){
 
 
 
-exports.RunMining = function(){
-	async function mining(){
+exports.RunMining = async function(){
+	let UsedRewardPrivkey = [];
+
+	while (true){
+
 		/*
 		tagrewardトランザクションを走査してprivkeyを集める
 		*/
@@ -163,8 +166,8 @@ exports.RunMining = function(){
 				if ((await exports.GetMiningTags()).length>0 && (await exports.GetMiningTags()).indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
 
 
-				//tagのtxリストから共通鍵作る
-				let tagtxids = TRANSACTION.GetTagTxids(tagrewarddata.GetObjData()["tag"]);
+				//tagreward元のアカウントのtagのtxidリストから共通鍵作る
+				let tagtxids = await tx.TargetAccount.GetFormTxList(undefined,tagrewarddata.GetObjData()["tag"]);
 				let commonkey = new HASHS.hashs().GetMarkleroot(tagtxids);
 
 				if (!commonkey){continue;};
@@ -214,13 +217,7 @@ exports.RunMining = function(){
 		}
 
 
-		setTimeout(
-			mining,
-			1000,
-		);
+
+		await MAIN.sleep(0.1);
 	}
-
-
-	let UsedRewardPrivkey = [];
-	mining();
 }

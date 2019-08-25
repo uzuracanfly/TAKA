@@ -406,6 +406,9 @@ exports.SetServer = function(){
 							let tag = postData["args"]["tag"];
 							let FunctionName = postData["args"]["FunctionName"];
 							let FunctionArgs = postData["args"]["FunctionArgs"];
+							if ("usingkeys" in postData["args"]){
+								usingkeys = postData["args"]["usingkeys"];
+							};
 
 
 							if (!key || !tag || !FunctionName || !FunctionArgs){
@@ -415,7 +418,7 @@ exports.SetServer = function(){
 							}
 
 
-							let result = TRANSACTIONTOOLS_CONTRACT.SendRunContractTransaction(key,tag,FunctionName,FunctionArgs);
+							let result = TRANSACTIONTOOLS_CONTRACT.SendRunContractTransaction(key,tag,FunctionName,FunctionArgs,usingkeys);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));
@@ -430,6 +433,9 @@ exports.SetServer = function(){
 							let tag = postData["args"]["tag"];
 							let FunctionName = postData["args"]["FunctionName"];
 							let FunctionArgs = postData["args"]["FunctionArgs"];
+							if ("usingkeys" in postData["args"]){
+								usingkeys = postData["args"]["usingkeys"];
+							};
 
 
 							if (!address || !tag || !FunctionName || !FunctionArgs){
@@ -439,7 +445,7 @@ exports.SetServer = function(){
 							}
 
 
-							let result = TRANSACTIONTOOLS_CONTRACT.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
+							let result = TRANSACTIONTOOLS_CONTRACT.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs,usingkeys);
 
 
 							result.then(function(value){
@@ -456,6 +462,10 @@ exports.SetServer = function(){
 							let tag = postData["args"]["tag"];
 							let FunctionName = postData["args"]["FunctionName"];
 							let FunctionArgs = postData["args"]["FunctionArgs"];
+							let usingkeys = [];
+							if ("usingkeys" in postData["args"]){
+								usingkeys = postData["args"]["usingkeys"];
+							};
 
 
 							if (!address || !tag || !FunctionName || !FunctionArgs){
@@ -466,7 +476,7 @@ exports.SetServer = function(){
 
 
 							let TargetAccount = new ACCOUNT.account(address);
-							let result = TRANSACTIONTOOLS_CONTRACT.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
+							let result = TRANSACTIONTOOLS_CONTRACT.RunCode(TargetAccount,tag,FunctionName,FunctionArgs,usingkeys);
 
 
 							result.then(function(value){

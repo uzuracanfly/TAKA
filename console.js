@@ -102,24 +102,36 @@ exports.RunConsole = function(){
 				let FunctionName = commands[3];
 				let FunctionArgs = commands[4];
 				FunctionArgs = JSON.parse(FunctionArgs);
+				let usingkeys = [];
+				if (commands.length >= 6){
+					usingkeys = commands[5];
+				};
 
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendruncontracttransaction","args":{"key":key,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendruncontracttransaction","args":{"key":key,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"usingkeys":usingkeys}});
 			}else if (commands[0] == "callruncontracttransaction"){
 				let address = commands[1];
 				let tag = commands[2];
 				let FunctionName = commands[3];
 				let FunctionArgs = commands[4];
 				FunctionArgs = JSON.parse(FunctionArgs);
+				let usingkeys = [];
+				if (commands.length >= 6){
+					usingkeys = commands[5];
+				};
 
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"callruncontracttransaction","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"callruncontracttransaction","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"usingkeys":usingkeys}});
 			}else if (commands[0] == "runcode"){
 				let address = commands[1];
 				let tag = commands[2];
 				let FunctionName = commands[3];
 				let FunctionArgs = commands[4];
 				FunctionArgs = JSON.parse(FunctionArgs);
+				let usingkeys = [];
+				if (commands.length >= 6){
+					usingkeys = commands[5];
+				};
 
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"runcode","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"runcode","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"usingkeys":usingkeys}});
 			}else if (commands[0] == "getimporttag"){
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getimporttag","args":{}});
 			}else if (commands[0] == "setimporttag"){
