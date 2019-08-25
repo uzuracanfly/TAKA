@@ -1,7 +1,7 @@
 TAKA
 ====
 
-![TAKA ICON](https://github.com/uzuracanfly/TAKA/blob/master/doc/img/TAKAICON.png)
+<img src="https://github.com/uzuracanfly/TAKA/blob/master/doc/img/TAKAICON.png" alt="TAKA ICON" width="300px">
 
 ## Description
 Distributed large capacity database.
