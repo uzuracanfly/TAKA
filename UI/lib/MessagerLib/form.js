@@ -334,13 +334,14 @@ class form {
 			};
 			if (paradata[0] == "img"){
 				let src = paradata[1];
+				let size = paradata[2];
 
 				let img = element(
 					{
 						"name":"img"+index,
 						"attachele":this.formInner,
 						"type":"img",
-						"width":"100%",
+						"width":size,
 						"textAlign":"center",
 					}
 				);
