@@ -624,9 +624,9 @@ h2 {
 										function()
 										{
 											let tag = document.getElementById("tag").value;
-											let permissiontype = document.getElementById("permissiontype").value;
+											let permissiontype = parseInt(document.getElementById("permissiontype").value);
 											let powtarget = document.getElementById("powtarget").value;
-											let DataMaxSizeInByte = document.getElementById("DataMaxSizeInByte").value;
+											let DataMaxSizeInByte = parseInt(document.getElementById("DataMaxSizeInByte").value);
 
 											if (!powtarget){
 												powtarget = "0000000000000000000000000000000000000000000000000000000000000000";
@@ -1131,7 +1131,6 @@ h2 {
 									["input","tag","tag"],
 									["input","FunctionName","FunctionName"],
 									["input","FunctionArgs","FunctionArgs"],
-									["input","UsingKeys","usingkeys"],
 									[
 										"button",
 										"send",
@@ -1141,10 +1140,9 @@ h2 {
 											let tag = document.getElementById("tag").value;
 											let FunctionName = document.getElementById("FunctionName").value;
 											let FunctionArgs = JSON.parse(document.getElementById("FunctionArgs").value);
-											let usingkeys = JSON.parse(document.getElementById("usingkeys").value);
 
 
-											let result = TAKAAPI.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs,usingkeys);
+											let result = TAKAAPI.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
 
 
 											let TopResultForm = new form(
@@ -1189,7 +1187,6 @@ h2 {
 									["input","tag","tag"],
 									["input","FunctionName","FunctionName"],
 									["input","FunctionArgs","FunctionArgs"],
-									["input","UsingKeys","usingkeys"],
 									[
 										"button",
 										"send",
@@ -1199,10 +1196,9 @@ h2 {
 											let tag = document.getElementById("tag").value;
 											let FunctionName = document.getElementById("FunctionName").value;
 											let FunctionArgs = JSON.parse(document.getElementById("FunctionArgs").value);
-											let usingkeys = JSON.parse(document.getElementById("usingkeys").value);
 
 
-											let ResultPlan = TAKAAPI.RunCode(address,tag,FunctionName,FunctionArgs,usingkeys);
+											let ResultPlan = TAKAAPI.RunCode(address,tag,FunctionName,FunctionArgs);
 
 
 											//tagrewardのデータ生成
