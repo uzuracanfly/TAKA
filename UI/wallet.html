@@ -535,8 +535,8 @@ h2 {
 									["title","Tag Order"],
 									["input","tag","tag"],
 									["input","Permission Type","permissiontype"],
-									["input","Pow Target","powtarget"],
-									["input","Data MaxSize In Byte","DataMaxSizeInByte"],
+									["input","[OPTION] Pow Target (ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)","powtarget"],
+									["input","[OPTION] Data MaxSize In Byte (1000)","DataMaxSizeInByte"],
 									[
 										"button",
 										"send",
@@ -802,6 +802,7 @@ h2 {
 							let TopTagAddpermForm = new form(
 								[
 									["title","Tag Add Permit"],
+									["text","If 'permissiontype' is set to 2 at the time of 'tagorder', only 'tagaddpermit' users can send transactions.Even if 'permissiontype' is other than 2, only users who have 'tagaddpermit' for 'Set Contract Transaction' can send transactions."],
 									["input","tag","tag"],
 									["input","Add address","addaddress"],
 									[
@@ -887,7 +888,7 @@ h2 {
 									["title","Database"],
 									["input","tag","tag"],
 									["input","data","data"],
-									["input","commonkey","commonkey"],
+									["input","[OPTION] commonkey (hex only)","commonkey"],
 									[
 										"button",
 										"send",
@@ -1063,7 +1064,7 @@ h2 {
 									["title","Call Run Contract Transaction"],
 									["input","tag","tag"],
 									["input","FunctionName","FunctionName"],
-									["input","FunctionArgs","FunctionArgs"],
+									["input",'FunctionArgs ({})',"FunctionArgs"],
 									[
 										"button",
 										"send",
@@ -1119,7 +1120,7 @@ h2 {
 									["title","Send Run Contract Transaction"],
 									["input","tag","tag"],
 									["input","FunctionName","FunctionName"],
-									["input","FunctionArgs","FunctionArgs"],
+									["input",'FunctionArgs ({"toaddress":"80ba149c1e71ca4576198998418bc47d4e297ab2","amount":1})',"FunctionArgs"],
 									[
 										"button",
 										"send",

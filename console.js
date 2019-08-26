@@ -42,6 +42,9 @@ exports.RunConsole = function(){
 			}else if (commands[0] == "gettag"){
 				let tag = commands[1];
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettag","args":{"tag":tag}});
+			}else if (commands[0] == "sendtx"){
+				let rawtx = commands[1];
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtx","args":{"rawtx":rawtx}});
 			}else if (commands[0] == "sendpaytx"){
 				let key = commands[1];
 				let toaddress = commands[2];
@@ -134,6 +137,13 @@ exports.RunConsole = function(){
 				let tag = commands[2];
 
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"setminingtags","args":{"type":type,"tag":tag}});
+			}else if (commands[0] == "exchange"){
+				let type = commands[1];
+				let PayTxid = commands[2];
+				let ReceiverAddress = commands[3];
+				let amount = commands[4];
+				
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"exchange","args":{"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount}});
 			};
 
 			resolve(result);
