@@ -20,6 +20,12 @@ exports.TagrewardData = class{
 	GetRawData(objdata=this.objdata){
 		let data = "";
 
+		let rewardtxid = objdata["rewardtxid"];
+		data = data + MAIN.GetFillZero(rewardtxid,64);
+
+		let UsingRawTxIndex = objdata["UsingRawTxIndex"].toString(16);
+		data = data + MAIN.GetFillZero(UsingRawTxIndex,16);
+
 		let tag = new HEX.HexText().string_to_utf8_hex_string(objdata["tag"]);
 		let taglen = tag.length.toString(16);
 		data = data + MAIN.GetFillZero(taglen,16) + tag;
@@ -48,10 +54,14 @@ exports.TagrewardData = class{
 			return cuthex
 		};
 
+		let rewardtxid = cut(64);
+		let UsingRawTxIndex = parseInt(cut(16),16);
 		let tag = VariableCut();
 		let EncryptoPrivkey = VariableCut();
 
 		let objdata = {
+			"rewardtxid":rewardtxid,
+			"UsingRawTxIndex":UsingRawTxIndex,
 			"tag":new HEX.HexText().utf8_hex_string_to_string(tag),
 			"EncryptoPrivkey":EncryptoPrivkey,
 		}
@@ -84,10 +94,21 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagreward");
 		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
-		let TagMerkleRoot = await TargetAccount.GetFormTxList(undefined,tag);
-		let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(TagMerkleRoot,RewardPrivkey);
+		let TagTxids = TRANSACTION.GetTagTxids(tag);
+		if (tag == "pay" && TagTxids.indexOf(paytxid) == -1){
+			TagTxids.push(paytxid);
+		};
+		let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(TagTxids);
+
+		let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length );
+		let UsingRawTx = await TRANSACTION.GetTx(TagTxids[UsingRawTxIndex]).GetRawTx();
+		let commonkey = new HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
+
+		let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(commonkey,RewardPrivkey);
 
 		let objdata = {
+			"rewardtxid":paytxid,
+			"UsingRawTxIndex":UsingRawTxIndex,
 			"tag":tag,
 			"EncryptoPrivkey":EncryptoPrivkey,
 		};
@@ -160,27 +181,30 @@ exports.RunMining = async function(){
 			try{
 				let txid = tagrewardtxids[index];
 				let tx = TRANSACTION.GetTx(txid);
-				let tagrewarddata = new exports.TagrewardData((await tx.GetObjTx())["data"]);
+				let TAGREWARDDATA = new exports.TagrewardData((await tx.GetObjTx())["data"]);
+				let TagRewardObjData = TAGREWARDDATA.GetObjData();
 
 
-				if ((await exports.GetMiningTags()).length>0 && (await exports.GetMiningTags()).indexOf(tagrewarddata.GetObjData()["tag"]) == -1){continue;};
+				if ((await exports.GetMiningTags()).length>0 && (await exports.GetMiningTags()).indexOf(TagRewardObjData["tag"]) == -1){continue;};
 
 
-				//tagreward元のアカウントのtagのtxidリストから共通鍵作る
-				let tagtxids = await tx.TargetAccount.GetFormTxList(undefined,tagrewarddata.GetObjData()["tag"]);
-				let commonkey = new HASHS.hashs().GetMarkleroot(tagtxids);
+				//tagのtxリストから共通鍵作る
+				let tagtxids = TRANSACTION.GetTagTxids(TagRewardObjData["tag"]);
+				let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(tagtxids);
+				let UsingRawTx = await TRANSACTION.GetTx(tagtxids[TagRewardObjData["UsingRawTxIndex"]]).GetRawTx();
+				let commonkey = new HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
 
 				if (!commonkey){continue;};
 
 
 				//賞金の入った秘密鍵を取得
-				let EncryptoPrivkey = tagrewarddata.GetObjData()["EncryptoPrivkey"];
+				let EncryptoPrivkey = TagRewardObjData["EncryptoPrivkey"];
 
 				let RewardPrivkey = new CRYPTO.common().GetDecryptedData(commonkey,EncryptoPrivkey);
 				//console.log(commonkey);
 				//console.log(EncryptoPrivkey);
 				//console.log(RewardPrivkey);
-				Rewards.push({"tag":tagrewarddata.GetObjData()["tag"],"RewardPrivkey":RewardPrivkey});
+				Rewards.push({"tag":TagRewardObjData["tag"],"RewardPrivkey":RewardPrivkey});
 			}catch(e){
 				console.log(e);
 				continue;
@@ -212,12 +236,12 @@ exports.RunMining = async function(){
 			if (sendamount > 0 && UsedRewardPrivkey.indexOf(RewardPrivkey) == -1){
 				UsedRewardPrivkey.push(RewardPrivkey);
 				MAIN.note(1,"tagreward_RunMining","[Reward] "+sendamount+" by tag of "+tag);
-				let result = await TRANSACTION.SendPayTransaction(RewardPrivkey,(await CollectAccount.GetKeys())["address"],sendamount);
+				TRANSACTION.SendPayTransaction(RewardPrivkey,(await CollectAccount.GetKeys())["address"],sendamount);
 			}
 		}
 
 
 
-		await MAIN.sleep(0.1);
+		await MAIN.sleep(1);
 	}
 }

@@ -612,27 +612,27 @@ exports.Transaction = class{
 		let txid = await this.GetTxid(rawtx);
 
 		/* ユーザー定義のtagの場合 */
-		let target = "";
-		if (!powtarget){
-			let TagOrderTx = await exports.GetTagOrderTx(objtx["tag"]);
-			if (TagOrderTx){
-				let TagOrderTxData = (await TagOrderTx.GetObjTx())["data"];
-				let tagorder = require('./TransactionTools/tagorder.js');
-				let Tagorder = new tagorder.TagOrderData(TagOrderTxData);
-				let TagorderObjData = Tagorder.GetObjData();
-				powtarget = TagorderObjData["powtarget"];
+		let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+		if (objtx["tag"] != "pay" && objtx["tag"] != "tagreward"){
+			if (!powtarget){
+				let TagOrderTx = await exports.GetTagOrderTx(objtx["tag"]);
+				if (TagOrderTx){
+					let TagOrderTxData = (await TagOrderTx.GetObjTx())["data"];
+					let tagorder = require('./TransactionTools/tagorder.js');
+					let Tagorder = new tagorder.TagOrderData(TagOrderTxData);
+					let TagorderObjData = Tagorder.GetObjData();
+					powtarget = TagorderObjData["powtarget"];
+				};
 			};
 		};
 		if (powtarget){
 			target = BigInt("0x"+powtarget);
-		}else{
-			target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		}
 
 
 
 		/* payまたはtagrewardなど一般的なtagの場合 */
-		if (objtx["tag"] == "pay" || objtx["tag"] == "tagreward" || BigInt(target) == 0){
+		if (objtx["tag"] == "pay" || objtx["tag"] == "tagreward" || target == 0){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			let time = objtx["time"];

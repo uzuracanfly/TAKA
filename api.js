@@ -185,20 +185,17 @@ exports.SetServer = function(){
 
 
 						if(postData["function"] == "getrawtx"){
-							let objtx = postData["args"]["objtx"];
+							let txid = postData["args"]["txid"];
 
-							if (!objtx){
+							if (!txid){
 								response.write(JSON.stringify(false));
 								response.end();
 								return 0;
 							}
 
-							let key = "";
-							if ("key" in postData["args"] && postData["args"]["key"]){
-								key = postData["args"]["key"];
-							}
 
-							let TargetTransaction = new TRANSACTION.Transaction("",key,objtx);
+
+							let TargetTransaction = new TRANSACTION.GetTx(txid);
 							let result = await TargetTransaction.GetRawTx();
 
 

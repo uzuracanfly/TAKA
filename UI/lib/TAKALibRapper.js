@@ -101,12 +101,11 @@ global.TAKA = {
 			return result;
 		}
 
-		getrawtx(objtx,privkey=""){
+		getrawtx(txid){
 			let args = {
 				"function":"getrawtx",
 				"args":{
-					"objtx":objtx,
-					"privkey":privkey
+					"txid":txid
 				}
 			};
 

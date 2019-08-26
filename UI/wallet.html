@@ -156,11 +156,10 @@ h2 {
 			let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 			//最後のトランザクションの時間を取得
-			let lasttxid = txs.slice(-1)[0];
-			let LASTTX  = TAKA.TRANSACTION.GetTx(lasttxid);
 			let lasttxtime = time - 60*10;
-			if (LASTTX){
-				lasttxtime = (await LASTTX.GetObjTx())["time"];
+			if (txs.length > 0){
+				let lasttxid = txs.slice(-1)[0];
+				lasttxtime = TAKAAPI.gettx(lasttxid)["time"];
 			}
 
 			if (tag != "pay" && tag != "tagreward"){
@@ -751,19 +750,8 @@ h2 {
 											let tag = document.getElementById("tag").value;
 											let amount = document.getElementById("amount").value;
 
-											let TagData = TAKAAPI.gettag(tag);
-											let TagsMerkleRoot = TagData["MerkleRoot"];
-											if (!TagsMerkleRoot){
-												let TopFailForm = new form(
-													[
-														["title","FAIL"]
-													],
-													"TopFailForm"
-												);
-											}
 
 											let RewardPrivkeyKeys = await (new TAKA.ACCOUNT.account().GetKeys());
-											let EncryptoPrivkey = new TAKA.CRYPTO.common().GetEncryptedData(TagsMerkleRoot,RewardPrivkeyKeys["privkey"]);
 
 
 											//送信ロード画面
@@ -791,8 +779,33 @@ h2 {
 
 
 
+												let TagData = TAKAAPI.gettag(tag);
+												let TagTxids = TagData["txids"];
+												if (tag == "pay" && TagTxids.indexOf(FeeTxResult["txid"]) == -1){
+													TagTxids.push(FeeTxResult["txid"]);
+												};
+												let TagtxidsMarkleroot = new TAKA.HASHS.hashs().GetMarkleroot(TagTxids);
+
+												let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length );
+												let UsingRawTx = TAKAAPI.getrawtx(TagTxids[UsingRawTxIndex]);
+												let commonkey = new TAKA.HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
+
+												if (!commonkey){
+													let TopFailForm = new form(
+														[
+															["title","FAIL"]
+														],
+														"TopFailForm"
+													);
+												}
+												let EncryptoPrivkey = new TAKA.CRYPTO.common().GetEncryptedData(commonkey,RewardPrivkeyKeys["privkey"]);
+
+
+
 												//tagrewardのデータ生成
 												let objdata = {
+													"rewardtxid":FeeTxResult["txid"],
+													"UsingRawTxIndex":UsingRawTxIndex,
 													"tag":tag,
 													"EncryptoPrivkey":EncryptoPrivkey,
 												};
