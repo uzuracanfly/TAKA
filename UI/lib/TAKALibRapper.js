@@ -101,18 +101,6 @@ global.TAKA = {
 			return result;
 		}
 
-		getrawtx(txid){
-			let args = {
-				"function":"getrawtx",
-				"args":{
-					"txid":txid
-				}
-			};
-
-			let result = this.post(args);
-			return result;
-		}
-
 		gettx(txid){
 			let args = {
 				"function":"gettx",
@@ -215,15 +203,14 @@ global.TAKA = {
 				let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 				//最後のトランザクションの時間を取得
-				let lasttxid = txs.slice(-1)[0];
-				let LASTTX  = TAKA.TRANSACTION.GetTx(lasttxid);
 				let lasttxtime = time - 60*10;
-				if (LASTTX){
-					lasttxtime = (await LASTTX.GetObjTx())["time"];
+				if (txs.length > 0){
+					let lasttxid = txs.slice(-1)[0];
+					lasttxtime = outthis.TAKAAPI.gettx(lasttxid)["objtx"]["time"];
 				}
 
 				if (tag != "pay" && tag != "tagreward"){
-					let objfirsttx = outthis.TAKAAPI.gettx(txs[0]);
+					let objfirsttx = outthis.TAKAAPI.gettx(txs[0])["objtx"];
 
 					let FIRSTTXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
 					let objdata = FIRSTTXDATA.GetObjData();

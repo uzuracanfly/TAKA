@@ -109,6 +109,8 @@ h2 {
 
 <script>
 	const TAKAAPI = new TAKA.API("MYURL");
+	const TAKAFUNCTIONS = new TAKA.RappingFunctions("MYURL");
+
 	let Notification = new notification();
 	let account = {};
 
@@ -116,88 +118,6 @@ h2 {
 
 	//TAKAAPI.exchange("sell","0047933be15e76002ef3ae8f1e722465aea86c0ce70c0369bffe80b7ef4cc2d5","0xfab5600CAf07EAeABb55305B1E559a7a5aeEbA60",1300);
 
-
-
-
-	function SendTransaction(type,tag,toaddress,amount,data,privkey=account["privkey"]){
-		return new Promise(async function (resolve, reject) {
-
-			let address = (await new TAKA.ACCOUNT.account(privkey).GetKeys())["address"];
-
-			let AccountData = TAKAAPI.getaccount(address,0);
-			let MerkleRoot = "";
-			let txs = [];
-			if (tag in AccountData["txids"]){
-				MerkleRoot = AccountData["txids"][tag]["MerkleRoot"];
-				txs = AccountData["txids"][tag]["txs"];
-			}
-			let index = txs.length;
-			let time = Math.floor(Date.now()/1000);
-
-			let objtx = {
-				"pubkey":account["pubkey"],
-				"type":type,
-				"time":time,
-				"tag":tag,
-				"index":index+1,
-				"MerkleRoot":MerkleRoot,
-				"toaddress":toaddress,
-				"amount":parseInt(amount),
-				"data":data,
-				"sig":"",
-				"nonce":0,
-			};
-			//console.log(objtx);
-			let TargetTransaction = new TAKA.TRANSACTION.Transaction("",privkey,objtx);
-
-
-
-			/* Targetの取得 */
-			let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-
-			//最後のトランザクションの時間を取得
-			let lasttxtime = time - 60*10;
-			if (txs.length > 0){
-				let lasttxid = txs.slice(-1)[0];
-				lasttxtime = TAKAAPI.gettx(lasttxid)["time"];
-			}
-
-			if (tag != "pay" && tag != "tagreward"){
-				let objfirsttx = TAKAAPI.gettx(txs[0]);
-
-				let FIRSTTXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
-				let objdata = FIRSTTXDATA.GetObjData();
-
-				target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),objdata["powtarget"],lasttxtime);
-			}else{
-				target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),null,lasttxtime);
-			}
-
-
-
-
-			let result = TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target);
-			let objsendtx = await TargetTransaction.GetObjTx();
-
-
-
-			result.then(async function(nonce){
-
-				objsendtx["nonce"] = nonce;
-
-				TargetTransaction = new TAKA.TRANSACTION.Transaction("",privkey,objsendtx);
-				let rawtx = await TargetTransaction.GetRawTx();
-
-
-				TAKAAPI.sendtx(
-					rawtx,
-					function(CallbackResult,CallbackArgs){
-						return resolve({"txid":CallbackResult,"rawtx":rawtx});
-					}
-				);
-			});
-		});
-	};
 
 
 
@@ -238,7 +158,7 @@ h2 {
 			return 2;
 		}
 
-		let result = await SendTransaction(1,"pay","PAYTAKAADDRESS",amount,"");
+		let result = await TAKAFUNCTIONS.SendTransaction(account["privkey"],1,"pay","PAYTAKAADDRESS",amount,"");
 
 		if (!result){
 			return 3;
@@ -548,7 +468,7 @@ h2 {
 										amount = parseInt(amount);
 
 
-										let result = SendTransaction(1,"pay",toaddress,amount,"");
+										let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],1,"pay",toaddress,amount,"");
 
 
 										//送信ロード画面
@@ -637,7 +557,7 @@ h2 {
 
 
 											//FeeTx作成
-											let result = SendTransaction(1,"pay","0000000000000000000000000000000000000000",1,"");
+											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],1,"pay","0000000000000000000000000000000000000000",1,"");
 
 
 											//送信ロード画面
@@ -676,7 +596,7 @@ h2 {
 
 
 												//TagOrderTx作成
-												let TagOrderResult = SendTransaction(12,tag,"0000000000000000000000000000000000000000",0,rawdata);
+												let TagOrderResult = TAKAFUNCTIONS.SendTransaction(account["privkey"],12,tag,"0000000000000000000000000000000000000000",0,rawdata);
 
 												TopLoadForm = new form(
 													[
@@ -763,7 +683,7 @@ h2 {
 											);
 
 
-											let result = SendTransaction(1,"pay",RewardPrivkeyKeys["address"],amount,"");
+											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],1,"pay",RewardPrivkeyKeys["address"],amount,"");
 
 
 											result.then(function(FeeTxResult){
@@ -787,7 +707,7 @@ h2 {
 												let TagtxidsMarkleroot = new TAKA.HASHS.hashs().GetMarkleroot(TagTxids);
 
 												let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length );
-												let UsingRawTx = TAKAAPI.getrawtx(TagTxids[UsingRawTxIndex]);
+												let UsingRawTx = TAKAAPI.gettx(TagTxids[UsingRawTxIndex])["rawtx"];
 												let commonkey = new TAKA.HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
 
 												if (!commonkey){
@@ -823,7 +743,7 @@ h2 {
 												);
 
 												//TagrewardTx作成
-												let TagrewardResult = SendTransaction(11,"tagreward","0000000000000000000000000000000000000000",0,rawdata);
+												let TagrewardResult = TAKAFUNCTIONS.SendTransaction(account["privkey"],11,"tagreward","0000000000000000000000000000000000000000",0,rawdata);
 
 
 												///Tagrewardの結果発表
@@ -900,7 +820,7 @@ h2 {
 											let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
-											let result = SendTransaction(13,tag,"0000000000000000000000000000000000000000",0,rawdata);
+											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],13,tag,"0000000000000000000000000000000000000000",0,rawdata);
 
 
 											//送信ロード画面
@@ -985,7 +905,7 @@ h2 {
 											}
 
 
-											let result = SendTransaction(101,tag,"0000000000000000000000000000000000000000",0,data);
+											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],101,tag,"0000000000000000000000000000000000000000",0,data);
 
 
 											//送信ロード画面
@@ -1076,7 +996,7 @@ h2 {
 											let TXDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.SetFunctionData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
-											let result = SendTransaction(111,tag,"0000000000000000000000000000000000000000",0,rawdata);
+											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],111,tag,"0000000000000000000000000000000000000000",0,rawdata);
 
 
 											//送信ロード画面
@@ -1224,7 +1144,7 @@ h2 {
 											let TXDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.RunFunctionData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
-											let result = SendTransaction(112,tag,"0000000000000000000000000000000000000000",0,rawdata);
+											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],112,tag,"0000000000000000000000000000000000000000",0,rawdata);
 
 
 											//送信ロード画面
@@ -1305,6 +1225,11 @@ h2 {
 
 <script>
 	window.onload = function(){
+		document.body.style.color = "rgba(0,0,0,1)";
+		document.body.style.backgroundColor = "rgba(255,127,0,1)";
+
+
+
 
 		let EleLogin = element(
 			{
@@ -1316,8 +1241,6 @@ h2 {
 				"position":"fixed",
 				"top":"0px",
 				"left":"0px",
-				"color":"rgba(0,0,0,1)",
-				"backgroundColor":"rgba(255,127,0,1)",
 			}
 		);
 

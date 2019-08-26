@@ -193,7 +193,7 @@ h2 {
 
 
 	async function TxForm(txid){
-		let TxData = TAKAAPI.gettx(txid);
+		let TxData = TAKAAPI.gettx(txid)["objtx"];
 		let AccountData = TAKAAPI.getaccount(TxData["pubkey"],0);
 
 		let args = [];

@@ -33,25 +33,10 @@ Show account data.
 
 
 
-# getrawtx
-
-	Get rawtx.
-	objtx is Human-friendly shape.
-	rawtx is for streaming on the network.
-
-### parameters
-	getrawtx <txid>
-
-### example
-	sudo curl http://127.0.0.1 -d '{"function":"getrawtx","args":{"txid":"008cc065b696c150f83c320614ef41940731ba0805654dbbbd83be59c545d98a"}}'
-
-
-
-
 
 # gettx
 
-	Get objtx.
+	Get objtx and rawtx.
 	objtx is Human-friendly shape.
 	rawtx is for streaming on the network.
 

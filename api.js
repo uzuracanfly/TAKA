@@ -184,28 +184,6 @@ exports.SetServer = function(){
 
 
 
-						if(postData["function"] == "getrawtx"){
-							let txid = postData["args"]["txid"];
-
-							if (!txid){
-								response.write(JSON.stringify(false));
-								response.end();
-								return 0;
-							}
-
-
-
-							let TargetTransaction = new TRANSACTION.GetTx(txid);
-							let result = await TargetTransaction.GetRawTx();
-
-
-
-							response.write(JSON.stringify(result));
-							response.end();
-						};
-
-
-
 						if (postData["function"] == "sendpaytx"){
 							let key = postData["args"]["key"];
 							let toaddress = postData["args"]["toaddress"];
@@ -264,20 +242,13 @@ exports.SetServer = function(){
 							}
 
 
-							let result = await TRANSACTION.GetTx(txid).GetObjTx();
+							let TargetTransaction = new TRANSACTION.GetTx(txid);
+							let rawtx = await TargetTransaction.GetRawTx();
+							let objtx = await TargetTransaction.GetObjTx();
 
 							let callback = {
-								"pubkey":result["pubkey"],
-								"type":result["type"],
-								"time":result["time"],
-								"tag":result["tag"],
-								"index":result["index"],
-								"MerkleRoot":result["MerkleRoot"],
-								"toaddress":result["toaddress"],
-								"amount":result["amount"],
-								"data":result["data"],
-								"sig":result["sig"],
-								"nonce":result["nonce"],
+								"rawtx":rawtx,
+								"objtx":objtx,
 							}
 
 							response.write(JSON.stringify(callback));
