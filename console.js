@@ -75,7 +75,7 @@ exports.RunConsole = function(){
 				if (commands.length >= 5){
 					powtarget = commands[4];
 				};
-				let DataMaxSizeInByte = 1000;
+				let DataMaxSizeInByte = 10000;
 				if (commands.length >= 6){
 					DataMaxSizeInByte = commands[5];
 				};
@@ -113,16 +113,32 @@ exports.RunConsole = function(){
 				let FunctionName = commands[3];
 				let FunctionArgs = commands[4];
 				FunctionArgs = JSON.parse(FunctionArgs);
+				let AddressIndexs = [];
+				if (commands.length >= 6){
+					AddressIndexs = commands[5];
+				};
+				let lastonly = false;
+				if (commands.length >= 7){
+					lastonly = commands[6];
+				};
 
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"callruncontracttransaction","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"callruncontracttransaction","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddressIndexs":AddressIndexs,"lastonly":lastonly}});
 			}else if (commands[0] == "runcode"){
 				let address = commands[1];
 				let tag = commands[2];
 				let FunctionName = commands[3];
 				let FunctionArgs = commands[4];
 				FunctionArgs = JSON.parse(FunctionArgs);
+				let AddressIndexs = [];
+				if (commands.length >= 6){
+					AddressIndexs = commands[5];
+				};
+				let lastonly = false;
+				if (commands.length >= 7){
+					lastonly = commands[6];
+				};
 
-				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"runcode","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"runcode","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddressIndexs":AddressIndexs,"lastonly":lastonly}});
 			}else if (commands[0] == "getimporttag"){
 				result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getimporttag","args":{}});
 			}else if (commands[0] == "setimporttag"){

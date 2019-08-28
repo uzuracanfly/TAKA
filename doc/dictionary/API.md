@@ -158,7 +158,7 @@ Show account data.
 # callruncontracttransaction
 
 ### parameters
-	callruncontracttransaction <address> <tag> <FunctionName> <FunctionArgs>
+	callruncontracttransaction <address> <tag> <FunctionName> <FunctionArgs> [AddressIndexs] [lastonly]
 
 ### example
 
@@ -167,7 +167,7 @@ Show account data.
 # runcode
 
 ### parameters
-	runcode <address> <tag> <FunctionName> <FunctionArgs>
+	runcode <address> <tag> <FunctionName> <FunctionArgs> [AddressIndexs] [lastonly]
 
 ### example
 

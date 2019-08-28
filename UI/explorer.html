@@ -194,10 +194,11 @@ h2 {
 
 	async function TxForm(txid){
 		let TxData = TAKAAPI.gettx(txid)["objtx"];
-		let AccountData = TAKAAPI.getaccount(TxData["pubkey"],0);
 
 		let args = [];
 		if (TxData){
+			let AccountData = TAKAAPI.getaccount(TxData["pubkey"],0);
+			
 			args = [
 				["title","Transaction ID : "+txid],
 				["head","Sender"],
@@ -217,6 +218,11 @@ h2 {
 			let ObjData = GetObjData(TxData["type"],TxData["data"]);
 			for (let key in ObjData){
 				let value = ObjData[key];
+				try{
+					value = JSON.stringify(value);
+				}catch(e){
+					//pass
+				}
 
 				args.push(["text",key+" : "+value]);
 			}

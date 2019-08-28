@@ -296,7 +296,7 @@ exports.SetServer = function(){
 								powtarget = postData["args"]["powtarget"];
 							}
 
-							let DataMaxSizeInByte = 1000;
+							let DataMaxSizeInByte = 10000;
 							if ("DataMaxSizeInByte" in postData["args"] && postData["args"]["DataMaxSizeInByte"]){
 								DataMaxSizeInByte = postData["args"]["DataMaxSizeInByte"];
 							}
@@ -398,6 +398,14 @@ exports.SetServer = function(){
 							let tag = postData["args"]["tag"];
 							let FunctionName = postData["args"]["FunctionName"];
 							let FunctionArgs = postData["args"]["FunctionArgs"];
+							let AddressIndexs = [];
+							if ("AddressIndexs" in postData["args"]){
+								AddressIndexs = postData["args"]["AddressIndexs"];
+							};
+							let lastonly = false;
+							if ("lastonly" in postData["args"]){
+								lastonly = postData["args"]["lastonly"];
+							};
 
 
 							if (!address || !tag || !FunctionName || !FunctionArgs){
@@ -407,7 +415,7 @@ exports.SetServer = function(){
 							}
 
 
-							let result = TRANSACTIONTOOLS_CONTRACT.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
+							let result = TRANSACTIONTOOLS_CONTRACT.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs,AddressIndexs,lastonly);
 
 
 							result.then(function(value){
@@ -424,6 +432,14 @@ exports.SetServer = function(){
 							let tag = postData["args"]["tag"];
 							let FunctionName = postData["args"]["FunctionName"];
 							let FunctionArgs = postData["args"]["FunctionArgs"];
+							let AddressIndexs = [];
+							if ("AddressIndexs" in postData["args"]){
+								AddressIndexs = postData["args"]["AddressIndexs"];
+							};
+							let lastonly = false;
+							if ("lastonly" in postData["args"]){
+								lastonly = postData["args"]["lastonly"];
+							};
 
 
 							if (!address || !tag || !FunctionName || !FunctionArgs){
@@ -434,7 +450,7 @@ exports.SetServer = function(){
 
 
 							let TargetAccount = new ACCOUNT.account(address);
-							let result = TRANSACTIONTOOLS_CONTRACT.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
+							let result = TRANSACTIONTOOLS_CONTRACT.RunCode(TargetAccount,tag,FunctionName,FunctionArgs,AddressIndexs,lastonly);
 
 
 							result.then(function(value){

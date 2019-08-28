@@ -608,11 +608,10 @@ exports.Transaction = class{
 			rawtx=this.rawtx;
 		}
 
+		let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		let objtx = await this.GetObjTx(rawtx);
-		let txid = await this.GetTxid(rawtx);
 
 		/* ユーザー定義のtagの場合 */
-		let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		if (objtx["tag"] != "pay" && objtx["tag"] != "tagreward"){
 			if (!powtarget){
 				let TagOrderTx = await exports.GetTagOrderTx(objtx["tag"]);

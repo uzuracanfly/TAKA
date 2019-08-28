@@ -113,7 +113,7 @@ global.TAKA = {
 			return result;
 		}
 
-		CallRunContractTransaction(address,tag,FunctionName,FunctionArgs){
+		CallRunContractTransaction(address,tag,FunctionName,FunctionArgs,AddressIndexs=[],lastonly=false){
 			let args = {
 				"function":"callruncontracttransaction",
 				"args":{
@@ -121,6 +121,8 @@ global.TAKA = {
 					"tag":tag,
 					"FunctionName":FunctionName,
 					"FunctionArgs":FunctionArgs,
+					"AddressIndexs":AddressIndexs,
+					"lastonly":lastonly,
 				}
 			};
 
@@ -129,7 +131,7 @@ global.TAKA = {
 		}
 
 
-		RunCode(address,tag,FunctionName,FunctionArgs){
+		RunCode(address,tag,FunctionName,FunctionArgs,AddressIndexs=[],lastonly=false){
 			let args = {
 				"function":"runcode",
 				"args":{
@@ -137,6 +139,8 @@ global.TAKA = {
 					"tag":tag,
 					"FunctionName":FunctionName,
 					"FunctionArgs":FunctionArgs,
+					"AddressIndexs":AddressIndexs,
+					"lastonly":lastonly,
 				}
 			};
 
@@ -210,12 +214,14 @@ global.TAKA = {
 				}
 
 				if (tag != "pay" && tag != "tagreward"){
-					let objfirsttx = outthis.TAKAAPI.gettx(txs[0])["objtx"];
+					if (txs.length > 0){
+						let objfirsttx = outthis.TAKAAPI.gettx(txs[0])["objtx"];
 
-					let FIRSTTXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
-					let objdata = FIRSTTXDATA.GetObjData();
+						let FIRSTTXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
+						let objdata = FIRSTTXDATA.GetObjData();
 
-					target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),objdata["powtarget"],lasttxtime);
+						target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),objdata["powtarget"],lasttxtime);
+					};
 				}else{
 					target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),null,lasttxtime);
 				}

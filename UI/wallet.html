@@ -534,9 +534,9 @@ h2 {
 								[
 									["title","Tag Order"],
 									["input","tag","tag"],
-									["input","Permission Type","permissiontype"],
+									["select","permissiontype",[["Permission Type",0],["Any account can add transactions.",0],["Owner only",1],["Only accounts added with 'TagAddPermit'",2]]],
 									["input","[OPTION] Pow Target (ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)","powtarget"],
-									["input","[OPTION] Data MaxSize In Byte (1000)","DataMaxSizeInByte"],
+									["input","[OPTION] Data MaxSize In Byte (10000)","DataMaxSizeInByte"],
 									[
 										"button",
 										"send",
@@ -552,7 +552,7 @@ h2 {
 											};
 
 											if (!DataMaxSizeInByte){
-												DataMaxSizeInByte = 1000;
+												DataMaxSizeInByte = 10000;
 											}
 
 
@@ -888,6 +888,7 @@ h2 {
 									["title","Database"],
 									["input","tag","tag"],
 									["input","data","data"],
+									["input","[OPTION] Add Address Index","AddAddressIndex"],
 									["input","[OPTION] commonkey (hex only)","commonkey"],
 									[
 										"button",
@@ -898,15 +899,14 @@ h2 {
 
 											let tag = document.getElementById("tag").value;
 											let data = document.getElementById("data").value;
+											let AddAddressIndex = document.getElementById("AddAddressIndex").value;
 											let commonkey = document.getElementById("commonkey").value;
-
-
 											if (commonkey){
 												data = new TAKA.CRYPTO.common().GetEncryptedData(commonkey,data);
 											}
 
 
-											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],101,tag,"0000000000000000000000000000000000000000",0,data);
+											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],101,tag,AddAddressIndex,0,data);
 
 
 											//送信ロード画面
@@ -1056,62 +1056,6 @@ h2 {
 					],
 					[
 						"button",
-						"Call Run Contract Transaction",
-						function()
-						{
-							let CallRunContractTransactionForm = new form(
-								[
-									["title","Call Run Contract Transaction"],
-									["input","tag","tag"],
-									["input","FunctionName","FunctionName"],
-									["input",'FunctionArgs ({})',"FunctionArgs"],
-									[
-										"button",
-										"send",
-										function()
-										{
-											let address = account["address"];
-											let tag = document.getElementById("tag").value;
-											let FunctionName = document.getElementById("FunctionName").value;
-											let FunctionArgs = JSON.parse(document.getElementById("FunctionArgs").value);
-
-
-											let result = TAKAAPI.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs);
-
-
-											let TopResultForm = new form(
-												[
-													["title","Result"],
-													["head","Result"],
-													["input","result","result"],
-													["head","RawTx"],
-													["input","rawtx","rawtx"],
-													[
-														"button",
-														"Done",
-														function()
-														{
-															TopResultForm.DeleteForm();
-															CallRunContractTransactionForm.DeleteForm();
-														}
-													]
-												],
-												"TopResultForm"
-											);
-
-											document.getElementById("result").value = result;
-											document.getElementById("rawtx").value = "";
-
-
-										}
-									]
-								],
-								"CallRunContractTransactionForm",
-							);
-						}
-					],
-					[
-						"button",
 						"Send Run Contract Transaction",
 						function()
 						{
@@ -1121,6 +1065,7 @@ h2 {
 									["input","tag","tag"],
 									["input","FunctionName","FunctionName"],
 									["input",'FunctionArgs ({"toaddress":"80ba149c1e71ca4576198998418bc47d4e297ab2","amount":1})',"FunctionArgs"],
+									["input","[OPTION] Add Address Index","AddAddressIndex"],
 									[
 										"button",
 										"send",
@@ -1130,6 +1075,7 @@ h2 {
 											let tag = document.getElementById("tag").value;
 											let FunctionName = document.getElementById("FunctionName").value;
 											let FunctionArgs = JSON.parse(document.getElementById("FunctionArgs").value);
+											let AddAddressIndex = document.getElementById("AddAddressIndex").value;
 
 
 											let ResultPlan = TAKAAPI.RunCode(address,tag,FunctionName,FunctionArgs);
@@ -1145,7 +1091,7 @@ h2 {
 											let TXDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.RunFunctionData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
-											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],112,tag,"0000000000000000000000000000000000000000",0,rawdata);
+											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],112,tag,AddAddressIndex,0,rawdata);
 
 
 											//送信ロード画面
@@ -1202,7 +1148,148 @@ h2 {
 							);
 						}
 					],
+					[
+						"button",
+						"Call Run Contract Transaction",
+						function()
+						{
+							let CallRunContractTransactionForm = new form(
+								[
+									["title","Call Run Contract Transaction"],
+									["input","tag","tag"],
+									["input","FunctionName","FunctionName"],
+									["input",'FunctionArgs ({})',"FunctionArgs"],
+									["input","[OPTION] Address Indexs ([])","AddressIndexs"],
+									["select","lastonly",[["[OPTION] Last Only",0],["Do not use only the last tx of the tx or tag specified by indexs.",0],["Use only the last tx of the tx or tag specified by indexs.",1]]],
+									[
+										"button",
+										"send",
+										function()
+										{
+											let address = account["address"];
+											let tag = document.getElementById("tag").value;
+											let FunctionName = document.getElementById("FunctionName").value;
+											let FunctionArgs = JSON.parse(document.getElementById("FunctionArgs").value);
+											let AddressIndexs = document.getElementById("AddressIndexs").value;
+											if (AddressIndexs){
+												AddressIndexs = JSON.parse(AddressIndexs);	
+											}else{
+												AddressIndexs = [];
+											}
+											let lastonly = document.getElementById("lastonly").value;
+											if (lastonly){
+												lastonly = parseInt(lastonly);	
+											}else{
+												lastonly = 0;
+											}
 
+
+
+											let result = TAKAAPI.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs,AddressIndexs,lastonly);
+
+
+											let TopResultForm = new form(
+												[
+													["title","Result"],
+													["head","Result"],
+													["input","result","result"],
+													["head","RawTx"],
+													["input","rawtx","rawtx"],
+													[
+														"button",
+														"Done",
+														function()
+														{
+															TopResultForm.DeleteForm();
+															CallRunContractTransactionForm.DeleteForm();
+														}
+													]
+												],
+												"TopResultForm"
+											);
+
+											document.getElementById("result").value = JSON.stringify(result);
+											document.getElementById("rawtx").value = "";
+
+
+										}
+									]
+								],
+								"CallRunContractTransactionForm",
+							);
+						}
+					],
+					[
+						"button",
+						"Run Code",
+						function()
+						{
+							let RunCodeForm = new form(
+								[
+									["title","Run Code"],
+									["input","tag","tag"],
+									["input","FunctionName","FunctionName"],
+									["input",'FunctionArgs ({})',"FunctionArgs"],
+									["input","[OPTION] Address Indexs ([])","AddressIndexs"],
+									["select","lastonly",[["[OPTION] Last Only",0],["Do not use only the last tx of the tx or tag specified by indexs.",0],["Use only the last tx of the tx or tag specified by indexs.",1]]],
+									[
+										"button",
+										"send",
+										function()
+										{
+											let address = account["address"];
+											let tag = document.getElementById("tag").value;
+											let FunctionName = document.getElementById("FunctionName").value;
+											let FunctionArgs = JSON.parse(document.getElementById("FunctionArgs").value);
+											let AddressIndexs = document.getElementById("AddressIndexs").value;
+											if (AddressIndexs){
+												AddressIndexs = JSON.parse(AddressIndexs);	
+											}else{
+												AddressIndexs = [];
+											}
+											let lastonly = document.getElementById("lastonly").value;
+											if (lastonly){
+												lastonly = parseInt(lastonly);	
+											}else{
+												lastonly = 0;
+											}
+
+
+
+											let result = TAKAAPI.RunCode(address,tag,FunctionName,FunctionArgs,AddressIndexs,lastonly);
+
+
+											let TopResultForm = new form(
+												[
+													["title","Result"],
+													["head","Result"],
+													["input","result","result"],
+													["head","RawTx"],
+													["input","rawtx","rawtx"],
+													[
+														"button",
+														"Done",
+														function()
+														{
+															TopResultForm.DeleteForm();
+															RunCodeForm.DeleteForm();
+														}
+													]
+												],
+												"TopResultForm"
+											);
+
+											document.getElementById("result").value = JSON.stringify(result);
+											document.getElementById("rawtx").value = "";
+
+
+										}
+									]
+								],
+								"RunCodeForm",
+							);
+						}
+					],
 
 				];
 
@@ -1332,6 +1419,8 @@ h2 {
 
 									document.getElementById("privkey").value = data["MinPrivkey"];
 									FORMACTION.DeleteForm();
+
+									document.getElementById("EleButtonLogin").click();
 								}
 							]
 						],
