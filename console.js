@@ -175,6 +175,6 @@ let commands = [];
 for (let index=2;index<process.argv.length;index++){
 	commands.push(process.argv[index]);
 }
-CommandAction(commands).then(function(result){
-	console.log(result);
+CommandAction(commands).then(function(value){
+	console.log(JSON.stringify(value,null,'\t'));
 });

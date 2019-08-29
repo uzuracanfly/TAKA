@@ -734,6 +734,10 @@ exports.Transaction = class{
 			return false;
 		}
 
+		if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(objtx["tag"]) == -1){
+			return false;
+		};
+
 
 		return new Promise(function (resolve, reject) {
 			let bPromise = require('bluebird');
