@@ -78,7 +78,7 @@ const CRYPTO = require('./crypto.js');
 
 		ConfigData = ConfigData.replace( 'API_ADDRESS', '"'+API_ADDRESS+'"' );
 		ConfigData = ConfigData.replace( 'API_PORT', API_PORT );
-		ConfigData = ConfigData.replace( 'API_ACCESSPOINT', API_ACCESSPOINT );
+		ConfigData = ConfigData.replace( 'API_ACCESSPOINT', '"'+API_ACCESSPOINT+'"' );
 
 		ConfigData = ConfigData.replace( 'API_EXCHANGE_ETHERSCANAPI_APIKEY', '"'+API_EXCHANGE_ETHERSCANAPI_APIKEY+'"' );
 		ConfigData = ConfigData.replace( 'API_EXCHANGE_ETAKAPRIVKEY', '"'+API_EXCHANGE_ETAKAPRIVKEY+'"' );
