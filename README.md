@@ -21,8 +21,9 @@ Distributed large capacity database.
 	http://127.0.0.1/explorer
 
 ### Console
-	node init.js
-And type command
+After starting the node
+
+	node console.js [COMMAND] [PARAMETERS]
 
 ### API
 	sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{}}'
