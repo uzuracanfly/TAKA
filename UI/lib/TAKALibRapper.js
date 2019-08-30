@@ -214,8 +214,9 @@ global.TAKA = {
 				}
 
 				if (tag != "pay" && tag != "tagreward"){
-					if (txs.length > 0){
-						let objfirsttx = outthis.TAKAAPI.gettx(txs[0])["objtx"];
+					let TagTxids = outthis.TAKAAPI.gettag(tag)["txids"];
+					if (TagTxids.length > 0){
+						let objfirsttx = outthis.TAKAAPI.gettx(TagTxids[0])["objtx"];
 
 						let FIRSTTXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
 						let objdata = FIRSTTXDATA.GetObjData();
