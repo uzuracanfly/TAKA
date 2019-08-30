@@ -26,10 +26,8 @@ Check with [explorer](https://neko.taka.site/explorer) if it is sent properly.
 	<script src="https://neko.taka.site/lib/TAKALibRapper"></script>
 
 ### Using function.
-
-	const TAKAFUNCTIONS = new TAKA.RappingFunctions("https://neko.taka.site");
-	let txid = await TAKAFUNCTIONS.SendTransaction("[MinPrivkey]",1,"pay","80ba149c1e71ca4576198998418bc47d4e297ab2",1,"");
-	console.log(txid);
-
-* const TAKAFUNCTIONS = new TAKA.RappingFunctions(NodeURL);
-* let txid = await TAKAFUNCTIONS.SendTransaction(key,type,tag,toaddress,amount,data);
+	(async () => {
+		const TAKAFUNCTIONS = new TAKA.RappingFunctions("https://neko.taka.site");
+		let txid = await TAKAFUNCTIONS.SendTransaction("[MinPrivkey]",1,"pay","80ba149c1e71ca4576198998418bc47d4e297ab2",1,"");
+		console.log(txid);
+	})();

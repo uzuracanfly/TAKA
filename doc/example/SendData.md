@@ -1,4 +1,4 @@
-SendDataToDatebase
+SendData
 ====
 
 Goal
@@ -34,7 +34,7 @@ type to console.
 # Using library
 
 ### Buy TAKA and Tag Order
-[Using console](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/SendDataToDatebase.md#using-console)
+[Using console](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/SendData.md#using-console)
 
 ### load library.
 
@@ -45,6 +45,3 @@ type to console.
 	const TAKAFUNCTIONS = new TAKA.RappingFunctions("https://neko.taka.site");
 	let txid = await TAKAFUNCTIONS.SendTransaction("[MinPrivkey]",101,"[TAG]","",0,"[DATA]");
 	console.log(txid);
-
-* const TAKAFUNCTIONS = new TAKA.RappingFunctions(NodeURL);
-* let txid = await TAKAFUNCTIONS.SendTransaction(key,type,tag,toaddress,amount,data);

@@ -37,8 +37,7 @@ Goal
 	<script src="https://neko.taka.site/lib/TAKALibRapper"></script>
 
 ### Using function.
-
-	let TAKAKeys = await (new TAKA.ACCOUNT.account()).GetKeys();
-	console.log(TAKAKeys);
-
-* let TAKAKeys = await (new TAKA.ACCOUNT.account(key)).GetKeys();
+	(async () => {
+		let TAKAKeys = await (new TAKA.ACCOUNT.account()).GetKeys();
+		console.log(TAKAKeys);
+	})();
