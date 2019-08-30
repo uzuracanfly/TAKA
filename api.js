@@ -498,6 +498,12 @@ exports.SetServer = function(){
 					"ETHCoindRapper":FS.readFileSync('UI/lib/ETHCoindRapper_bundle.js'),
 					"TAKAICON":FS.readFileSync('UI/picture/TAKAICON.png'),
 					"TAKAICON_NoBackground":FS.readFileSync('UI/picture/TAKAICON_NoBackground.png'),
+					"twitter":FS.readFileSync('UI/picture/twitter.png'),
+					"github":FS.readFileSync('UI/picture/github.png'),
+					"wallet":FS.readFileSync('UI/picture/wallet.png'),
+					"search":FS.readFileSync('UI/picture/search.png'),
+					"Japan":FS.readFileSync('UI/picture/Japan.png'),
+					"United-Kingdom":FS.readFileSync('UI/picture/United-Kingdom.png'),
 				};
 
 				let ExplorerHtml = FS.readFileSync('UI/explorer.html');
