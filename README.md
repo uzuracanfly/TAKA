@@ -43,7 +43,7 @@ Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA
 [token](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/token.md) : Creating tokens using smart contracts.
 
 ## Dictionary
-[API and Console Methods](https://github.com/uzuracanfly/TAKA/blob/master/doc/dictionary/APIandConsole.md) : TAKA API and console method.
+[API and Console Methods](https://github.com/uzuracanfly/TAKA/blob/master/doc/dictionary/APIandConsole.md) : TAKA API and console method.<br>
 [Library](https://github.com/uzuracanfly/TAKA/blob/master/doc/dictionary/Library.md) : TAKA Library class and functions.
 
 
