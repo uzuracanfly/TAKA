@@ -380,6 +380,10 @@ exports.SetServer = function(){
 							let tag = postData["args"]["tag"];
 							let FunctionName = postData["args"]["FunctionName"];
 							let FunctionArgs = postData["args"]["FunctionArgs"];
+							let AddAddressIndex = "";
+							if ("AddAddressIndex" in postData["args"]){
+								AddAddressIndex = postData["args"]["AddAddressIndex"];
+							};
 
 
 							if (!key || !tag || !FunctionName || !FunctionArgs){
@@ -389,7 +393,7 @@ exports.SetServer = function(){
 							}
 
 
-							let result = TRANSACTIONTOOLS_CONTRACT.SendRunContractTransaction(key,tag,FunctionName,FunctionArgs);
+							let result = TRANSACTIONTOOLS_CONTRACT.SendRunContractTransaction(key,tag,FunctionName,FunctionArgs,AddAddressIndex);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));

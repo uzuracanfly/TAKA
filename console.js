@@ -101,8 +101,12 @@ function CommandAction(commands){
 			let FunctionName = commands[3];
 			let FunctionArgs = commands[4];
 			FunctionArgs = JSON.parse(FunctionArgs);
+			let AddAddressIndex = "";
+			if (commands.length >= 6){
+				AddAddressIndex = commands[5];
+			};
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendruncontracttransaction","args":{"key":key,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs}});
+			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendruncontracttransaction","args":{"key":key,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddAddressIndex":AddAddressIndex}});
 		}else if (commands[0] == "callruncontracttransaction"){
 			let address = commands[1];
 			let tag = commands[2];

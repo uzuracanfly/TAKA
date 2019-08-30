@@ -426,7 +426,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs,Add
 
 
 
-exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,FunctionArgs){
+exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,FunctionArgs,AddAddressIndex=""){
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
@@ -474,7 +474,7 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 		"tag":tag,
 		"index":FormTxList.length+1,
 		"MerkleRoot":MerkleRoot,
-		"toaddress":"",
+		"toaddress":AddAddressIndex,
 		"amount":0,
 		"data":rawdata,
 		"sig":"",
