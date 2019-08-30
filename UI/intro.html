@@ -374,6 +374,13 @@ window.onload = async function(){
 						["head","ETAKA"],
 						["text",await GetLangText("総合サプライ : 10000000000ETAKA","General Supply : 10000000000ETAKA")],
 						["text",await GetLangText("コントラクトアドレス : 0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97","Contract Address : 0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97")],
+						[
+							"button",
+							await GetLangText("購入方法","How to buy"),
+							function(){
+								window.open('https://github.com/uzuracanfly/TAKA/blob/master/doc/example/BuyTAKA.md', '_blank');
+							}
+						]
 					],
 					"EleOuter_FourElements_Three_details"
 				);
