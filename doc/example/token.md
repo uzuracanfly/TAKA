@@ -14,7 +14,7 @@ Goal
 # Using console
 
 ### Buy TAKA
-To network usage fee.
+To network usage fee.<br>
 [Buy TAKA](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/BuyTAKA.md).
 
 ### Node Start.
