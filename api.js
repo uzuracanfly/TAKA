@@ -496,6 +496,8 @@ exports.SetServer = function(){
 					"basicfunctions":FS.readFileSync('UI/lib/basicfunctions.js'),
 					"TAKALibRapper":FS.readFileSync('UI/lib/TAKALibRapper_bundle.js'),
 					"ETHCoindRapper":FS.readFileSync('UI/lib/ETHCoindRapper_bundle.js'),
+					"TAKAICON":FS.readFileSync('UI/picture/TAKAICON.png'),
+					"TAKAICON_NoBackground":FS.readFileSync('UI/picture/TAKAICON_NoBackground.png'),
 				};
 
 				let ExplorerHtml = FS.readFileSync('UI/explorer.html');
