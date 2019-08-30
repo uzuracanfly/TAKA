@@ -4,10 +4,10 @@ TAKA
 <img src="https://github.com/uzuracanfly/TAKA/blob/master/doc/img/TAKAICON.png" alt="TAKA ICON" width="300px">
 
 ## Description
-Distributed large capacity database.
+Distributed database.
 
 	・ Original currency function
-	・ Database function
+	・ Distributed Database function
 	・ Smart contract function
 
 
