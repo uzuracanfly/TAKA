@@ -21,11 +21,11 @@ Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA
 
 	const TRANSACTION = new TAKA.TRANSACTION.transaction(rawtx="",privkey="",objtx="");
 
-#### TRANSACTION.GetRawTx(TargetAccount=this.TargetAccount,objtx=this.objtx,orgonly=false)
+#### TRANSACTION.GetRawTx()
 
-#### TRANSACTION.GetObjTx(rawtx=this.rawtx)
+#### TRANSACTION.GetObjTx()
 
-#### TRANSACTION.GetTxid(rawtx=this.rawtx)
+#### TRANSACTION.GetTxid()
 
 
 
