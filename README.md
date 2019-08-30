@@ -44,6 +44,7 @@ Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA
 
 ## Dictionary
 [API and Console Methods](https://github.com/uzuracanfly/TAKA/blob/master/doc/dictionary/APIandConsole.md) : TAKA API and console method.
+[Library](https://github.com/uzuracanfly/TAKA/blob/master/doc/dictionary/Library.md) : TAKA Library class and functions.
 
 
 ## Licence
