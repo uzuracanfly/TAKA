@@ -40,7 +40,8 @@ Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA
 [CreateAccount](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/CreateAccount.md) : Create new account.<br>
 [SendPayTx](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/SendPayTx.md) : Send TAKA to other account.<br>
 [SendData](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/SendData.md) : Send data to database of TAKA.<br>
-[token](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/token.md) : Creating tokens using smart contracts.
+[token](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/token.md) : Creating tokens using smart contracts.<br>
+[BuyTAKA](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/BuyTAKA.md) : Buy TAKA.<br>
 
 ## Dictionary
 [API and Console Methods](https://github.com/uzuracanfly/TAKA/blob/master/doc/dictionary/APIandConsole.md) : TAKA API and console method.<br>
