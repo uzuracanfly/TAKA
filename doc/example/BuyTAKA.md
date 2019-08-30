@@ -7,8 +7,8 @@ Goal
 	・Exchange ETAKA to TAKA by Wallet of NEKO NODE
 
 
-### Buy ETAKA at exchange
-
+### Buy ETAKA at exchanges
+coming soon.....
 
 
 ### Exchange ETAKA to TAKA
