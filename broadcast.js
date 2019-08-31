@@ -177,7 +177,7 @@ function SetActionEvents(socket){
 					continue;
 				};
 
-				TargetTransaction.commit();
+				TargetTransaction.commit(undefined,false);
 			};
 		}catch(e){
 			MAIN.note(2,"SetActionEvents",e);
@@ -237,9 +237,10 @@ function SetActionEvents(socket){
 				return 0;
 			};
 
-			TargetTransaction.commit().then(function(txid){
-				MyNodeGetPlanTxids = MyNodeGetPlanTxids.filter(n => n !== txid);
-			});
+			TargetTransaction.commit(undefined,false);
+
+			MyNodeGetPlanTxids = MyNodeGetPlanTxids.filter(n => n !== txid);
+			
 		}catch(e){
 			MAIN.note(2,"SetActionEvents",e);
 		}
