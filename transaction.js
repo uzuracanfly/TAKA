@@ -716,54 +716,43 @@ exports.Transaction = class{
 	}
 
 
-	async commit(rawtx=this.rawtx){
+	async commit(rawtx=this.rawtx,BoolUntilConfirmation=true){
 		await this.SetUpClass();
 		if (!rawtx){
 			rawtx=this.rawtx;
 		}
 		
 		let objtx = await this.GetObjTx(rawtx);
+		let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
+		let nonce = await this.GetNonce(rawtx);
+		objtx["nonce"] = nonce;
 
-		let nonce = objtx["nonce"];
-		let outthis = this;
-		let target = await this.GetPOWTarget(rawtx);
-		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+		rawtx = await this.GetRawTx(TargetAccount,objtx);
+		let txid = await this.GetTxid(rawtx);
 
-		if (!objtx["tag"]){
-			return false;
+		DATABASE.add("UnconfirmedTransactions",objtx["tag"],rawtx);
+
+		if (!BoolUntilConfirmation){
+			return txid;
 		}
 
-		if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(objtx["tag"]) == -1){
-			return false;
-		};
 
+		/* txが確認されたかの確認 */
+		let timecount = 0;
+		while (true){
+			let rawtxs = DATABASE.get("ConfirmedTransactions",txid);
 
-		return new Promise(function (resolve, reject) {
-			let bPromise = require('bluebird');
-			(async function loop(nonce) {
+			if (rawtxs.length > 0){
+				return txid;
+			}
+			if (timecount > 1000){
+				return false;
+			}
 
-				let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
-				
-				objtx["nonce"] = nonce;
-				rawtx = await outthis.GetRawTx(TargetAccount,objtx);
-				txid = await outthis.GetTxid(rawtx);
-				numtxid = BigInt("0x"+txid);
+			timecount = timecount + 1;
 
-
-				if (numtxid <= target){
-					DATABASE.add("UnconfirmedTransactions",objtx["tag"],rawtx);
-
-					return resolve(txid);
-				}else{
-					return bPromise.delay(1).then(function() {
-						return nonce+1;
-					}).then(loop);
-				};
-			})(nonce);
-		}).catch(function (e) {
-			MAIN.note(2,"commit",e);
-		});
+			await MAIN.sleep(0.01);
+		}
 	};
 };
 
