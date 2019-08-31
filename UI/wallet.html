@@ -570,13 +570,14 @@ h2 {
 
 											result.then(function(FeeTxResult){
 												TopLoadForm.DeleteForm();
-												if (!FeeTxResult){
+												if (!FeeTxResult || !FeeTxResult["txid"]){
 													let TopFailForm = new form(
 														[
 															["title","FAIL"]
 														],
 														"TopFailForm"
 													);
+													return false;
 												}
 
 
@@ -687,13 +688,14 @@ h2 {
 
 											result.then(function(FeeTxResult){
 												TopLoadForm.DeleteForm();
-												if (!FeeTxResult){
+												if (!FeeTxResult || !FeeTxResult["txid"]){
 													let TopFailForm = new form(
 														[
 															["title","FAIL"]
 														],
 														"TopFailForm"
 													);
+													return false;
 												}
 
 
@@ -716,6 +718,7 @@ h2 {
 														],
 														"TopFailForm"
 													);
+													return false;
 												}
 												let EncryptoPrivkey = new TAKA.CRYPTO.common().GetEncryptedData(commonkey,RewardPrivkeyKeys["privkey"]);
 
