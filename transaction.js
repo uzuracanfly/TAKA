@@ -716,7 +716,7 @@ exports.Transaction = class{
 	}
 
 
-	async commit(rawtx=this.rawtx,BoolUntilConfirmation=false){
+	async commit(rawtx=this.rawtx,BoolUntilConfirmation=true){
 		await this.SetUpClass();
 		if (!rawtx){
 			rawtx=this.rawtx;
