@@ -737,6 +737,19 @@ exports.Transaction = class{
 		rawtx = await this.GetRawTx(TargetAccount,objtx);
 		let txid = await this.GetTxid(rawtx);
 
+		//txidが存在する
+		let rawtxs = DATABASE.get("ConfirmedTransactions",txid);
+		if (rawtxs.length > 0){
+			return false;
+		}
+
+		//UnconfirmedTransactionsに存在する
+		let UnconfirmedTransactionsPerTag = DATABASE.get("UnconfirmedTransactions",objtx["tag"]);
+		if (UnconfirmedTransactionsPerTag.indexOf(rawtx) > -1){
+			return false;
+		}
+
+
 		DATABASE.add("UnconfirmedTransactions",objtx["tag"],rawtx);
 
 		if (!BoolUntilConfirmation){
@@ -997,7 +1010,6 @@ exports.RunCommit = async function(){
 				}
 
 				let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
-
 
 				if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(tag) == -1){
 					continue;
