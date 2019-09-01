@@ -172,13 +172,7 @@ exports.SetServer = function(){
 							}
 
 							let TargetTransaction = new TRANSACTION.Transaction(rawtx);
-							let txbool = await TargetTransaction.Confirmation();
-							if (!txbool){
-								response.write(JSON.stringify(false));
-								response.end();
-								return 0;
-							}
-							let result = await TargetTransaction.commit();
+							let result = await TargetTransaction.commit(undefined,true,true);
 
 
 							response.write(JSON.stringify(result));

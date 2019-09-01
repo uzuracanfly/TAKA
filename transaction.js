@@ -716,7 +716,7 @@ exports.Transaction = class{
 	}
 
 
-	async commit(rawtx=this.rawtx,BoolUntilConfirmation=true){
+	async commit(rawtx=this.rawtx,BoolUntilConfirmation=true,BoolStartConfirmation=false){
 		await this.SetUpClass();
 		if (!rawtx){
 			rawtx=this.rawtx;
@@ -729,7 +729,12 @@ exports.Transaction = class{
 		if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(objtx["tag"]) == -1){
 			return false;
 		};
+		let txbool = await this.Confirmation(rawtx);
+		if (!txbool){
+			return false;
+		}
 		
+
 		let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 		let nonce = await this.GetNonce(rawtx);
 		objtx["nonce"] = nonce;
