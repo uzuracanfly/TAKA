@@ -737,19 +737,6 @@ exports.Transaction = class{
 		rawtx = await this.GetRawTx(TargetAccount,objtx);
 		let txid = await this.GetTxid(rawtx);
 
-		//txidが存在する
-		let rawtxs = DATABASE.get("ConfirmedTransactions",txid);
-		if (rawtxs.length > 0){
-			return false;
-		}
-
-		//UnconfirmedTransactionsに存在する
-		let UnconfirmedTransactionsPerTag = DATABASE.get("UnconfirmedTransactions",objtx["tag"]);
-		if (UnconfirmedTransactionsPerTag.indexOf(rawtx) > -1){
-			return false;
-		}
-
-
 		DATABASE.add("UnconfirmedTransactions",objtx["tag"],rawtx);
 
 		if (!BoolUntilConfirmation){
@@ -997,7 +984,22 @@ exports.RunCommit = async function(){
 
 				return comparison;
 			}
+			function RawTxOldCompare(RawTxA, RawTxB){
+				let comparison = 0;
 
+				let TargetTransactionA = new exports.Transaction(RawTxA);
+				let ObjTxA = await TargetTransactionA.GetObjTx();
+				let TargetTransactionB = new exports.Transaction(RawTxB);
+				let ObjTxB = await TargetTransactionB.GetObjTx();
+
+				if (ObjTxA["time"] < ObjTxB["time"]){
+					comparison = -1;
+				}else{
+					comparison = 1;
+				}
+
+				return comparison;
+			}
 
 
 			let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
@@ -1008,48 +1010,20 @@ exports.RunCommit = async function(){
 				if (!tag){
 					continue;
 				}
-
-				let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
-				DATABASE.set("UnconfirmedTransactions",tag,[]);
-
 				if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(tag) == -1){
 					continue;
 				};
 
+				let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
+				DATABASE.set("UnconfirmedTransactions",tag,[]);
+
 				//timeが古い順並び替え
-				let UnconfirmedTransactionsSort = [];
+				UnconfirmedTransactions = UnconfirmedTransactions.sort(RawTxOldCompare);
+
+
 				for (let mindex in UnconfirmedTransactions){
 					try{
-						let oldtime = 9999999999999999;
-						let oldrawtx = "";
-						for (let mmindex in UnconfirmedTransactions){
-							let rawtx = UnconfirmedTransactions[mmindex];
-
-							if (UnconfirmedTransactionsSort.indexOf(rawtx) >= 0){
-								continue;
-							}
-
-							let TargetTransaction = new exports.Transaction(rawtx);
-
-							let objtx = await TargetTransaction.GetObjTx();
-							if (oldtime >= objtx["time"]){
-								oldtime = objtx["time"];
-								oldrawtx = rawtx;
-							}
-						};
-						if (oldrawtx){
-							UnconfirmedTransactionsSort.push(oldrawtx);
-						}
-					}catch(e){
-						MAIN.note(2,"RunCommit",e);
-						continue;
-					}
-				};
-
-
-				for (let mindex in UnconfirmedTransactionsSort){
-					try{
-						let rawtx = UnconfirmedTransactionsSort[mindex];
+						let rawtx = UnconfirmedTransactions[mindex];
 
 						let TargetTransaction = new exports.Transaction(rawtx);
 
