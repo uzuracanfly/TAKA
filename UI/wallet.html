@@ -705,6 +705,7 @@ h2 {
 												if (tag == "pay" && TagTxids.indexOf(FeeTxResult["txid"]) == -1){
 													TagTxids.push(FeeTxResult["txid"]);
 												};
+												TagTxids = TagTxids.sort(TAKA.TRANSACTIONTOOLS_TAGREWARD.TxidLengthCompare);
 												let TagtxidsMarkleroot = new TAKA.HASHS.hashs().GetMarkleroot(TagTxids);
 
 												let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length );

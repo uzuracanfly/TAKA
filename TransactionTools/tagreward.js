@@ -98,6 +98,7 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		if (tag == "pay" && TagTxids.indexOf(paytxid) == -1){
 			TagTxids.push(paytxid);
 		};
+		TagTxids = TagTxids.sort(exports.TxidLengthCompare);
 		let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(TagTxids);
 
 		let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length );
@@ -164,6 +165,20 @@ exports.SetMiningTags = async function(type,tag){
 }
 
 
+exports.TxidLengthCompare = function(TxidA, TxidB){
+	let comparison = 0;
+
+	if (parseInt(TxidA,16) > parseInt(TxidB,16)){
+		comparison = -1;
+	}else{
+		comparison = 1;
+	}
+
+	return comparison;
+}
+
+
+
 
 
 
@@ -190,6 +205,7 @@ exports.RunMining = async function(){
 
 				//tagのtxリストから共通鍵作る
 				let tagtxids = TRANSACTION.GetTagTxids(TagRewardObjData["tag"]);
+				tagtxids = tagtxids.sort(exports.TxidLengthCompare);
 				let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(tagtxids);
 				let UsingRawTx = await TRANSACTION.GetTx(tagtxids[TagRewardObjData["UsingRawTxIndex"]]).GetRawTx();
 				let commonkey = new HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
