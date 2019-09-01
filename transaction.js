@@ -997,7 +997,7 @@ exports.RunCommit = async function(){
 				}
 
 				let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
-				DATABASE.set("UnconfirmedTransactions",tag,[]);
+
 
 				if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(tag) == -1){
 					continue;
