@@ -1003,7 +1003,7 @@ exports.RunCommit = async function(){
 
 
 			let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
-			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(await TagCompare);
+			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(TagCompare);
 			for (let index in UnconfirmedTransactionsTags){
 				let tag = UnconfirmedTransactionsTags[index];
 
@@ -1018,7 +1018,7 @@ exports.RunCommit = async function(){
 				DATABASE.set("UnconfirmedTransactions",tag,[]);
 
 				//timeが古い順並び替え
-				UnconfirmedTransactions = UnconfirmedTransactions.sort(RawTxOldCompare);
+				UnconfirmedTransactions = UnconfirmedTransactions.sort(await RawTxOldCompare);
 
 
 				for (let mindex in UnconfirmedTransactions){
