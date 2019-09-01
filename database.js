@@ -77,63 +77,55 @@ exports.ChangeMemDatabase = class{
 exports.RunCommit = async function(){
 
 
-	function load(database,table,index=""){	
-		return new Promise(function (resolve, reject) {
-
-			(function loop(result) {
-				if (typeof result != "object"){
-					return bPROMISE.delay(10).then(function() {
-						try {
-							if (!index){
-								let result = [];
-								let path = "database/"+database+"/"+table+"/";
-								let list = FS.readdirSync(path);
-								for (let index in list){
-									let value = list[index];
-
-									result.push(value.replace(/.json/g, ''));
-								}
-
-								return result;
-							};
+	const sleep = function(msec){
+		return new Promise(function(resolve) {
+			setTimeout(function() {resolve()}, 1000*msec);
+		})
+	}
 
 
-							let path = "database/"+database+"/"+table+"/"+index+".json";
-							FS.statSync(path);
+	async function load(database,table,index=""){	
+		while (true){
+			try {
+				if (!index){
+					let result = [];
+					let path = "database/"+database+"/"+table+"/";
+					let list = FS.readdirSync(path);
+					for (let index in list){
+						let value = list[index];
 
-							let data = FS.readFileSync(path, 'utf8');
-							//暗号化必要性
-							if ("key" in CONFIG.database && CONFIG.database["key"]){
-								const CRYPTO = require('./crypto.js');
-								data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
-							};
-							try{
-								data = JSON.parse(data);
-							}catch(e){
-								console.log(e);
-								return "";
-							}
-
-							return data;
-
-						}catch (e){
-							if (e.code === 'ENOENT') {
-								return [];
-							} else {
-								console.log(e);
-								return "";
-							}
-						};
-					}).then(loop);
+						result.push(value.replace(/.json/g, ''));
+					}
+					return result;
 				};
 
-				return bPROMISE.resolve(result);
 
-			})("").then(function(value){
-				resolve(value);
-			});
+				let path = "database/"+database+"/"+table+"/"+index+".json";
+				FS.statSync(path);
 
-		});
+				let data = FS.readFileSync(path, 'utf8');
+				//暗号化必要性
+				if ("key" in CONFIG.database && CONFIG.database["key"]){
+					const CRYPTO = require('./crypto.js');
+					data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
+				};
+				try{
+					data = JSON.parse(data);
+					return data;
+				}catch(e){
+					console.log(e);
+				}
+
+			}catch(e){
+				if (e.code === 'ENOENT') {
+					return [];
+				} else {
+					console.log(e);
+				}
+			};
+
+			await sleep(1);
+		};
 	}
 
 
@@ -266,35 +258,34 @@ exports.RunCommit = async function(){
 
 
 
-	setInterval(
-		function(){
-			for (let index in transactions){
-				let transaction = transactions[index];
+	while (true){
+		for (let index in transactions){
+			let transaction = transactions[index];
 
-				if (transaction["function"] == "set"){
-					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
-				};
-				if (transaction["function"] == "add"){
-					load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]).then(function(data){
-						data.push(transaction["args"]["data"]);
-
-						save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
-					});
-				};
-				if (transaction["function"] == "remove"){
-					load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]).then(function(data){
-						data.splice(transaction["args"]["removeindex"], 1);
-
-						save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
-					});
-				};
-				if (transaction["function"] == "delete"){
-					Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-				};
+			if (transaction["function"] == "set"){
+				save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
 			};
-			transactions = [];
-		},
-		1
-	)
+			if (transaction["function"] == "add"){
+				load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]).then(function(data){
+					data.push(transaction["args"]["data"]);
+
+					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+				});
+			};
+			if (transaction["function"] == "remove"){
+				load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]).then(function(data){
+					data.splice(transaction["args"]["removeindex"], 1);
+
+					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+				});
+			};
+			if (transaction["function"] == "delete"){
+				Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+			};
+		};
+		transactions = [];
+
+		await sleep(1);
+	};
 
 };

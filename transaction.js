@@ -729,10 +729,13 @@ exports.Transaction = class{
 		if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(objtx["tag"]) == -1){
 			return false;
 		};
-		let txbool = await this.Confirmation(rawtx);
-		if (!txbool){
-			return false;
-		}
+
+		if (BoolStartConfirmation){
+			let txbool = await this.Confirmation(rawtx);
+			if (!txbool){
+				return false;
+			}
+		};
 		
 
 		let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
@@ -976,78 +979,78 @@ exports.RunCommit = async function(){
 	}
 
 
-	setInterval(
-		async function(){
-			function TagCompare(TagA, TagB){
-				let comparison = 0;
+	while (true){
+		function TagCompare(TagA, TagB){
+			let comparison = 0;
 
-				if (TagA == "pay"){
-					comparison = -1;
-				}else{
-					comparison = 1;
-				}
-
-				return comparison;
-			}
-			async function RawTxOldCompare(RawTxA, RawTxB){
-				let comparison = 0;
-
-				let TargetTransactionA = new exports.Transaction(RawTxA);
-				let ObjTxA = await TargetTransactionA.GetObjTx();
-				let TargetTransactionB = new exports.Transaction(RawTxB);
-				let ObjTxB = await TargetTransactionB.GetObjTx();
-
-				if (ObjTxA["time"] < ObjTxB["time"]){
-					comparison = -1;
-				}else{
-					comparison = 1;
-				}
-
-				return comparison;
+			if (TagA == "pay"){
+				comparison = -1;
+			}else{
+				comparison = 1;
 			}
 
+			return comparison;
+		}
+		async function RawTxOldCompare(RawTxA, RawTxB){
+			let comparison = 0;
 
-			let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
-			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(TagCompare);
-			for (let index in UnconfirmedTransactionsTags){
-				let tag = UnconfirmedTransactionsTags[index];
+			let TargetTransactionA = new exports.Transaction(RawTxA);
+			let ObjTxA = await TargetTransactionA.GetObjTx();
+			let TargetTransactionB = new exports.Transaction(RawTxB);
+			let ObjTxB = await TargetTransactionB.GetObjTx();
 
-				if (!tag){
-					continue;
-				}
-				if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(tag) == -1){
-					continue;
-				};
+			if (ObjTxA["time"] < ObjTxB["time"]){
+				comparison = -1;
+			}else{
+				comparison = 1;
+			}
 
-				let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
-				DATABASE.set("UnconfirmedTransactions",tag,[]);
-
-				//timeが古い順並び替え
-				UnconfirmedTransactions = UnconfirmedTransactions.sort(await RawTxOldCompare);
-
-
-				for (let mindex in UnconfirmedTransactions){
-					try{
-						let rawtx = UnconfirmedTransactions[mindex];
-
-						let TargetTransaction = new exports.Transaction(rawtx);
+			return comparison;
+		}
 
 
-						MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
+		let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
+		UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(TagCompare);
+		for (let index in UnconfirmedTransactionsTags){
+			let tag = UnconfirmedTransactionsTags[index];
 
-						let txbool = await TargetTransaction.Confirmation();
-						if (txbool){
-							await commit(TargetTransaction);
-						}else{
-							MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
-						}
-					}catch(e){
-						MAIN.note(2,"RunCommit",e);
-						continue;
-					}
-				}
+			if (!tag){
+				continue;
+			}
+			if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(tag) == -1){
+				continue;
 			};
-		},
-		10000
-	)
+
+			let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
+			DATABASE.set("UnconfirmedTransactions",tag,[]);
+
+			//timeが古い順並び替え
+			UnconfirmedTransactions = UnconfirmedTransactions.sort(await RawTxOldCompare);
+
+
+			for (let mindex in UnconfirmedTransactions){
+				try{
+					let rawtx = UnconfirmedTransactions[mindex];
+
+					let TargetTransaction = new exports.Transaction(rawtx);
+
+
+					MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
+
+					let txbool = await TargetTransaction.Confirmation();
+					if (txbool){
+						await commit(TargetTransaction);
+					}else{
+						MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
+					}
+				}catch(e){
+					MAIN.note(2,"RunCommit",e);
+					continue;
+				}
+				await MAIN.sleep(0.1);
+			}
+		};
+
+		await MAIN.sleep(10);
+	}
 }
