@@ -145,6 +145,8 @@ function SetActionEvents(socket){
 	/* 未承認のトランザクション追加 */
 	socket.on('UnconfirmedTransactions', async function(data){
 		try{
+			let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
+			
 			for (let mindex in data){
 				let rawtx = data[mindex];
 
@@ -168,7 +170,6 @@ function SetActionEvents(socket){
 					continue;
 				}
 
-				let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
 				if (TransactionIdsPerAll.indexOf(txid) >= 0){
 					continue;
 				};
@@ -329,7 +330,9 @@ exports.SetServer = function(){
 				for (let index in MyNodeGetPlanTxids){
 					let txid = MyNodeGetPlanTxids[index];
 
-					socket.emit('GetTransaction',txid);
+					(async () => {
+						socket.emit('GetTransaction',txid);
+					})();
 					await MAIN.sleep(1);
 				}
 
@@ -399,7 +402,9 @@ exports.SetClient = async function(){
 					for (let index in MyNodeGetPlanTxids){
 						let txid = MyNodeGetPlanTxids[index];
 
-						socket.emit('GetTransaction',txid);
+						(async () => {
+							socket.emit('GetTransaction',txid);
+						})();
 						await MAIN.sleep(1);
 					}
 
