@@ -984,7 +984,7 @@ exports.RunCommit = async function(){
 
 				return comparison;
 			}
-			function RawTxOldCompare(RawTxA, RawTxB){
+			async function RawTxOldCompare(RawTxA, RawTxB){
 				let comparison = 0;
 
 				let TargetTransactionA = new exports.Transaction(RawTxA);
@@ -1003,7 +1003,7 @@ exports.RunCommit = async function(){
 
 
 			let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
-			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(TagCompare);
+			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(await TagCompare);
 			for (let index in UnconfirmedTransactionsTags){
 				let tag = UnconfirmedTransactionsTags[index];
 
