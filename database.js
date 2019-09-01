@@ -109,12 +109,8 @@ exports.RunCommit = async function(){
 					const CRYPTO = require('./crypto.js');
 					data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
 				};
-				try{
-					data = JSON.parse(data);
-					return data;
-				}catch(e){
-					console.log(e);
-				}
+				data = JSON.parse(data);
+				return data;
 
 			}catch(e){
 				if (e.code === 'ENOENT') {
