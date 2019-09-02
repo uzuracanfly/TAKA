@@ -17,7 +17,7 @@ exports.GetNodeList = function(){
 		for (let index in CONFIG.broadcast["seed"]){
 			let address = CONFIG.broadcast["seed"][index];
 
-			exports.SetNode(address,"server",0);
+			exports.SetNode(address,"",0);
 		};
 	}
 
@@ -53,7 +53,7 @@ exports.SetNode = function(address,type,state){
 
 	MAIN.note(1,"SetNode",address+" state:"+state);
 
-	DATABASE.set("nodelist",address,{"type":type,"state":state});
+	DATABASE.set("nodelist",address,{"time":Math.floor(Date.now()/1000),"type":type,"state":state});
 
 	return 1;
 }
@@ -174,11 +174,7 @@ function SetActionEvents(socket){
 					continue;
 				};
 
-				if (MyNodeGetPlanTxids.indexOf(txid) >= 0){
-					continue;
-				};
-
-				TargetTransaction.commit(undefined,false,true);
+				TargetTransaction.commit(undefined,false,false,-1);
 			};
 		}catch(e){
 			MAIN.note(2,"SetActionEvents",e);
@@ -206,11 +202,7 @@ function SetActionEvents(socket){
 					continue;
 				};
 
-				if (MyNodeGetPlanTxids.indexOf(txid) >= 0){
-					continue;
-				};
-
-				MyNodeGetPlanTxids.push(txid);
+				socket.emit('GetTransaction',txid);
 			};
 		}catch(e){
 			MAIN.note(2,"SetActionEvents",e);
@@ -225,22 +217,9 @@ function SetActionEvents(socket){
 				return 0;
 			}
 
-			let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
-			if (UnconfirmedTransactions.indexOf(data) >= 0){
-				return 0;
-			};
-
 			let TargetTransaction = new TRANSACTION.Transaction(data);
-			let txid = await TargetTransaction.GetTxid();
 
-			let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
-			if (TransactionIdsPerAll.indexOf(txid) >= 0){
-				return 0;
-			};
-
-			TargetTransaction.commit(undefined,false,true);
-
-			MyNodeGetPlanTxids = MyNodeGetPlanTxids.filter(n => n !== txid);
+			TargetTransaction.commit(undefined,false,false,-1);
 			
 		}catch(e){
 			MAIN.note(2,"SetActionEvents",e);
@@ -268,8 +247,6 @@ function SetActionEvents(socket){
 
 
 
-//rawtxを取得する予定のtxidリスト
-let MyNodeGetPlanTxids = [];
 
 
 exports.SetServer = function(){
@@ -279,23 +256,25 @@ exports.SetServer = function(){
 
 
 
-
-
-
-
-	IO.on('connection', async function(socket){
-
+	async function SetActionNode(socket){
 		/* ノードリストにクライアントのアドレスを追加 */
 		let address = socket.request.connection.remoteAddress;
 		address = address.replace(/^.*:/, '');
 
 
-		/* すでにこちらがサーバー側またはクライアント側として接続済み */
+		/* すでにこちらがクライアント側として接続済み */
 		let nodedata = exports.GetNode(address);
 		if (nodedata){
-			if (nodedata["state"] == 1){
+			if (nodedata["type"] == "client" && nodedata["state"] == 1){
 				return false;
 			};
+			while (true){
+				if (nodedata["time"]+10 < Math.floor(Date.now()/1000)){
+					break;
+				}
+
+				await MAIN.sleep(1);
+			}
 		}
 		exports.SetNode(address,"server",1);
 
@@ -327,12 +306,11 @@ exports.SetServer = function(){
 				socket.emit('GetUnconfirmedTransactions');
 				socket.emit('GetTransactionIdsPerAll');
 
-				for (let index in MyNodeGetPlanTxids){
-					let txid = MyNodeGetPlanTxids[index];
+				/* 未処理のトランザクションの処理完了まで待機 */
+				let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
+				while (UnconfirmedTransactions.length > 0){
+					UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
 
-					(async () => {
-						socket.emit('GetTransaction',txid);
-					})();
 					await MAIN.sleep(1);
 				}
 
@@ -342,6 +320,13 @@ exports.SetServer = function(){
 				continue;
 			};
 		};
+	};
+
+
+
+
+	IO.on('connection', async function(socket){
+		SetActionNode(socket);
 	});
 
 
@@ -371,12 +356,19 @@ exports.SetClient = async function(){
 
 
 		socket.on('connect', async function(){
-			/* すでにこちらがサーバー側またはクライアント側として接続済み */
+			/* すでにこちらがサーバー側として接続済み */
 			let nodedata = exports.GetNode(address);
 			if (nodedata){
-				if (nodedata["state"] == 1){
+				if (nodedata["type"] == "server" && nodedata["state"] == 1){
 					return false;
 				};
+				while (true){
+					if (nodedata["time"]+10 < Math.floor(Date.now()/1000)){
+						break;
+					}
+
+					await MAIN.sleep(1);
+				}
 			}
 			exports.SetNode(address,"client",1);
 
@@ -399,12 +391,12 @@ exports.SetClient = async function(){
 					socket.emit('GetUnconfirmedTransactions');
 					socket.emit('GetTransactionIdsPerAll');
 
-					for (let index in MyNodeGetPlanTxids){
-						let txid = MyNodeGetPlanTxids[index];
 
-						(async () => {
-							socket.emit('GetTransaction',txid);
-						})();
+					/* 未処理のトランザクションの処理完了まで待機 */
+					let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
+					while (UnconfirmedTransactions.length > 0){
+						UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
+
 						await MAIN.sleep(1);
 					}
 

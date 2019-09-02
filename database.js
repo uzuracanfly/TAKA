@@ -262,22 +262,20 @@ exports.RunCommit = async function(){
 				save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
 			};
 			if (transaction["function"] == "add"){
-				load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]).then(function(data){
-					data.push(transaction["args"]["data"]);
-
-					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
-				});
+				let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+				data.push(transaction["args"]["data"]);
+				save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
 			};
 			if (transaction["function"] == "remove"){
-				load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]).then(function(data){
-					data.splice(transaction["args"]["removeindex"], 1);
-
-					save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
-				});
+				let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+				data.splice(transaction["args"]["removeindex"], 1);
+				save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
 			};
 			if (transaction["function"] == "delete"){
 				Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
 			};
+
+			await sleep(0.1);
 		};
 		transactions = [];
 

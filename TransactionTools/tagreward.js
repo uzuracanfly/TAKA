@@ -196,9 +196,12 @@ exports.RunMining = async function(){
 			try{
 				let txid = tagrewardtxids[index];
 				let tx = TRANSACTION.GetTx(txid);
-				let TAGREWARDDATA = new exports.TagrewardData((await tx.GetObjTx())["data"]);
+				let TagRewardObjTx = await tx.GetObjTx();
+				let TAGREWARDDATA = new exports.TagrewardData(TagRewardObjTx["data"]);
 				let TagRewardObjData = TAGREWARDDATA.GetObjData();
 
+
+				if (TagRewardObjTx["time"]+60*10 > Math.floor(Date.now()/1000) || TagRewardObjTx["time"]+60*30 < Math.floor(Date.now()/1000)){continue;};
 
 				if ((await exports.GetMiningTags()).length>0 && (await exports.GetMiningTags()).indexOf(TagRewardObjData["tag"]) == -1){continue;};
 

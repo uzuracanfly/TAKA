@@ -673,7 +673,7 @@ exports.Transaction = class{
 	}
 
 
-	async GetNonce(rawtx=this.rawtx,target=0){
+	async GetNonce(rawtx=this.rawtx,target=0,TimeoutToNonceScan=0){
 		await this.SetUpClass();
 		if (!rawtx){
 			rawtx=this.rawtx;
@@ -690,10 +690,9 @@ exports.Transaction = class{
 		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 
-		return new Promise(function (resolve, reject) {
-			let bPromise = require('bluebird');
-			(async function loop(nonce) {
-
+		let timecount = 0;
+		while (true){
+			try{
 				let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 
 				objtx["nonce"] = nonce;
@@ -703,20 +702,28 @@ exports.Transaction = class{
 
 
 				if (numtxid <= target){
-					return resolve(nonce);
+					return nonce;
 				}else{
-					return bPromise.delay(1).then(function() {
-						return nonce+1;
-					}).then(loop);
+					nonce = nonce + 1;
 				};
-			})(nonce);
-		}).catch(function (e) {
-			MAIN.note(2,"GetNonce",e);
-		});
+
+
+				if (TimeoutToNonceScan){
+					if (timecount > TimeoutToNonceScan){
+						return -1;
+					}
+				};
+				timecount = timecount + 0.01;
+			}catch(e){
+				MAIN.note(2,"GetNonce",e);
+			};
+
+			await MAIN.sleep(0.01);
+		};
 	}
 
 
-	async commit(rawtx=this.rawtx,BoolUntilConfirmation=true,BoolStartConfirmation=false){
+	async commit(rawtx=this.rawtx,BoolUntilConfirmation=true,BoolStartConfirmation=false,TimeoutToNonceScan=0){
 		await this.SetUpClass();
 		if (!rawtx){
 			rawtx=this.rawtx;
@@ -739,7 +746,10 @@ exports.Transaction = class{
 		
 
 		let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
-		let nonce = await this.GetNonce(rawtx);
+		let nonce = await this.GetNonce(rawtx,undefined,TimeoutToNonceScan);
+		if (nonce == -1){
+			return false;
+		}
 		objtx["nonce"] = nonce;
 
 		rawtx = await this.GetRawTx(TargetAccount,objtx);
@@ -827,7 +837,7 @@ exports.GetTagMerkleRoot = function(tag){
 	return MerkleRoot;
 };
 
-exports.SendPayTransaction = async function(privkey,toaddress,amount){
+exports.SendPayTransaction = async function(privkey,toaddress,amount,TimeoutToNonceScan=0){
 	amount = parseInt(amount);
 
 	let TargetAccount = new ACCOUNT.account(privkey);
@@ -849,7 +859,7 @@ exports.SendPayTransaction = async function(privkey,toaddress,amount){
 		"nonce":0
 	};
 	let TargetTransaction = new exports.Transaction("",privkey,objtx);
-	let result = await TargetTransaction.commit();
+	let result = await TargetTransaction.commit(undefined,undefined,undefined,TimeoutToNonceScan);
 
 	return result;
 };
@@ -1022,6 +1032,7 @@ exports.RunCommit = async function(){
 			};
 
 			let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
+			DATABASE.set("UnconfirmedTransactions",tag,[]);
 
 			//timeが古い順並び替え
 			UnconfirmedTransactions = UnconfirmedTransactions.sort(await RawTxOldCompare);
@@ -1044,12 +1055,8 @@ exports.RunCommit = async function(){
 					}
 				}catch(e){
 					MAIN.note(2,"RunCommit",e);
-					continue;
 				}
-				await MAIN.sleep(0.1);
 			}
-
-			DATABASE.set("UnconfirmedTransactions",tag,[]);
 		};
 
 		await MAIN.sleep(10);
