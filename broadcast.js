@@ -75,10 +75,16 @@ function SetActionEvents(socket){
 
 	socket.on('NodeList', function(data){
 		try{
-			for (let mindex in data){
-				let maddress = data[mindex];
+			for (let index in data){
+				let address = data[index];
 
-				exports.SetNode(maddress,"",0);
+				/* すでに追加済み */
+				let NodeData = exports.GetNode(address);
+				if (NodeData){
+					return false;
+				}
+
+				exports.SetNode(address,"",0);
 			};
 		}catch(e){
 			MAIN.note(2,"SetActionEvents",e);
