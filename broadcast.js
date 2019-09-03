@@ -155,11 +155,7 @@ function SetActionEvents(socket){
 					continue;
 				};
 
-				if (MyNodeGetPlanTxids.indexOf(txid) >= 0){
-					continue;
-				};
-
-				TargetTransaction.commit(undefined,false,true);
+				TargetTransaction.commit(undefined,false,false,-1);
 			};
 		}catch(e){
 			MAIN.note(2,"SetActionEvents",e);
@@ -170,99 +166,52 @@ function SetActionEvents(socket){
 
 
 
+	/*
+		選出して生のトランザクションをお届け
 
-
-	socket.on('GetTags', function (data) {
+		parameter : {"ConfirmedTxids":[ConfirmedTxids],"count":count}
+		response : [rawtxs]
+	*/
+	socket.on('GetConfirmedTransactions', async function (data) {
 		try{
-			let tags = TRANSACTION.GetTags();
+			let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
+			let rawtxs = [];
+			for (let index in TransactionIdsPerAll){
+				let txid = TransactionIdsPerAll[index];
 
-			socket.emit('tags', tags);
-		}catch(e){
-			MAIN.note(2,"SetActionEvents",e);
-		}
-	});
+				if (rawtxs.length >= data["count"]){
+					break;
+				}
+				if ((data["ConfirmedTxids"]).indexOf(txid) > 0){
+					continue;
+				}
 
-	socket.on('tags', function (data) {
-		try{
-			BroadcastTags = data;
-		}catch(e){
-			MAIN.note(2,"SetActionEvents",e);
-		}
-	});
+				let TX = TRANSACTION.GetTx(txid);
+				let rawtx = await TX.GetRawTx();
 
-
-
-
-
-
-
-
-	socket.on('GetTagTxids', function (data) {
-		try{
-			let TagTxids = TRANSACTION.GetTagTxids(data);
-
-			socket.emit('TagTxids', {"tag":data,"txids":TagTxids});
-		}catch(e){
-			MAIN.note(2,"SetActionEvents",e);
-		}
-	});
-
-	socket.on('TagTxids', function (data) {
-		try{
-			BroadcastTxidsPerTags[data["tag"]] = data["txids"];
-		}catch(e){
-			MAIN.note(2,"SetActionEvents",e);
-		}
-	});
-
-
-
-
-
-
-
-
-	socket.on('GetTransaction', async function (data) {
-		try{
-			let txs = DATABASE.get("ConfirmedTransactions",data);
-
-			socket.emit('Transaction', txs[0]);
-		}catch(e){
-			MAIN.note(2,"SetActionEvents",e);
-		}
-	});
-
-	/* トランザクションデータ到着 */
-	socket.on('Transaction', async function(data){
-		try{
-			if (!data){
-				return 0;
+				rawtxs.push(rawtx);
 			}
 
-			let TargetTransaction = new TRANSACTION.Transaction(data);
-
-			TargetTransaction.commit(undefined,false,false,-1);
-			
+			socket.emit('ConfirmedTransactions', rawtxs);
 		}catch(e){
-			MAIN.note(2,"SetActionEvents",e);
-		}
+			MAIN.note(2,"GetConfirmedTransactions",e);
+		};
+	});
+
+	socket.on('ConfirmedTransactions', async function (rawtxs) {
+		try{
+			BroadcastConfirmedTransactions = rawtxs;
+		}catch(e){
+			MAIN.note(2,"ConfirmedTransactions",e);
+		};
 	});
 };
 
 
-async function GetBroadcastTxsPerTag(socket,address,tag){
-	try{
-		socket.emit('GetTagTxids',tag);
-		let BroadcastTxidsPerTag = [];
-		let timecount = 0;
-		while (timecount < 10){
-			if (tag in BroadcastTxidsPerTags){
-				BroadcastTxidsPerTag = BroadcastTxidsPerTags[tag];
-			};
 
-			if (BroadcastTxidsPerTag.length > 0){
-				break;
-			}
+async function RunWantBroadcast(socket,address){
+	while (true){
+		try{
 			let nodedata = exports.GetNode(address);
 			if (!nodedata){
 				break;
@@ -271,51 +220,57 @@ async function GetBroadcastTxsPerTag(socket,address,tag){
 				break;
 			};
 
-			timecount = timecount + 1;
-			await MAIN.sleep(1);
-		}
 
-		for (let index in BroadcastTxidsPerTag){
-			let txid = BroadcastTxidsPerTag[index];
+			let ConfirmedTxids = TRANSACTION.GetAllTxids();
+			let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
+			for (let index in UnconfirmedTransactions){
+				let rawtx = UnconfirmedTransactions[index];
 
-			let TransactionIdsPerTag = TRANSACTION.GetTagTxids(tag);
-			if (TransactionIdsPerTag.indexOf(txid) >= 0){
-				continue;
+				let TargetTransaction = new TRANSACTION.Transaction(rawtx);
+				let txid = await TargetTransaction.GetTxid();
+
+				ConfirmedTxids.push(txid);
 			};
+			BroadcastConfirmedTransactions = [];
+			socket.emit('GetConfirmedTransactions',{"ConfirmedTxids":ConfirmedTxids,"count":100});
 
-			socket.emit('GetTransaction',txid);
 
-			/* 適用されるまで待機 */
+
+
+
 			let timecount = 0;
 			while (timecount < 30){
-				let TransactionIdsPerTag = TRANSACTION.GetTagTxids(tag);
-				if (TransactionIdsPerTag.indexOf(txid) >= 0){
-					break;
-				};
-				let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
-				if (UnconfirmedTransactions.length == 0){
-					break;
-				};
-				let nodedata = exports.GetNode(address);
-				if (!nodedata){
-					break;
-				}
-				if (nodedata["state"] == 0){
+				if (BroadcastConfirmedTransactions.length > 0){
 					break;
 				};
 
-				timecount = timecount + 1;
+				timecount = timecount + 5;
 				await MAIN.sleep(1);
 			}
-			await MAIN.sleep(1);
+
+
+
+
+
+			for (let index in BroadcastConfirmedTransactions){
+				let rawtx = BroadcastConfirmedTransactions[index];
+
+				if (!rawtx){
+					continue;
+				}
+
+				let TargetTransaction = new TRANSACTION.Transaction(rawtx);
+
+				await TargetTransaction.commit(undefined,false,false,-1);
+			};
+
+		}catch(e){
+			MAIN.note(2,"RunWantBroadcast",e);
 		}
-		BroadcastTxidsPerTags[tag] = [];
 
-	}catch(e){
-		MAIN.note(2,"GetBroadcastTxsPerTag",e);
-		return false;
-	}
-}
+		await MAIN.sleep(1);
+	};
+};
 
 
 
@@ -335,10 +290,9 @@ async function GetBroadcastTxsPerTag(socket,address,tag){
 
 
 
-let BroadcastTxidsPerTags = {};
-let BroadcastTags = [];
 
 
+let BroadcastConfirmedTransactions = [];
 
 exports.SetServer = function(){
 	const APP = require('express')();
@@ -364,7 +318,7 @@ exports.SetServer = function(){
 					break;
 				}
 
-				await MAIN.sleep(5);
+				await MAIN.sleep(1);
 			}
 		}
 		exports.SetNode(address,"server",1);
@@ -383,43 +337,13 @@ exports.SetServer = function(){
 
 
 		/* 接続ノードに対してデータの要求 */
+		RunWantBroadcast(socket,address);
 		while (true){
-			try{
-				let nodedata = exports.GetNode(address);
-				if (!nodedata){
-					break;
-				}
-				if (nodedata["state"] == 0){
-					break;
-				};
-
-				socket.emit('GetNodeList');
-				socket.emit('GetUnconfirmedTransactions');
-				socket.emit('GetTags');
-
-
-				/* payを優先してブロードキャスト */
-				await GetBroadcastTxsPerTag(socket,address,"pay");
-
-				for (let index in BroadcastTags){
-					let tag = BroadcastTags[index];
-
-					if (tag == "pay"){
-						continue;
-					}
-					if ((await TRANSACTION.GetImportTags()).length>0 && (await TRANSACTION.GetImportTags()).indexOf(tag) == -1){
-						continue;
-					};
-
-					await GetBroadcastTxsPerTag(socket,address,tag);
-				}
-			}catch(e){
-				MAIN.note(2,"SetServer",e);
-				continue;
-			};
+			socket.emit('GetNodeList');
+			socket.emit('GetUnconfirmedTransactions');
 
 			await MAIN.sleep(1);
-		};
+		}
 	};
 
 
@@ -468,7 +392,7 @@ exports.SetClient = async function(){
 						break;
 					}
 
-					await MAIN.sleep(5);
+					await MAIN.sleep(1);
 				}
 			}
 			exports.SetNode(address,"client",1);
@@ -478,43 +402,13 @@ exports.SetClient = async function(){
 
 
 			/* 接続ノードに対してデータの要求 */
+			RunWantBroadcast(socket,address);
 			while (true){
-				try{
-					let nodedata = exports.GetNode(address);
-					if (!nodedata){
-						break;
-					}
-					if (nodedata["state"] == 0){
-						break;
-					};
-
-					socket.emit('GetNodeList');
-					socket.emit('GetUnconfirmedTransactions');
-					socket.emit('GetTags');
-
-
-					/* payを優先してブロードキャスト */
-					await GetBroadcastTxsPerTag(socket,address,"pay");
-
-					for (let index in BroadcastTags){
-						let tag = BroadcastTags[index];
-
-						if (tag == "pay"){
-							continue;
-						}
-						if ((await TRANSACTION.GetImportTags()).length>0 && (await TRANSACTION.GetImportTags()).indexOf(tag) == -1){
-							continue;
-						};
-
-						await GetBroadcastTxsPerTag(socket,address,tag);
-					}
-				}catch(e){
-					MAIN.note(2,"SetClient",e);
-					continue;
-				};
+				socket.emit('GetNodeList');
+				socket.emit('GetUnconfirmedTransactions');
 
 				await MAIN.sleep(1);
-			};
+			}
 		});
 
 		socket.on('disconnect', async function(){
@@ -553,14 +447,10 @@ exports.SetClient = async function(){
 			};
 
 
-			await MAIN.sleep(10);
-
 		}catch(e){
 			MAIN.note(2,"SetClient",e);
-			continue;
 		};
-
-
+		await MAIN.sleep(10);
 	};
 }
 
