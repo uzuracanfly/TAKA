@@ -1056,6 +1056,7 @@ exports.RunCommit = async function(){
 				}catch(e){
 					MAIN.note(2,"RunCommit",e);
 				}
+				await MAIN.sleep(1);
 			}
 		};
 
