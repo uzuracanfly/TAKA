@@ -10,6 +10,22 @@ const TRANSACTION = require('./transaction.js');
 
 
 
+exports.GetConnectionNodeList = function(){
+	let NodeList = exports.GetNodeList();
+
+	let result = [];
+	for (let index in NodeList){
+		let address = NodeList[index];
+
+		let NodeData = exports.GetNode(address);
+		if (NodeData["state"] == 1){
+			result.push(NodeData);
+		}
+	}
+
+	return result;
+}
+
 
 exports.GetNodeList = function(){
 	let nodelist = DATABASE.get("nodelist");
@@ -214,7 +230,7 @@ function SetActionEvents(socket){
 
 
 
-async function RunWantBroadcast(socket,address){
+async function RuningGetConfirmedTransactions(socket,address){
 	while (true){
 		try{
 			let nodedata = exports.GetNode(address);
@@ -276,13 +292,34 @@ async function RunWantBroadcast(socket,address){
 				await TargetTransaction.commit(undefined,false,false,-1);
 			};
 		}catch(e){
-			MAIN.note(2,"RunWantBroadcast",e);
+			MAIN.note(2,"RuningGetConfirmedTransactions",e);
 		}
 
 		await MAIN.sleep(1);
 	};
 };
 
+async function RuningGetUnConfirmedTransactions(socket,address){
+	while (true){
+		try{
+			let nodedata = exports.GetNode(address);
+			if (!nodedata){
+				break;
+			}
+			if (nodedata["state"] == 0){
+				break;
+			};
+
+			socket.emit('GetNodeList');
+			socket.emit('GetUnconfirmedTransactions');
+
+		}catch(e){
+			MAIN.note(2,"RuningGetUnConfirmedTransactions",e);
+		};
+
+		await MAIN.sleep(1);
+	};
+};
 
 
 
@@ -318,6 +355,13 @@ exports.SetServer = function(){
 		address = address.replace(/^.*:/, '');
 
 
+		/* 接続ノード数上限 */
+		if (socket.client.conn.server.clientsCount >= 3){
+			socket.disconnect();
+			return false;
+		}
+
+
 		/* すでにこちらがクライアント側として接続済み */
 		let nodedata = exports.GetNode(address);
 		if (nodedata){
@@ -348,13 +392,8 @@ exports.SetServer = function(){
 
 
 		/* 接続ノードに対してデータの要求 */
-		RunWantBroadcast(socket,address);
-		while (true){
-			socket.emit('GetNodeList');
-			socket.emit('GetUnconfirmedTransactions');
-
-			await MAIN.sleep(1);
-		}
+		RuningGetConfirmedTransactions(socket,address);
+		RuningGetUnConfirmedTransactions(socket,address);
 	};
 
 
@@ -413,13 +452,8 @@ exports.SetClient = async function(){
 
 
 			/* 接続ノードに対してデータの要求 */
-			RunWantBroadcast(socket,address);
-			while (true){
-				socket.emit('GetNodeList');
-				socket.emit('GetUnconfirmedTransactions');
-
-				await MAIN.sleep(1);
-			}
+			RuningGetConfirmedTransactions(socket,address);
+			RuningGetUnConfirmedTransactions(socket,address);
 		});
 
 		socket.on('disconnect', async function(){
