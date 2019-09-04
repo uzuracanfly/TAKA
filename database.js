@@ -274,7 +274,6 @@ exports.RunCommit = async function(){
 			if (transaction["function"] == "delete"){
 				Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
 			};
-
 			await sleep(0.1);
 		};
 		transactions = [];

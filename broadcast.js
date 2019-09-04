@@ -169,7 +169,7 @@ function SetActionEvents(socket){
 	/*
 		選出して生のトランザクションをお届け
 
-		parameter : {"ConfirmedTxids":[ConfirmedTxids],"count":count}
+		parameter : {"ConfirmedTxids":[ConfirmedTxids],"count":count,"NeedTags":[]}
 		response : [rawtxs]
 	*/
 	socket.on('GetConfirmedTransactions', async function (data) {
@@ -188,6 +188,11 @@ function SetActionEvents(socket){
 
 				let TX = TRANSACTION.GetTx(txid);
 				let rawtx = await TX.GetRawTx();
+				let objtx = await TX.GetObjTx();
+
+				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(objtx["tag"]) == -1){
+					continue;
+				}
 
 				rawtxs.push(rawtx);
 			}
@@ -221,6 +226,8 @@ async function RunWantBroadcast(socket,address){
 			};
 
 
+
+			/* 承認済みトランザクションリストまとめ */
 			let ConfirmedTxids = TRANSACTION.GetAllTxids();
 			let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
 			for (let index in UnconfirmedTransactions){
@@ -229,22 +236,27 @@ async function RunWantBroadcast(socket,address){
 				let TargetTransaction = new TRANSACTION.Transaction(rawtx);
 				let txid = await TargetTransaction.GetTxid();
 
+				if (ConfirmedTxids.indexOf(txid) > 0){
+					continue;
+				}
+
 				ConfirmedTxids.push(txid);
 			};
 			BroadcastConfirmedTransactions = [];
-			socket.emit('GetConfirmedTransactions',{"ConfirmedTxids":ConfirmedTxids,"count":100});
+			socket.emit('GetConfirmedTransactions',{"ConfirmedTxids":ConfirmedTxids,"count":10,"NeedTags":(await TRANSACTION.GetImportTags())});
 
 
 
 
 
+			/* BroadcastConfirmedTransactions取得まで待機 */
 			let timecount = 0;
-			while (timecount < 30){
+			while (timecount < 10*60){
 				if (BroadcastConfirmedTransactions.length > 0){
 					break;
 				};
 
-				timecount = timecount + 5;
+				timecount = timecount + 1;
 				await MAIN.sleep(1);
 			}
 
@@ -263,7 +275,6 @@ async function RunWantBroadcast(socket,address){
 
 				await TargetTransaction.commit(undefined,false,false,-1);
 			};
-
 		}catch(e){
 			MAIN.note(2,"RunWantBroadcast",e);
 		}
