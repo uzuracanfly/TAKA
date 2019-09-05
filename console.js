@@ -38,9 +38,49 @@ function CommandAction(commands){
 		}else if (commands[0] == "gettag"){
 			let tag = commands[1];
 			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettag","args":{"tag":tag}});
+		}else if (commands[0] == "gettx"){
+			let txid = commands[1];
+			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettx","args":{"txid":txid}});
+
+
+
+
+
+
+		}else if (commands[0] == "getimporttag"){
+			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getimporttag","args":{}});
+		}else if (commands[0] == "setimporttag"){
+			let type = commands[1];
+			let tag = commands[2];
+
+			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"setimporttag","args":{"type":type,"tag":tag}});
+		}else if (commands[0] == "getminingtags"){
+			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getminingtags","args":{}});
+		}else if (commands[0] == "setminingtags"){
+			let type = commands[1];
+			let tag = commands[2];
+			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"setminingtags","args":{"type":type,"tag":tag}});
+
+
+
+
+
+
+
+
+
+
 		}else if (commands[0] == "sendtx"){
 			let rawtx = commands[1];
 			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtx","args":{"rawtx":rawtx}});
+
+
+
+
+
+
+
+
 		}else if (commands[0] == "sendpaytx"){
 			let key = commands[1];
 			let toaddress = commands[2];
@@ -51,9 +91,6 @@ function CommandAction(commands){
 			let tag = commands[2];
 			let amount = commands[3];
 			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagrewardtx","args":{"key":key,"tag":tag,"amount":amount}});
-		}else if (commands[0] == "gettx"){
-			let txid = commands[1];
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettx","args":{"txid":txid}});
 		}else if (commands[0] == "senddatabasetx"){
 			let key = commands[1];
 			let tag = commands[2];
@@ -115,11 +152,11 @@ function CommandAction(commands){
 			FunctionArgs = JSON.parse(FunctionArgs);
 			let AddressIndexs = [];
 			if (commands.length >= 6){
-				AddressIndexs = commands[5];
+				AddressIndexs = JSON.parse(commands[5]);
 			};
 			let lastonly = false;
 			if (commands.length >= 7){
-				lastonly = commands[6];
+				lastonly = parseInt(commands[6]);
 			};
 
 			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"callruncontracttransaction","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddressIndexs":AddressIndexs,"lastonly":lastonly}});
@@ -131,28 +168,23 @@ function CommandAction(commands){
 			FunctionArgs = JSON.parse(FunctionArgs);
 			let AddressIndexs = [];
 			if (commands.length >= 6){
-				AddressIndexs = commands[5];
+				AddressIndexs = JSON.parse(commands[5]);
 			};
 			let lastonly = false;
 			if (commands.length >= 7){
-				lastonly = commands[6];
+				lastonly = parseInt(commands[6]);
 			};
-
 			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"runcode","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddressIndexs":AddressIndexs,"lastonly":lastonly}});
-		}else if (commands[0] == "getimporttag"){
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getimporttag","args":{}});
-		}else if (commands[0] == "setimporttag"){
-			let type = commands[1];
-			let tag = commands[2];
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"setimporttag","args":{"type":type,"tag":tag}});
-		}else if (commands[0] == "getminingtags"){
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getminingtags","args":{}});
-		}else if (commands[0] == "setminingtags"){
-			let type = commands[1];
-			let tag = commands[2];
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"setminingtags","args":{"type":type,"tag":tag}});
+
+
+
+
+
+
+
+
 		}else if (commands[0] == "exchange"){
 			let type = commands[1];
 			let PayTxid = commands[2];

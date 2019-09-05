@@ -708,8 +708,8 @@ h2 {
 												TagTxids = TagTxids.sort(TAKA.TRANSACTIONTOOLS_TAGREWARD.TxidLengthCompare);
 												let TagtxidsMarkleroot = new TAKA.HASHS.hashs().GetMarkleroot(TagTxids);
 
-												let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length );
-												let UsingRawTx = TAKAAPI.gettx(TagTxids[UsingRawTxIndex])["rawtx"];
+												let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length )+1;
+												let UsingRawTx = TAKAAPI.gettx(TagTxids[UsingRawTxIndex-1])["rawtx"];
 												let commonkey = new TAKA.HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
 
 												if (!commonkey){

@@ -101,8 +101,8 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		TagTxids = TagTxids.sort(exports.TxidLengthCompare);
 		let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(TagTxids);
 
-		let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length );
-		let UsingRawTx = await TRANSACTION.GetTx(TagTxids[UsingRawTxIndex]).GetRawTx();
+		let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length )+1;
+		let UsingRawTx = await TRANSACTION.GetTx(TagTxids[UsingRawTxIndex-1]).GetRawTx();
 		let commonkey = new HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
 
 		let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(commonkey,RewardPrivkey);
@@ -201,7 +201,7 @@ exports.RunMining = async function(){
 				let TagRewardObjData = TAGREWARDDATA.GetObjData();
 
 
-				if (TagRewardObjTx["time"]+60*10 > Math.floor(Date.now()/1000) || TagRewardObjTx["time"]+60*30 < Math.floor(Date.now()/1000)){continue;};
+				if (TagRewardObjTx["time"]+60*1 > Math.floor(Date.now()/1000) || TagRewardObjTx["time"]+60*10 < Math.floor(Date.now()/1000)){continue;};
 
 				if ((await exports.GetMiningTags()).length>0 && (await exports.GetMiningTags()).indexOf(TagRewardObjData["tag"]) == -1){continue;};
 
@@ -210,7 +210,7 @@ exports.RunMining = async function(){
 				let tagtxids = TRANSACTION.GetTagTxids(TagRewardObjData["tag"]);
 				tagtxids = tagtxids.sort(exports.TxidLengthCompare);
 				let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(tagtxids);
-				let UsingRawTx = await TRANSACTION.GetTx(tagtxids[TagRewardObjData["UsingRawTxIndex"]]).GetRawTx();
+				let UsingRawTx = await TRANSACTION.GetTx(tagtxids[TagRewardObjData["UsingRawTxIndex"]-1]).GetRawTx();
 				let commonkey = new HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
 
 				if (!commonkey){continue;};
@@ -253,9 +253,11 @@ exports.RunMining = async function(){
 			}
 
 			if (sendamount > 0 && UsedRewardPrivkey.indexOf(RewardPrivkey) == -1){
-				UsedRewardPrivkey.push(RewardPrivkey);
-				MAIN.note(1,"tagreward_RunMining","[Reward] "+sendamount+" by tag of "+tag);
-				TRANSACTION.SendPayTransaction(RewardPrivkey,(await CollectAccount.GetKeys())["address"],sendamount);
+				let result = await TRANSACTION.SendPayTransaction(RewardPrivkey,(await CollectAccount.GetKeys())["address"],sendamount,10);
+				if (result){
+					MAIN.note(1,"tagreward_RunMining","[Reward] "+sendamount+" by tag of "+tag);
+					UsedRewardPrivkey.push(RewardPrivkey);
+				}
 			}
 		}
 

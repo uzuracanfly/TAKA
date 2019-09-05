@@ -274,13 +274,12 @@ h2 {
 				]
 			);
 
-			for (let index in TagData["PermitAddresss"]){
-				let PermitAddress = TagData["PermitAddresss"][index];
+			for (let index in TagData["TagPermitAddresss"]){
+				let PermitAddress = TagData["TagPermitAddresss"][index];
 
 				args.push(["text",PermitAddress]);
 			}
 
-			args.push(["head","PoW Target : "+TagData["powtarget"]]);
 		};
 
 

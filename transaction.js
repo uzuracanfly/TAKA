@@ -363,7 +363,25 @@ exports.Transaction = class{
 					if (feetxobj["toaddress"] != MAIN.GetFillZero("", 40)){
 						return 0;
 					}
+
+					//使いまわされていないか確認
+					let tags = exports.GetTags();
+					for (let index in tags){
+						let tag = tags[index];
+
+						let TAGORDERTXForConfirmation = await exports.GetTagOrderTx(tag);
+						if (!TAGORDERTXForConfirmation){
+							continue;
+						}
+						let TagOrderObjTxForConfirmation = await TAGORDERTXForConfirmation.GetObjTx();
+						let TAGORDERForConfirmation = new tagorder.TagOrderData(TagOrderObjTxForConfirmation["data"]);
+						let TagorderObjDataForConfirmation = TAGORDERForConfirmation.GetObjData();
+						if (TagorderObjDataForConfirmation["feetxid"] == TagorderObjData["feetxid"]){
+							return 0;
+						}
+					}
 				}catch(e){
+					//console.log(e);
 					return 0;
 				};
 			};
@@ -690,7 +708,7 @@ exports.Transaction = class{
 		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 
-		let timecount = 0;
+		let StartTime = Math.floor(Date.now()/1000);
 		while (true){
 			try{
 				let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
@@ -709,11 +727,10 @@ exports.Transaction = class{
 
 
 				if (TimeoutToNonceScan){
-					if (timecount > TimeoutToNonceScan){
+					if (Math.floor(Date.now()/1000) >= StartTime + TimeoutToNonceScan){
 						return -1;
 					}
 				};
-				timecount = timecount + 0.01;
 			}catch(e){
 				MAIN.note(2,"GetNonce",e);
 			};
@@ -770,7 +787,7 @@ exports.Transaction = class{
 			if (rawtxs.length > 0){
 				return txid;
 			}
-			if (timecount > 1000){
+			if (timecount > 100*10){
 				return false;
 			}
 

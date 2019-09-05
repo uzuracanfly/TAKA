@@ -38,40 +38,6 @@ exports.SetServer = function(){
 
 
 
-						/*
-						サーバー管理関連コマンド
-						*/
-						if(postData["function"] == "getimporttag"){
-							let callback = await TRANSACTION.GetImportTags();
-
-							response.write(JSON.stringify(callback));
-							response.end();
-						};
-						if(postData["function"] == "setimporttag"){
-							let type = postData["args"]["type"];
-							let tag = postData["args"]["tag"];
-
-							let callback = await TRANSACTION.SetImportTags(type,tag);
-
-							response.write(JSON.stringify(callback));
-							response.end();
-						};
-						if(postData["function"] == "getminingtags"){
-							let callback = await TRANSACTIONTOOLS_TAGREWARD.GetMiningTags();
-
-							response.write(JSON.stringify(callback));
-							response.end();
-						};
-						if(postData["function"] == "setminingtags"){
-							let type = postData["args"]["type"];
-							let tag = postData["args"]["tag"];
-
-							let callback = await TRANSACTIONTOOLS_TAGREWARD.SetMiningTags(type,tag);
-
-							response.write(JSON.stringify(callback));
-							response.end();
-						};
-
 
 						//curl http:/cation/json' -d '{"function":"getaccount","args":{"key":"5f2ba01ab3d8c3a418cf0232f83a0cd18e5a8a09"}}'
 						if(postData["function"] == "getaccount"){
@@ -162,6 +128,84 @@ exports.SetServer = function(){
 
 
 
+						if (postData["function"] == "gettx"){
+							let txid = postData["args"]["txid"];
+
+
+							if (!txid){
+								response.write(JSON.stringify(false));
+								response.end();
+								return 0;
+							}
+
+
+							let TargetTransaction = new TRANSACTION.GetTx(txid);
+							let rawtx = await TargetTransaction.GetRawTx();
+							let objtx = await TargetTransaction.GetObjTx();
+
+							let callback = {
+								"rawtx":rawtx,
+								"objtx":objtx,
+							}
+
+							response.write(JSON.stringify(callback));
+							response.end();
+						};
+
+
+
+
+
+
+
+
+
+
+						/*
+						サーバー管理関連コマンド
+						*/
+						if(postData["function"] == "getimporttag"){
+							let callback = await TRANSACTION.GetImportTags();
+
+							response.write(JSON.stringify(callback));
+							response.end();
+						};
+						if(postData["function"] == "setimporttag"){
+							let type = postData["args"]["type"];
+							let tag = postData["args"]["tag"];
+
+							let callback = await TRANSACTION.SetImportTags(type,tag);
+
+							response.write(JSON.stringify(callback));
+							response.end();
+						};
+						if(postData["function"] == "getminingtags"){
+							let callback = await TRANSACTIONTOOLS_TAGREWARD.GetMiningTags();
+
+							response.write(JSON.stringify(callback));
+							response.end();
+						};
+						if(postData["function"] == "setminingtags"){
+							let type = postData["args"]["type"];
+							let tag = postData["args"]["tag"];
+
+							let callback = await TRANSACTIONTOOLS_TAGREWARD.SetMiningTags(type,tag);
+
+							response.write(JSON.stringify(callback));
+							response.end();
+						};
+
+
+
+
+
+
+
+
+
+
+
+
 						if(postData["function"] == "sendtx"){
 							let rawtx = postData["args"]["rawtx"];
 
@@ -179,6 +223,21 @@ exports.SetServer = function(){
 							response.end();
 
 						};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -227,31 +286,6 @@ exports.SetServer = function(){
 							});
 						}
 
-
-
-						if (postData["function"] == "gettx"){
-							let txid = postData["args"]["txid"];
-
-
-							if (!txid){
-								response.write(JSON.stringify(false));
-								response.end();
-								return 0;
-							}
-
-
-							let TargetTransaction = new TRANSACTION.GetTx(txid);
-							let rawtx = await TargetTransaction.GetRawTx();
-							let objtx = await TargetTransaction.GetObjTx();
-
-							let callback = {
-								"rawtx":rawtx,
-								"objtx":objtx,
-							}
-
-							response.write(JSON.stringify(callback));
-							response.end();
-						};
 
 
 
@@ -461,6 +495,20 @@ exports.SetServer = function(){
 							});
 
 						};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 						if (postData["function"] == "exchange"){
