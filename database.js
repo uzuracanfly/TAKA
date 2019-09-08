@@ -111,7 +111,11 @@ exports.RunCommit = async function(){
 					data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
 				};
 
-				data = data.split('0D0A');
+				if (data){
+					data = data.split('0D0A');
+				}else{
+					data = [];
+				}
 
 				return data;
 
@@ -240,10 +244,6 @@ exports.RunCommit = async function(){
 						if (ResultsKey in ResultValues){
 							let result = ResultValues[ResultsKey];
 
-							if (!result){
-								result = [];
-							}
-
 							response.write(JSON.stringify(result));
 							response.end();
 
@@ -268,7 +268,7 @@ exports.RunCommit = async function(){
 		if (transactions.length > 0){
 			let transaction = transactions[0];
 
-			delete transactions[0];
+			transactions.shift();
 
 			if (transaction["function"] == "set"){
 				save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
