@@ -538,7 +538,7 @@ exports.SetServer = function(){
 
 
 					}catch(e){
-						MAIN.note(2,"SetServer",e);
+						MAIN.note(2,"api_SetServer",e);
 						response.write(JSON.stringify(false));
 						response.end();
 					};

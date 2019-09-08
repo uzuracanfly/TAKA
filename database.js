@@ -78,6 +78,18 @@ exports.ChangeMemDatabase = class{
 exports.RunCommit = async function(){
 
 
+	const GetFillZero = function(hex, hexlength){
+		let needzeroffill = hexlength-hex.length;
+		if (needzeroffill > 0){
+			for (var i=needzeroffill;i>0;i--){
+				hex = "0" + hex
+			};
+		};
+
+		return hex;
+	};
+
+
 	const sleep = function(msec){
 		return new Promise(function(resolve) {
 			setTimeout(function() {resolve()}, 1000*msec);
@@ -85,7 +97,54 @@ exports.RunCommit = async function(){
 	}
 
 
-	async function load(database,table,index=""){	
+	const ConversionData = function(array,hex){
+		if (array){
+			let lencount = array.length;
+			lencount = lencount.toString(16);
+			let hex = GetFillZero(lencount,16);
+			
+			for (let index in array){
+				let per = array[index];
+
+				let perlen = per.length;
+				perlen = perlen.toString(16);
+				perlen = GetFillZero(perlen,16);
+
+				hex = hex + perlen + per;
+			}
+
+			return hex;
+		}
+		if (hex){
+			function cut(len){
+				let cuthex = hex.slice(0,len);
+				hex = hex.slice(len);
+				return cuthex;
+			};
+
+
+			function VariableCut(lenlen=16){
+				let len = parseInt(cut(lenlen),16);
+
+				let cuthex = hex.slice(0,len);
+				hex = hex.slice(len);
+
+				return cuthex;
+			};
+
+			let array = [];
+			let lencount = cut(16);
+			for (let index=0;index<lencount;index++){
+				array.push(VariableCut(16));
+			}
+
+			return array;
+		}
+	};
+
+
+
+	async function load(database,table,index=""){
 		while (true){
 			try {
 				if (!index){
@@ -111,11 +170,12 @@ exports.RunCommit = async function(){
 					data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
 				};
 
-				if (data){
-					data = data.split('0D0A');
-				}else{
-					data = [];
+
+				if (!data){
+					throw new Error("no data");
 				}
+
+				data = ConversionData("",data);
 
 				return data;
 
@@ -138,7 +198,7 @@ exports.RunCommit = async function(){
 	*/
 	function save(database,table,index,data){
 		
-		data = data.join('0D0A');
+		data = ConversionData(data,"");
 
 		if ("key" in CONFIG.database && CONFIG.database["key"]){
 			const CRYPTO = require('./crypto.js');
@@ -252,7 +312,7 @@ exports.RunCommit = async function(){
 							break;
 						}
 
-						await sleep(1);
+						await sleep(0.1);
 					}
 
 				};
