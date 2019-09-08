@@ -119,6 +119,8 @@ exports.SetServer = function(){
 								callback["permissiontype"] = TagOrderObjData["permissiontype"];
 								callback["powtarget"] = TagOrderObjData["powtarget"];
 								callback["DataMaxSizeInByte"] = TagOrderObjData["DataMaxSizeInByte"];
+								callback["FeeToAddress"] = TagOrderObjData["FeeToAddress"];
+								callback["FeeAmount"] = TagOrderObjData["FeeAmount"];
 								callback["TagPermitAddresss"] = TagPermitAddresss;
 							};
 
@@ -333,13 +335,22 @@ exports.SetServer = function(){
 								DataMaxSizeInByte = postData["args"]["DataMaxSizeInByte"];
 							}
 
+							let FeeToAddress = "";
+							if ("FeeToAddress" in postData["args"] && postData["args"]["FeeToAddress"]){
+								FeeToAddress = postData["args"]["FeeToAddress"];
+							};
+							let FeeAmount = 0;
+							if ("FeeAmount" in postData["args"] && postData["args"]["FeeAmount"]){
+								FeeAmount = postData["args"]["FeeAmount"];
+							};
+
 							if (!key || !tag || !permissiontype){
 								response.write(JSON.stringify(false));
 								response.end();
 								return 0;
 							}
 
-							let result = TRANSACTIONTOOLS_TAGORDER.SendTagOrderTransaction(key,tag,permissiontype,powtarget,DataMaxSizeInByte);
+							let result = TRANSACTIONTOOLS_TAGORDER.SendTagOrderTransaction(key,tag,permissiontype,powtarget,DataMaxSizeInByte,FeeToAddress,FeeAmount);
 
 							result.then(function(value){
 								response.write(JSON.stringify(value));

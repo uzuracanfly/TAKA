@@ -26,8 +26,12 @@ exports.TagOrderData = class{
 		let DataMaxSizeInByte = objdata["DataMaxSizeInByte"].toString(16);
 		DataMaxSizeInByte = MAIN.GetFillZero(DataMaxSizeInByte, 16);
 
+		let FeeToAddress = MAIN.GetFillZero(objdata["FeeToAddress"], 40);
 
-		let data = feetxid + permissiontype + powtarget + DataMaxSizeInByte;
+		let FeeAmount = objdata["FeeAmount"].toString(16);
+		FeeAmount = MAIN.GetFillZero(FeeAmount, 16);
+
+		let data = feetxid + permissiontype + powtarget + DataMaxSizeInByte + FeeToAddress + FeeAmount;
 
 		return data;
 	};
@@ -53,12 +57,16 @@ exports.TagOrderData = class{
 		let permissiontype = parseInt(cut(2),16);
 		let powtarget = cut(64);
 		let DataMaxSizeInByte = parseInt(cut(16),16);
+		let FeeToAddress = cut(40);
+		let FeeAmount = parseInt(cut(16),16);
 
 		let objdata = {
 			"feetxid":feetxid,
 			"permissiontype":permissiontype,
 			"powtarget":powtarget,
 			"DataMaxSizeInByte":DataMaxSizeInByte,
+			"FeeToAddress":FeeToAddress,
+			"FeeAmount":FeeAmount,
 		};
 
 		return objdata;
@@ -70,7 +78,7 @@ exports.TagOrderData = class{
 
 
 
-exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powtarget,DataMaxSizeInByte){
+exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powtarget="0000000000000000000000000000000000000000000000000000000000000000",DataMaxSizeInByte=10000,FeeToAddress="",FeeAmount=0){
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
@@ -86,6 +94,8 @@ exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powt
 		"permissiontype":permissiontype,
 		"powtarget":powtarget,
 		"DataMaxSizeInByte":parseInt(DataMaxSizeInByte),
+		"FeeToAddress":FeeToAddress,
+		"FeeAmount":parseInt(FeeAmount),
 	};
 
 	let TagOrder = new exports.TagOrderData("",objdata);

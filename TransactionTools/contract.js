@@ -8,6 +8,7 @@ const HEX = require('../hex.js');
 const ACCOUNT = require('../account.js');
 const HASHS = require('../hashs.js');
 const TRANSACTION = require('../transaction.js');
+const TRANSACTIONTOOLS_TAGORDER = require('./tagorder.js');
 
 const CP = require('child_process');
 
@@ -89,60 +90,78 @@ exports.SetFunctionData = class{
 
 
 exports.SendSetContractTransaction = async function(privkey,tag,FunctionName,CodeType,CodeData,CodePath=""){
-	if (CodePath){
-		try{
-			CodeData = FS.readFileSync(CodePath, 'utf8');
-		}catch(e){
+	try{
+		/* Feeを追加 */
+		let TAGORDERTX = await TRANSACTION.GetTagOrderTx(tag);
+		let TagOrderObjTx = await TAGORDERTX.GetObjTx();
+		let TagData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]).GetObjData();
+		if (TagData["FeeAmount"] > 0){
+			let result = await TRANSACTION.SendPayTransaction(privkey,TagData["FeeToAddress"],TagData["FeeAmount"]);
+			if (!result){
+				return false;
+			}
+		}
+
+
+
+		if (CodePath){
+			try{
+				CodeData = FS.readFileSync(CodePath, 'utf8');
+			}catch(e){
+				return false;
+			}
+		};
+
+
+		for (let index in CONFIG.Contract["banword"]){
+			let banword = CONFIG.Contract["banword"][index];
+
+			//禁止句が含まれる場合
+			if (CodeData.indexOf(banword) != -1){
+				return 0;
+			}
+		};
+
+		let TargetAccount = new ACCOUNT.account(privkey);
+
+		let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
+		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
+
+		let objdata = {
+			"FunctionName":FunctionName,
+			"CodeType":parseInt(CodeType),
+			"CodeData":CodeData,
+		}
+
+		let SETFUNCTIONDATA = new exports.SetFunctionData("",objdata);
+
+		let rawdata = SETFUNCTIONDATA.GetRawData()
+		if (!rawdata){
 			return false;
 		}
-	};
 
+		let objtx = {
+			"pubkey":(await TargetAccount.GetKeys())["pubkey"],
+			"type":111,
+			"time":Math.floor(Date.now()/1000),
+			"tag":tag,
+			"index":FormTxList.length+1,
+			"MerkleRoot":MerkleRoot,
+			"toaddress":"",
+			"amount":0,
+			"data":rawdata,
+			"sig":"",
+			"nonce":0
+		};
+		//console.log(objtx);
+		let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
+		let result = await TargetTransaction.commit();
 
-	for (let index in CONFIG.Contract["banword"]){
-		let banword = CONFIG.Contract["banword"][index];
-
-		//禁止句が含まれる場合
-		if (CodeData.indexOf(banword) != -1){
-			return 0;
-		}
-	};
-
-	let TargetAccount = new ACCOUNT.account(privkey);
-
-	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
-	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
-
-	let objdata = {
-		"FunctionName":FunctionName,
-		"CodeType":parseInt(CodeType),
-		"CodeData":CodeData,
-	}
-
-	let SETFUNCTIONDATA = new exports.SetFunctionData("",objdata);
-
-	let rawdata = SETFUNCTIONDATA.GetRawData()
-	if (!rawdata){
+		return result;
+	}catch(e){
+		MAIN.note(2,"SendDatabaseTransaction",e);
 		return false;
 	}
-
-	let objtx = {
-		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-		"type":111,
-		"time":Math.floor(Date.now()/1000),
-		"tag":tag,
-		"index":FormTxList.length+1,
-		"MerkleRoot":MerkleRoot,
-		"toaddress":"",
-		"amount":0,
-		"data":rawdata,
-		"sig":"",
-		"nonce":0
-	};
-	//console.log(objtx);
-	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-	let result = await TargetTransaction.commit();
-
-	return result;
 };
 
 
@@ -427,64 +446,81 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs,Add
 
 
 exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,FunctionArgs,AddAddressIndex=""){
-
-	let TargetAccount = new ACCOUNT.account(privkey);
-
-	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
-	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
-
-
-	/*
-		コントラクト実行
-	*/
-	let CodeResult = await exports.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
-	if (!CodeResult){
-		return 0;
-	}
+	try{
+		/* Feeを追加 */
+		let TAGORDERTX = await TRANSACTION.GetTagOrderTx(tag);
+		let TagOrderObjTx = await TAGORDERTX.GetObjTx();
+		let TagData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]).GetObjData();
+		if (TagData["FeeAmount"] > 0){
+			let result = await TRANSACTION.SendPayTransaction(privkey,TagData["FeeToAddress"],TagData["FeeAmount"]);
+			if (!result){
+				return false;
+			}
+		}
 
 
-	if (!("result" in CodeResult) || !("SetData" in CodeResult)){
-		return 0;
-	}
+
+		let TargetAccount = new ACCOUNT.account(privkey);
+
+		let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
+		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 
-	if (!CodeResult["result"]){
-		return 0;
-	}
+		/*
+			コントラクト実行
+		*/
+		let CodeResult = await exports.RunCode(TargetAccount,tag,FunctionName,FunctionArgs);
+		if (!CodeResult){
+			return 0;
+		}
 
 
-	let objdata = {
-		"FunctionName":FunctionName,
-		"FunctionArgs":FunctionArgs,
-		"result":CodeResult["result"],
-		"SetData":CodeResult["SetData"],
-	}
+		if (!("result" in CodeResult) || !("SetData" in CodeResult)){
+			return 0;
+		}
 
-	let RUNFUNCTIONDATA = new exports.RunFunctionData("",objdata);
 
-	let rawdata = RUNFUNCTIONDATA.GetRawData()
-	if (!rawdata){
+		if (!CodeResult["result"]){
+			return 0;
+		}
+
+
+		let objdata = {
+			"FunctionName":FunctionName,
+			"FunctionArgs":FunctionArgs,
+			"result":CodeResult["result"],
+			"SetData":CodeResult["SetData"],
+		}
+
+		let RUNFUNCTIONDATA = new exports.RunFunctionData("",objdata);
+
+		let rawdata = RUNFUNCTIONDATA.GetRawData()
+		if (!rawdata){
+			return false;
+		}
+
+		let objtx = {
+			"pubkey":(await TargetAccount.GetKeys())["pubkey"],
+			"type":112,
+			"time":Math.floor(Date.now()/1000),
+			"tag":tag,
+			"index":FormTxList.length+1,
+			"MerkleRoot":MerkleRoot,
+			"toaddress":AddAddressIndex,
+			"amount":0,
+			"data":rawdata,
+			"sig":"",
+			"nonce":0
+		};
+		//console.log(objtx);
+		let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
+		let result = await TargetTransaction.commit();
+
+		return result;
+	}catch(e){
+		MAIN.note(2,"SendDatabaseTransaction",e);
 		return false;
 	}
-
-	let objtx = {
-		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-		"type":112,
-		"time":Math.floor(Date.now()/1000),
-		"tag":tag,
-		"index":FormTxList.length+1,
-		"MerkleRoot":MerkleRoot,
-		"toaddress":AddAddressIndex,
-		"amount":0,
-		"data":rawdata,
-		"sig":"",
-		"nonce":0
-	};
-	//console.log(objtx);
-	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-	let result = await TargetTransaction.commit();
-
-	return result;
 };
 
 

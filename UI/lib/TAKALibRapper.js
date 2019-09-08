@@ -169,7 +169,7 @@ global.TAKA = {
 			this.TAKAAPI = new TAKA.API(apiurl);
 		};
 
-		async SendTransaction (privkey,type,tag,toaddress,amount,data){
+		async SendTransaction(privkey,type,tag,toaddress,amount,data){
 			let outthis = this;
 			return new Promise(async function (resolve, reject) {
 
@@ -229,27 +229,39 @@ global.TAKA = {
 
 
 
-				let result = TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target);
+				let nonce = await TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target,10);
+				if (nonce == -1){
+					return resolve({"txid":false,"rawtx":await TargetTransaction.GetRawTx()});
+				}
 				let objsendtx = await TargetTransaction.GetObjTx();
+				objsendtx["nonce"] = nonce;
+
+				TargetTransaction = new TAKA.TRANSACTION.Transaction("",privkey,objsendtx);
+				let rawtx = await TargetTransaction.GetRawTx();
 
 
+				outthis.TAKAAPI.sendtx(
+					rawtx,
+					function(CallbackResult,CallbackArgs){
+						return resolve({"txid":CallbackResult,"rawtx":rawtx});
+					}
+				);
 
-				result.then(async function(nonce){
-
-					objsendtx["nonce"] = nonce;
-
-					TargetTransaction = new TAKA.TRANSACTION.Transaction("",privkey,objsendtx);
-					let rawtx = await TargetTransaction.GetRawTx();
-
-
-					outthis.TAKAAPI.sendtx(
-						rawtx,
-						function(CallbackResult,CallbackArgs){
-							return resolve({"txid":CallbackResult,"rawtx":rawtx});
-						}
-					);
-				});
 			});
-		}
+		};
+
+		async SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data){
+			//tag関連のデータの取得
+			if (type > 100){
+				let TagData = this.TAKAAPI.gettag(tag);
+				if ("FeeAmount" in TagData && TagData["FeeAmount"] > 0){
+					//tag使用料支払い
+					await this.SendTransaction(privkey,1,"pay",TagData["FeeToAddress"],TagData["FeeAmount"],"");
+				};
+			};
+
+			let result = await this.SendTransaction(privkey,type,tag,toaddress,amount,data);
+			return result;
+		};
 	}
 }

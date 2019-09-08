@@ -5,6 +5,7 @@ const CRYPTO = require('../crypto.js');
 const ACCOUNT = require('../account.js');
 const HASHS = require('../hashs.js');
 const TRANSACTION = require('../transaction.js');
+const TRANSACTIONTOOLS_TAGORDER = require('./tagorder.js');
 
 
 exports.DatabaseData = class{
@@ -43,34 +44,52 @@ exports.DatabaseData = class{
 
 
 exports.SendDatabaseTransaction = async function(privkey,tag,data,commonkey=""){
-	let TargetAccount = new ACCOUNT.account(privkey);
+	try{
+		/* Feeを追加 */
+		let TAGORDERTX = await TRANSACTION.GetTagOrderTx(tag);
+		let TagOrderObjTx = await TAGORDERTX.GetObjTx();
+		let TagData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]).GetObjData();
+		if (TagData["FeeAmount"] > 0){
+			let result = await TRANSACTION.SendPayTransaction(privkey,TagData["FeeToAddress"],TagData["FeeAmount"]);
+			if (!result){
+				return false;
+			}
+		}
 
-	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
-	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
-	let DatabaseData = new exports.DatabaseData(commonkey,data);
 
-	let rawdata = DatabaseData.GetRawData()
-	if (!rawdata){
+		let TargetAccount = new ACCOUNT.account(privkey);
+
+		let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
+		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
+
+		let DatabaseData = new exports.DatabaseData(commonkey,data);
+
+		let rawdata = DatabaseData.GetRawData();
+		if (!rawdata){
+			return false;
+		}
+
+		let objtx = {
+			"pubkey":(await TargetAccount.GetKeys())["pubkey"],
+			"type":101,
+			"time":Math.floor(Date.now()/1000),
+			"tag":tag,
+			"index":FormTxList.length+1,
+			"MerkleRoot":MerkleRoot,
+			"toaddress":"",
+			"amount":0,
+			"data":rawdata,
+			"sig":"",
+			"nonce":0
+		};
+		//console.log(objtx);
+		let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
+		let result = await TargetTransaction.commit();
+
+		return result;
+	}catch(e){
+		MAIN.note(2,"SendDatabaseTransaction",e);
 		return false;
 	}
-
-	let objtx = {
-		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-		"type":101,
-		"time":Math.floor(Date.now()/1000),
-		"tag":tag,
-		"index":FormTxList.length+1,
-		"MerkleRoot":MerkleRoot,
-		"toaddress":"",
-		"amount":0,
-		"data":rawdata,
-		"sig":"",
-		"nonce":0
-	};
-	//console.log(objtx);
-	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-	let result = await TargetTransaction.commit();
-
-	return result;
 };

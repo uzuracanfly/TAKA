@@ -459,6 +459,29 @@ exports.Transaction = class{
 					if (TagorderObjData["DataMaxSizeInByte"] < objtx["data"].length/2){
 						return 0;
 					};
+
+
+					//SenderからFeeToAddress宛のTAKA数量取得
+					let AmountToFeeToAddress = await TargetAccount.GetSendAmountToAddress(undefined,TagorderObjData["FeeToAddress"]);
+
+					//tag内におけるSenderのtx数から支払っておくべきfeeの数量を取得
+					let IndexPerTag = 0;
+					let TxidsPerTag = exports.GetTagTxids(objtx["tag"]);
+					for (let index in TxidsPerTag){
+						let txid = TxidsPerTag[index];
+
+						let TX = exports.GetTx(txid);
+						let objtx = await TX.GetObjTx();
+						if (objtx["type"] > 100){
+							IndexPerTag = IndexPerTag + 1;
+						}
+					}
+					let NeedSumFee = (IndexPerTag+1) * TagorderObjData["FeeAmount"];
+
+					//Fee不足
+					if (AmountToFeeToAddress < NeedSumFee){
+						return 0;
+					}
 				}else{
 					return 0;
 				}

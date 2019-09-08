@@ -157,7 +157,7 @@ h2 {
 			return 2;
 		}
 
-		let result = await TAKAFUNCTIONS.SendTransaction(account["privkey"],1,"pay","PAYTAKAADDRESS",amount,"");
+		let result = await TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay","PAYTAKAADDRESS",amount,"");
 
 		if (!result){
 			return 3;
@@ -467,7 +467,7 @@ h2 {
 										amount = parseInt(amount);
 
 
-										let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],1,"pay",toaddress,amount,"");
+										let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay",toaddress,amount,"");
 
 
 										//送信ロード画面
@@ -536,6 +536,8 @@ h2 {
 									["select","permissiontype",[["Permission Type",0],["Any account can add transactions.",0],["Owner only",1],["Only accounts added with 'TagAddPermit'",2]]],
 									["input","[OPTION] Pow Target (ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)","powtarget"],
 									["input","[OPTION] Data MaxSize In Byte (10000)","DataMaxSizeInByte"],
+									["input","[OPTION] Fee To Address","FeeToAddress"],
+									["input","[OPTION] Fee Amount","FeeAmount"],
 									[
 										"button",
 										"send",
@@ -545,6 +547,8 @@ h2 {
 											let permissiontype = parseInt(document.getElementById("permissiontype").value);
 											let powtarget = document.getElementById("powtarget").value;
 											let DataMaxSizeInByte = parseInt(document.getElementById("DataMaxSizeInByte").value);
+											let FeeToAddress = document.getElementById("FeeToAddress").value;
+											let FeeAmount = parseInt(document.getElementById("FeeAmount").value);
 
 											if (!powtarget){
 												powtarget = "0000000000000000000000000000000000000000000000000000000000000000";
@@ -554,9 +558,16 @@ h2 {
 												DataMaxSizeInByte = 10000;
 											}
 
+											if (!FeeToAddress){
+												FeeToAddress = "";
+											}
+
+											if (!FeeAmount){
+												FeeAmount = 0;
+											}
 
 											//FeeTx作成
-											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],1,"pay","0000000000000000000000000000000000000000",1,"");
+											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay","0000000000000000000000000000000000000000",1,"");
 
 
 											//送信ロード画面
@@ -588,6 +599,8 @@ h2 {
 													"permissiontype":permissiontype,
 													"powtarget":powtarget,
 													"DataMaxSizeInByte":DataMaxSizeInByte,
+													"FeeToAddress":FeeToAddress,
+													"FeeAmount":FeeAmount,
 												};
 
 												let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData("",objdata);
@@ -596,7 +609,7 @@ h2 {
 
 
 												//TagOrderTx作成
-												let TagOrderResult = TAKAFUNCTIONS.SendTransaction(account["privkey"],12,tag,"0000000000000000000000000000000000000000",0,rawdata);
+												let TagOrderResult = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],12,tag,"0000000000000000000000000000000000000000",0,rawdata);
 
 												TopLoadForm = new form(
 													[
@@ -683,7 +696,7 @@ h2 {
 											);
 
 
-											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],1,"pay",RewardPrivkeyKeys["address"],amount,"");
+											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay",RewardPrivkeyKeys["address"],amount,"");
 
 
 											result.then(function(FeeTxResult){
@@ -746,7 +759,7 @@ h2 {
 												);
 
 												//TagrewardTx作成
-												let TagrewardResult = TAKAFUNCTIONS.SendTransaction(account["privkey"],11,"tagreward","0000000000000000000000000000000000000000",0,rawdata);
+												let TagrewardResult = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],11,"tagreward","0000000000000000000000000000000000000000",0,rawdata);
 
 
 												///Tagrewardの結果発表
@@ -824,7 +837,7 @@ h2 {
 											let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
-											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],13,tag,"0000000000000000000000000000000000000000",0,rawdata);
+											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],13,tag,"0000000000000000000000000000000000000000",0,rawdata);
 
 
 											//送信ロード画面
@@ -909,7 +922,7 @@ h2 {
 											}
 
 
-											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],101,tag,AddAddressIndex,0,data);
+											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],101,tag,AddAddressIndex,0,data);
 
 
 											//送信ロード画面
@@ -1000,7 +1013,7 @@ h2 {
 											let TXDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.SetFunctionData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
-											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],111,tag,"0000000000000000000000000000000000000000",0,rawdata);
+											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],111,tag,"0000000000000000000000000000000000000000",0,rawdata);
 
 
 											//送信ロード画面
@@ -1094,7 +1107,7 @@ h2 {
 											let TXDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.RunFunctionData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
-											let result = TAKAFUNCTIONS.SendTransaction(account["privkey"],112,tag,AddAddressIndex,0,rawdata);
+											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],112,tag,AddAddressIndex,0,rawdata);
 
 
 											//送信ロード画面

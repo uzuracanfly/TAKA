@@ -112,8 +112,16 @@ function CommandAction(commands){
 			if (commands.length >= 6){
 				DataMaxSizeInByte = commands[5];
 			};
+			let FeeToAddress = "";
+			if (commands.length >= 7){
+				FeeToAddress = commands[6];
+			};
+			let FeeAmount = 0;
+			if (commands.length >= 8){
+				FeeAmount = commands[7];
+			};
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagordertx","args":{"key":key,"tag":tag,"permissiontype":permissiontype,"powtarget":powtarget,"DataMaxSizeInByte":DataMaxSizeInByte}});
+			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagordertx","args":{"key":key,"tag":tag,"permissiontype":permissiontype,"powtarget":powtarget,"DataMaxSizeInByte":DataMaxSizeInByte,"FeeToAddress":FeeToAddress,"FeeAmount":FeeAmount}});
 		}else if (commands[0] == "sendtagaddpermittx"){
 			let key = commands[1];
 			let tag = commands[2];

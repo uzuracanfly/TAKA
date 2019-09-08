@@ -135,17 +135,39 @@ exports.account = class{
 		for (let index in txlist){
 			let txid = txlist[index];
 
-			let rawtxdata = DATABASE.get("ConfirmedTransactions",txid);
-			if (rawtxdata.length <= 0){
-				return 0;
-			}
-			let rawtx = rawtxdata[0];
-			let TargetTransaction = new TRANSACTION.Transaction(rawtx);
+			let TX = TRANSACTION.GetTx(txid);
+			let objtx = await TX.GetObjTx();
 
-			if ((await TargetTransaction.GetObjTx())["toaddress"]==address){balance = balance + (await TargetTransaction.GetObjTx())["amount"]}else{balance = balance - (await TargetTransaction.GetObjTx())["amount"]};
+			if (objtx["toaddress"]==address){balance = balance + objtx["amount"]}else{balance = balance - objtx["amount"]};
 			
 		}
 
 		return balance;
+	}
+
+
+	async GetSendAmountToAddress(address="",toaddress="",LessIndex=0){
+		await this.SetUpClass();
+		if (!address){
+			address = (await this.GetKeys())["address"];
+		}
+
+		let txlist = await this.GetFormTxList(address,"pay",LessIndex);
+
+		let amount = 0;
+		for (let index in txlist){
+			let txid = txlist[index];
+
+			let TX = TRANSACTION.GetTx(txid);
+			let objtx = await TX.GetObjTx();
+
+			if (objtx["toaddress"] != toaddress){
+				continue;
+			}
+
+			amount = amount + objtx["amount"];
+		}
+
+		return amount;
 	}
 };
