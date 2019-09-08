@@ -2,6 +2,7 @@ const SYNCREQUEST = require('sync-request');
 const HTTP = require('http');
 const FS = require('fs');
 const bPROMISE = require('bluebird');
+const CRYPTO = require('crypto');
 
 const CONFIG = require('./config.js');
 
@@ -103,13 +104,15 @@ exports.RunCommit = async function(){
 				let path = "database/"+database+"/"+table+"/"+index+".json";
 				FS.statSync(path);
 
-				let data = FS.readFileSync(path, 'utf8');
+				let data = FS.readFileSync(path, 'hex');
 				//暗号化必要性
 				if ("key" in CONFIG.database && CONFIG.database["key"]){
 					const CRYPTO = require('./crypto.js');
 					data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
 				};
-				data = JSON.parse(data);
+
+				data = data.split('0D0A');
+
 				return data;
 
 			}catch(e){
@@ -125,8 +128,14 @@ exports.RunCommit = async function(){
 	}
 
 
+	/*
+		arg data : array
+		save data : hex
+	*/
 	function save(database,table,index,data){
-		data = JSON.stringify(data);
+		
+		data = data.join('0D0A');
+
 		if ("key" in CONFIG.database && CONFIG.database["key"]){
 			const CRYPTO = require('./crypto.js');
 			data = new CRYPTO.common().GetEncryptedData(CONFIG.database["key"],data);
@@ -136,7 +145,7 @@ exports.RunCommit = async function(){
 			FS.mkdir("database/"+database+"/", function (err) {
 				FS.mkdir("database/"+database+"/"+table+"/", function (err) {
 
-					FS.writeFile("database/"+database+"/"+table+"/"+index+".json", data, "utf8", (error) => {
+					FS.writeFile("database/"+database+"/"+table+"/"+index+".json", data, "hex", (error) => {
 						if (error) {
 							console.log(error.message);
 							throw error;
@@ -157,6 +166,7 @@ exports.RunCommit = async function(){
 
 
 	let transactions = [];
+	let ResultValues = {};
 
 	HTTP.createServer(async function(request, response) {
 		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
@@ -222,28 +232,28 @@ exports.RunCommit = async function(){
 					let database = postData["args"]["database"];
 					let table = postData["args"]["table"];
 					let index = postData["args"]["index"];
-
 					
+					let ResultsKey = CRYPTO.randomBytes(16).toString('base64').substring(0, 16);
+					transactions.push({"function":"load","args":{"database":database,"table":table,"index":index},"ResultsKey":ResultsKey});
 
-					(async function loop(i) {
-						if (transactions.length > 0) {
-							return bPROMISE.delay(10).then(async function() {
-								return i+1;
-							}).then(loop);
-						}
+					while (true){
+						if (ResultsKey in ResultValues){
+							let result = ResultValues[ResultsKey];
 
-						let result = await load(database,table,index);
+							if (!result){
+								result = [];
+							}
 
-						if (result){
 							response.write(JSON.stringify(result));
 							response.end();
-						}else{
-							response.write(JSON.stringify([]));
-							response.end();
+
+							delete ResultValues[ResultsKey];
+
+							break;
 						}
 
-						return bPROMISE.resolve(i);
-					})(0);
+						await sleep(1);
+					}
 
 				};
 			});
@@ -255,8 +265,10 @@ exports.RunCommit = async function(){
 
 
 	while (true){
-		for (let index in transactions){
-			let transaction = transactions[index];
+		if (transactions.length > 0){
+			let transaction = transactions[0];
+
+			delete transactions[0];
 
 			if (transaction["function"] == "set"){
 				save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
@@ -274,11 +286,12 @@ exports.RunCommit = async function(){
 			if (transaction["function"] == "delete"){
 				Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
 			};
-			await sleep(0.1);
+			if (transaction["function"] == "load"){
+				ResultValues[transaction["ResultsKey"]] = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+			}
 		};
-		transactions = [];
 
-		await sleep(1);
+		await sleep(0.1);
 	};
 
 };
