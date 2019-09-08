@@ -65,7 +65,7 @@ type to console.
 		};
 		let TXDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.RunFunctionData("",objdata);
 		let rawdata = TXDATA.GetRawData();
-		let result = await TAKAFUNCTIONS.SendTransaction([MinPrivkey],112,[TAG],[toaddress],0,rawdata);
+		let result = await TAKAFUNCTIONS.SendTransactionWithSendFee([MinPrivkey],112,[TAG],[toaddress],0,rawdata);
 		console.log(result);
 	})();
 

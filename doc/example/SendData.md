@@ -43,5 +43,5 @@ type to console.
 ### Using function.
 
 	const TAKAFUNCTIONS = new TAKA.RappingFunctions("https://neko.taka.site");
-	let txid = await TAKAFUNCTIONS.SendTransaction("[MinPrivkey]",101,"[TAG]","",0,"[DATA]");
+	let txid = await TAKAFUNCTIONS.SendTransactionWithSendFee("[MinPrivkey]",101,"[TAG]","",0,"[DATA]");
 	console.log(txid);

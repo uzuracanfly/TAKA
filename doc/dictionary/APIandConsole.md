@@ -122,7 +122,7 @@ Show account data.
 # sendtagordertx
 
 ### parameters
-	sendtagordertx <key> <tag> <permissiontype> [powtarget]
+	sendtagordertx <key> <tag> <permissiontype> [powtarget] [FeeToAddress] [FeeAmount]
 
 ### example
 

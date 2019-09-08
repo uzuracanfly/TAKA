@@ -28,6 +28,6 @@ Check with [explorer](https://neko.taka.site/explorer) if it is sent properly.
 ### Using function.
 	(async () => {
 		const TAKAFUNCTIONS = new TAKA.RappingFunctions("https://neko.taka.site");
-		let txid = await TAKAFUNCTIONS.SendTransaction("[MinPrivkey]",1,"pay","80ba149c1e71ca4576198998418bc47d4e297ab2",1,"");
+		let txid = await TAKAFUNCTIONS.SendTransactionWithSendFee("[MinPrivkey]",1,"pay","80ba149c1e71ca4576198998418bc47d4e297ab2",1,"");
 		console.log(txid);
 	})();

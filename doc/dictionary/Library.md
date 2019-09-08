@@ -133,3 +133,5 @@ Get keys of class argument key.
 
 
 ### TAKALIB.SendTransaction(privkey,type,tag,toaddress,amount,data)
+
+### TAKALIB.SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data)
