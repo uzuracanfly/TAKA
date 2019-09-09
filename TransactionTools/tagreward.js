@@ -289,6 +289,11 @@ exports.RunMining = async function(){
 
 
 exports.RunControlTag = async function(){
+
+	if (!CONFIG.Tagreward["UseControlTag"]){
+		return false;
+	}
+
 	while (true){
 		try{
 			let TagsRewardPerYear = {};
@@ -334,8 +339,10 @@ exports.RunControlTag = async function(){
 
 
 				if (TagsRewardPerYear[tag] / SumSize * 1000000 >= 1){
-					MAIN.note(1,"RunControlTag",`ADD ${tag}`);
-					await TRANSACTION.SetImportTags("add",tag);
+					let result = await TRANSACTION.SetImportTags("add",tag);
+					if (result){
+						MAIN.note(1,"RunControlTag",`ADD ${tag}`);
+					};
 				}
 			}
 
@@ -362,8 +369,10 @@ exports.RunControlTag = async function(){
 
 
 				if (!(tag in TagsRewardPerYear) || TagsRewardPerYear[tag] / SumSize * 1000000 < 1){
-					MAIN.note(1,"RunControlTag",`REMOVE ${tag}`);
-					await TRANSACTION.SetImportTags("remove",tag);
+					let result = await TRANSACTION.SetImportTags("remove",tag);
+					if (result){
+						MAIN.note(1,"RunControlTag",`REMOVE ${tag}`);
+					}
 				}
 			}
 
