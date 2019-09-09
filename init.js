@@ -110,6 +110,7 @@ const CRYPTO = require('./crypto.js');
 		{"name":"APISetServer","function":function(){let API = require('./api.js');API.SetServer()},"time":1000},
 		{"name":"TagrewardRunMining","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()},"time":1000},
 		{"name":"exchange","function":function(){let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()},"time":1000},
+		{"name":"ControlTag","function":function(){let CONTROLTAG = require('./ControlTag.js');CONTROLTAG.RunControlTag()},"time":1000},
 		{
 			"name":"TEST",
 			"function":function(){

@@ -152,9 +152,14 @@ exports.GetMiningTags = async function(){
 
 exports.SetMiningTags = async function(type,tag){
 	if (type == "add"){
+		let MiningTags = await exports.GetMiningTags();
+		let index = MiningTags.indexOf(tag);
+		if (index > -1){
+			return 0;
+		}
 		DATABASE.add("MiningTags","live",tag);
 	}else if (type == "remove"){
-		let MiningTags = DATABASE.get("MiningTags","live");
+		let MiningTags = await exports.GetMiningTags();
 		let index = MiningTags.indexOf(tag);
 		if (index == -1){
 			return 0;

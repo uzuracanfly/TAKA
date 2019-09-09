@@ -985,15 +985,30 @@ exports.GetImportTags = async function(){
 
 	Array.prototype.push.apply(ImportTags, CONFIG.ImportTags);
 
+	/* 標準装備 */
+	if (ImportTags.length > 0){
+		if (ImportTags.indexOf("pay") == -1){
+			ImportTags.push("pay");
+		}
+		if (ImportTags.indexOf("tagreward") == -1){
+			ImportTags.push("tagreward");
+		}
+	};
+
 	return ImportTags;
 };
 
 
 exports.SetImportTags = async function(type,tag){
 	if (type == "add"){
+		let ImportTags = await exports.GetImportTags();
+		let index = ImportTags.indexOf(tag);
+		if (index > -1){
+			return 0;
+		}
 		DATABASE.add("ImportTags","live",tag);
 	}else if (type == "remove"){
-		let ImportTags = DATABASE.get("ImportTags","live");
+		let ImportTags = await exports.GetImportTags();
 		let index = ImportTags.indexOf(tag);
 		if (index == -1){
 			return 0;
