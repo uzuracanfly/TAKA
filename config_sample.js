@@ -34,7 +34,8 @@ exports.ImportTags = IMPORTTAGS
 
 exports.Tagreward = {
 	"MiningTags":TAGREWARD_MININGTAGS,
-	"CollectPrivkey":TAGREWARD_COLLECTPRIVKEY
+	"CollectPrivkey":TAGREWARD_COLLECTPRIVKEY,
+	"UseControlTag":TAGREWARD_CONTROLTAG
 }
 
 

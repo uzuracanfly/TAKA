@@ -2,7 +2,7 @@ const MAIN = require('./main.js');
 const CRYPTO = require('./crypto.js');
 const ACCOUNT = require('./account.js');
 const HASHS = require('./hashs.js');
-const HAX = require('./hex.js');
+const HEX = require('./hex.js');
 const CONFIG = require('./config.js');
 const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.database["address"],CONFIG.database["port"],CONFIG.database["database"]);
 const FS = require('fs');
@@ -77,7 +77,7 @@ exports.Transaction = class{
 
 		let type = objtx["type"].toString(16);
 		let time = Math.floor(objtx["time"]).toString(16);
-		let tag = new HAX.HexText().string_to_utf8_hex_string(objtx["tag"]);
+		let tag = new HEX.HexText().string_to_utf8_hex_string(objtx["tag"]);
 		let index = objtx["index"].toString(16);
 		let MerkleRoot = objtx["MerkleRoot"];
 		let toaddress = objtx["toaddress"];
@@ -202,7 +202,7 @@ exports.Transaction = class{
 			"pubkey":pubkey,
 			"type":type,
 			"time":time,
-			"tag":new HAX.HexText().utf8_hex_string_to_string(tag),
+			"tag":new HEX.HexText().utf8_hex_string_to_string(tag),
 			"index":index,
 			"MerkleRoot":MerkleRoot,
 			"toaddress":toaddress,
@@ -981,7 +981,15 @@ exports.GetUnconfirmedTransactions = async function(){
 
 
 exports.GetImportTags = async function(){
-	let ImportTags = DATABASE.get("ImportTags","live");
+	let ImportTags =  [];
+	let DatabaseImportTags = DATABASE.get("ImportTags","live");
+	for (let index in DatabaseImportTags){
+		let tag = DatabaseImportTags[index];
+
+		let HEXTEXT = new HEX.HexText();
+		tag = HEXTEXT.utf8_hex_string_to_string(tag);
+		ImportTags.push(tag);
+	}
 
 	Array.prototype.push.apply(ImportTags, CONFIG.ImportTags);
 
@@ -1006,6 +1014,8 @@ exports.SetImportTags = async function(type,tag){
 		if (index > -1){
 			return 0;
 		}
+		let HEXTEXT = new HEX.HexText();
+		tag = HEXTEXT.string_to_utf8_hex_string(tag);
 		DATABASE.add("ImportTags","live",tag);
 	}else if (type == "remove"){
 		let ImportTags = await exports.GetImportTags();

@@ -143,7 +143,15 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 
 
 exports.GetMiningTags = async function(){
-	let MiningTags = DATABASE.get("MiningTags","live");
+	let MiningTags = [];
+	let DatabaseMiningTags = DATABASE.get("MiningTags","live");
+	for (let index in DatabaseMiningTags){
+		let tag = DatabaseMiningTags[index];
+
+		let HEXTEXT = new HEX.HexText();
+		tag = HEXTEXT.utf8_hex_string_to_string(tag);
+		MiningTags.push(tag);
+	}
 
 	Array.prototype.push.apply(MiningTags, CONFIG.Tagreward["MiningTags"]);
 
@@ -157,6 +165,8 @@ exports.SetMiningTags = async function(type,tag){
 		if (index > -1){
 			return 0;
 		}
+		let HEXTEXT = new HEX.HexText();
+		tag = HEXTEXT.string_to_utf8_hex_string(tag);
 		DATABASE.add("MiningTags","live",tag);
 	}else if (type == "remove"){
 		let MiningTags = await exports.GetMiningTags();
@@ -269,5 +279,113 @@ exports.RunMining = async function(){
 
 
 		await MAIN.sleep(1);
+	}
+}
+
+
+
+
+
+
+
+exports.RunControlTag = async function(){
+	while (true){
+		try{
+			let TagsRewardPerYear = {};
+			let TxidsTagreward = TRANSACTION.GetTagTxids("tagreward");
+			for (let index in TxidsTagreward){
+				let txid = TxidsTagreward[index];
+
+				let TX = TRANSACTION.GetTx(txid);
+				let objtx = await TX.GetObjTx();
+				let rewarddata = (new exports.TagrewardData(objtx["data"])).GetObjData();
+
+				let rewardtxid = rewarddata["rewardtxid"];
+				let REWARDTX = TRANSACTION.GetTx(rewardtxid);
+				let rewardobjtx = await REWARDTX.GetObjTx();
+
+				if (!(rewarddata["tag"] in TagsRewardPerYear)){
+					TagsRewardPerYear[rewarddata["tag"]] = 0;
+				}
+
+				if (rewardobjtx["time"] > Math.floor(Date.now()/1000)-60*60*24*30*12){
+					TagsRewardPerYear[rewarddata["tag"]] = TagsRewardPerYear[rewarddata["tag"]] + rewardobjtx["amount"];
+				}
+			}
+
+
+			/* add */
+			for (let tag in TagsRewardPerYear){
+				if ((await TRANSACTION.GetImportTags()).indexOf(tag) > -1){
+					continue;
+				}
+
+
+				let SumSize = 0;
+				let TxidsPerTag = TRANSACTION.GetTagTxids(tag);
+				for (let index in TxidsPerTag){
+					let txid = TxidsPerTag[index];
+
+					let TX = TRANSACTION.GetTx(txid);
+					let rawtx = await TX.GetRawTx();
+
+					SumSize = SumSize + (rawtx.length/2);
+				}
+
+
+				if (TagsRewardPerYear[tag] / SumSize * 1000000 >= 1){
+					MAIN.note(1,"RunControlTag",`ADD ${tag}`);
+					await TRANSACTION.SetImportTags("add",tag);
+				}
+			}
+
+
+			/* remove */
+			let ImportTags = await TRANSACTION.GetImportTags();
+			for (let index in ImportTags){
+				let tag = ImportTags[index];
+
+				if ((await TRANSACTION.GetImportTags()).indexOf(tag) == -1){
+					continue;
+				}
+
+				let SumSize = 0;
+				let TxidsPerTag = TRANSACTION.GetTagTxids(tag);
+				for (let index in TxidsPerTag){
+					let txid = TxidsPerTag[index];
+
+					let TX = TRANSACTION.GetTx(txid);
+					let rawtx = await TX.GetRawTx();
+
+					SumSize = SumSize + (rawtx.length/2);
+				}
+
+
+				if (!(tag in TagsRewardPerYear) || TagsRewardPerYear[tag] / SumSize * 1000000 < 1){
+					MAIN.note(1,"RunControlTag",`REMOVE ${tag}`);
+					await TRANSACTION.SetImportTags("remove",tag);
+				}
+			}
+
+
+
+			/* すべてsetminingtags */
+			let MiningTags = await exports.GetMiningTags();
+			for (let index in MiningTags){
+				let tag = MiningTags[index];
+
+				await exports.SetMiningTags("remove",tag);
+			};
+			ImportTags = await TRANSACTION.GetImportTags();
+			for (let index in ImportTags){
+				let tag = ImportTags[index];
+
+				await exports.SetMiningTags("add",tag);
+			};
+		}catch(e){
+			MAIN.note(2,"RunControlTag",e);
+		}
+
+		await MAIN.sleep(60);
 	}
 }

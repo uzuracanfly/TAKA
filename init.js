@@ -55,19 +55,24 @@ const CRYPTO = require('./crypto.js');
 		}
 
 
-		let IMPORTTAGS = await MAIN.GetConsole('[ImportTags] (["pay","tagreward"]) : ');
+		let IMPORTTAGS = await MAIN.GetConsole('[ImportTags] ([]) : ');
 		if (!IMPORTTAGS){
 			IMPORTTAGS = "[]";
 		};
-		let TAGREWARD_MININGTAGS = await MAIN.GetConsole('[TagReward] Mining Tags (["pay","tagreward"]) : ');
+
+
+		let TAGREWARD_MININGTAGS = await MAIN.GetConsole('[TagReward] Mining Tags ([]) : ');
 		if (!TAGREWARD_MININGTAGS){
 			TAGREWARD_MININGTAGS = "[]";
 		};
-
 		let TAGREWARD_COLLECTPRIVKEY = await MAIN.GetConsole('[TagReward] Collect Privkey () : ');
 		if (!TAGREWARD_COLLECTPRIVKEY){
 			TAGREWARD_COLLECTPRIVKEY = await new CRYPTO.signature().CreatePrivkey();
 		}
+		let TAGREWARD_CONTROLTAG = await MAIN.GetConsole('[TagReward] Use Control Tag (false) : ');
+		if (!TAGREWARD_CONTROLTAG){
+			TAGREWARD_CONTROLTAG = "false";
+		};
 
 
 
@@ -88,6 +93,8 @@ const CRYPTO = require('./crypto.js');
 
 		ConfigData = ConfigData.replace( 'TAGREWARD_MININGTAGS', TAGREWARD_MININGTAGS );
 		ConfigData = ConfigData.replace( 'TAGREWARD_COLLECTPRIVKEY', '"'+TAGREWARD_COLLECTPRIVKEY+'"' );
+		ConfigData = ConfigData.replace( 'TAGREWARD_COLLECTPRIVKEY', '"'+TAGREWARD_COLLECTPRIVKEY+'"' );
+		ConfigData = ConfigData.replace( 'TAGREWARD_CONTROLTAG', TAGREWARD_CONTROLTAG );
 
 		FS.writeFile("./config.js", ConfigData, "utf8", (e) => {
 			if (e) {
@@ -110,7 +117,7 @@ const CRYPTO = require('./crypto.js');
 		{"name":"APISetServer","function":function(){let API = require('./api.js');API.SetServer()},"time":1000},
 		{"name":"TagrewardRunMining","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()},"time":1000},
 		{"name":"exchange","function":function(){let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()},"time":1000},
-		{"name":"ControlTag","function":function(){let CONTROLTAG = require('./ControlTag.js');CONTROLTAG.RunControlTag()},"time":1000},
+		{"name":"ControlTag","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunControlTag()},"time":1000},
 		{
 			"name":"TEST",
 			"function":function(){
