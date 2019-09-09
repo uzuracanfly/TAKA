@@ -229,7 +229,7 @@ global.TAKA = {
 
 
 
-				let nonce = await TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target,10);
+				let nonce = await TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target,60);
 				if (nonce == -1){
 					return resolve({"txid":false,"rawtx":await TargetTransaction.GetRawTx()});
 				}

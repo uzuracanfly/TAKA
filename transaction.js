@@ -364,7 +364,11 @@ exports.Transaction = class{
 						return 0;
 					}
 
+					//Senderから0000....宛のTAKA数量取得
+					let AmountToZeroAddress = await TargetAccount.GetSendAmountToAddress(undefined,MAIN.GetFillZero("",40));
+
 					//使いまわされていないか確認
+					let IndexPerTagOrder = 0;
 					let tags = exports.GetTags();
 					for (let index in tags){
 						let tag = tags[index];
@@ -379,7 +383,16 @@ exports.Transaction = class{
 						if (TagorderObjDataForConfirmation["feetxid"] == TagorderObjData["feetxid"]){
 							return 0;
 						}
+						if (TagOrderObjTxForConfirmation["pubkey"] == objtx["pubkey"]){
+							IndexPerTagOrder = IndexPerTagOrder + 1;
+						}
 					}
+					let NeedSumFee = (IndexPerTagOrder+1) * 1;
+
+					if (AmountToZeroAddress < NeedSumFee){
+						return 0;
+					}
+
 				}catch(e){
 					//console.log(e);
 					return 0;
