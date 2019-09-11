@@ -101,7 +101,7 @@ exports.RunCommit = async function(){
 		if (array){
 			let lencount = array.length;
 			lencount = lencount.toString(16);
-			let hex = GetFillZero(lencount,16);
+			hex = GetFillZero(lencount,16);
 			
 			for (let index in array){
 				let per = array[index];
@@ -114,8 +114,7 @@ exports.RunCommit = async function(){
 			}
 
 			return hex;
-		}
-		if (hex){
+		}else if (hex){
 			function cut(len){
 				let cuthex = hex.slice(0,len);
 				hex = hex.slice(len);
@@ -132,8 +131,8 @@ exports.RunCommit = async function(){
 				return cuthex;
 			};
 
-			let array = [];
-			let lencount = cut(16);
+			array = [];
+			let lencount = parseInt(cut(16),16);
 			for (let index=0;index<lencount;index++){
 				array.push(VariableCut(16));
 			}
