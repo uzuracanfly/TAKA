@@ -138,7 +138,14 @@ exports.account = class{
 			let TX = TRANSACTION.GetTx(txid);
 			let objtx = await TX.GetObjTx();
 
-			if (objtx["toaddress"]==address){balance = balance + objtx["amount"]}else{balance = balance - objtx["amount"]};
+			let SenderKeys = await this.GetKeys(objtx["pubkey"]);
+
+			if (SenderKeys["address"]==address){
+				balance = balance - objtx["amount"]
+			};
+			if (objtx["toaddress"]==address){
+				balance = balance + objtx["amount"]
+			};
 			
 		}
 
