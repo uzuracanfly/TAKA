@@ -320,13 +320,9 @@ exports.Transaction = class{
 					let Tagreward = new tagreward.TagrewardData(objtx["data"]);
 					let TagrewardObjData = Tagreward.GetObjData();
 
-					if (!("tag" in TagrewardObjData) || !TagrewardObjData["tag"]){
+					if (objtx["toaddress"] != MAIN.GetFillZero("", 40)){
 						return 0;
-					}
-					if (!("EncryptoPrivkey" in TagrewardObjData) || !TagrewardObjData["EncryptoPrivkey"]){
-						return 0;
-					}
-
+					};
 
 					//Senderからeeeee....宛のTAKA数量取得
 					let AmountToZeroAddress = await TargetAccount.GetSendAmountToAddress(undefined,"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
@@ -356,6 +352,10 @@ exports.Transaction = class{
 					let tagorder = require('./TransactionTools/tagorder.js');
 					let Tagorder = new tagorder.TagOrderData(objtx["data"]);
 					let TagorderObjData = Tagorder.GetObjData();
+
+					if (objtx["toaddress"] != MAIN.GetFillZero("", 40)){
+						return 0;
+					};
 
 					let tagtxs = exports.GetTagTxids(objtx["tag"]);
 					if (tagtxs.length > 0){
@@ -423,6 +423,10 @@ exports.Transaction = class{
 					let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
 					let Tagaddpermit = new tagaddpermit.TagAddPermitData(objtx["data"]);
 					let TagaddpermitObjData = Tagaddpermit.GetObjData();
+
+					if (objtx["toaddress"] != MAIN.GetFillZero("", 40)){
+						return 0;
+					};
 
 					let TagOrderTx = await exports.GetTagOrderTx(objtx["tag"]);
 					if ((await TagOrderTx.GetObjTx())["pubkey"] != objtx["pubkey"]){
@@ -714,7 +718,7 @@ exports.Transaction = class{
 
 
 
-		/* payまたはtagrewardなど一般的なtagの場合 */
+		/* payまたは自動指定が必要なタグの場合 */
 		if (objtx["tag"] == "pay" || target == 0){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
