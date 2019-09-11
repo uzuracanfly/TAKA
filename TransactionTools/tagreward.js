@@ -20,8 +20,8 @@ exports.TagrewardData = class{
 	GetRawData(objdata=this.objdata){
 		let data = "";
 
-		let rewardtxid = objdata["rewardtxid"];
-		data = data + MAIN.GetFillZero(rewardtxid,64);
+		let RewardAddress = objdata["RewardAddress"];
+		data = data + MAIN.GetFillZero(RewardAddress,40);
 
 		let UsingRawTxIndex = objdata["UsingRawTxIndex"].toString(16);
 		data = data + MAIN.GetFillZero(UsingRawTxIndex,16);
@@ -54,13 +54,13 @@ exports.TagrewardData = class{
 			return cuthex
 		};
 
-		let rewardtxid = cut(64);
+		let RewardAddress = cut(40);
 		let UsingRawTxIndex = parseInt(cut(16),16);
 		let tag = VariableCut();
 		let EncryptoPrivkey = VariableCut();
 
 		let objdata = {
-			"rewardtxid":rewardtxid,
+			"RewardAddress":RewardAddress,
 			"UsingRawTxIndex":UsingRawTxIndex,
 			"tag":new HEX.HexText().utf8_hex_string_to_string(tag),
 			"EncryptoPrivkey":EncryptoPrivkey,
@@ -80,12 +80,29 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		amount = parseInt(amount);
 
 
+
+
+		/*
+		報酬を報酬アドレスに用意
+		*/
 		let TargetAccount = new ACCOUNT.account(privkey);
 
 		let RewardAccount = new ACCOUNT.account();
 		let RewardPrivkey = (await RewardAccount.GetKeys())["privkey"];
 		//console.log(RewardPrivkey);
 		let paytxid = await TRANSACTION.SendPayTransaction(privkey,(await RewardAccount.GetKeys())["address"],amount);
+
+
+
+
+		/* Feeを追加 */
+		let result = await TRANSACTION.SendPayTransaction(privkey,"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",1);
+		if (!result){
+			return false;
+		}
+
+
+
 
 		/*
 		報酬トランザクション生成
@@ -108,7 +125,7 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(commonkey,RewardPrivkey);
 
 		let objdata = {
-			"rewardtxid":paytxid,
+			"RewardAddress":(await RewardAccount.GetKeys())["address"],
 			"UsingRawTxIndex":UsingRawTxIndex,
 			"tag":tag,
 			"EncryptoPrivkey":EncryptoPrivkey,
@@ -305,17 +322,25 @@ exports.RunControlTag = async function(){
 				let objtx = await TX.GetObjTx();
 				let rewarddata = (new exports.TagrewardData(objtx["data"])).GetObjData();
 
-				let rewardtxid = rewarddata["rewardtxid"];
-				let REWARDTX = TRANSACTION.GetTx(rewardtxid);
-				let rewardobjtx = await REWARDTX.GetObjTx();
+				if (objtx["time"] < Math.floor(Date.now()/1000)-60*60*24*30*12){
+					continue;
+				};
+
+				let RewardAddress = rewarddata["RewardAddress"];
+				let REWARDACCOUNT = new ACCOUNT.account(RewardAddress);
+
+				let RewardBalance = await REWARDACCOUNT.GetBalance();
+				if (RewardBalance <= 0){
+					let TxidsPerPay = await REWARDACCOUNT.GetFormTxList(undefined,"pay");
+					RewardBalance = await REWARDACCOUNT.GetBalance(undefined,TxidsPerPay.length);
+				}
+
 
 				if (!(rewarddata["tag"] in TagsRewardPerYear)){
 					TagsRewardPerYear[rewarddata["tag"]] = 0;
 				}
 
-				if (rewardobjtx["time"] > Math.floor(Date.now()/1000)-60*60*24*30*12){
-					TagsRewardPerYear[rewarddata["tag"]] = TagsRewardPerYear[rewarddata["tag"]] + rewardobjtx["amount"];
-				}
+				TagsRewardPerYear[rewarddata["tag"]] = TagsRewardPerYear[rewarddata["tag"]] + RewardBalance;
 			}
 
 
@@ -352,6 +377,9 @@ exports.RunControlTag = async function(){
 			for (let index in ImportTags){
 				let tag = ImportTags[index];
 
+				if (tag == "pay" || tag == "tagreward"){
+					continue;
+				}
 				if ((await TRANSACTION.GetImportTags()).indexOf(tag) == -1){
 					continue;
 				}

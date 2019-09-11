@@ -326,6 +326,16 @@ exports.Transaction = class{
 					if (!("EncryptoPrivkey" in TagrewardObjData) || !TagrewardObjData["EncryptoPrivkey"]){
 						return 0;
 					}
+
+
+					//Senderからeeeee....宛のTAKA数量取得
+					let AmountToZeroAddress = await TargetAccount.GetSendAmountToAddress(undefined,"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+
+					let NeedSumFee = objtx["index"] * 1;
+
+					if (AmountToZeroAddress < NeedSumFee){
+						return 0;
+					}
 				}catch(e){
 					return 0;
 				};
@@ -360,12 +370,12 @@ exports.Transaction = class{
 					if (feetxobj["amount"] < 1){
 						return 0;
 					}
-					if (feetxobj["toaddress"] != MAIN.GetFillZero("", 40)){
+					if (feetxobj["toaddress"] != "ffffffffffffffffffffffffffffffffffffffff"){
 						return 0;
 					}
 
-					//Senderから0000....宛のTAKA数量取得
-					let AmountToZeroAddress = await TargetAccount.GetSendAmountToAddress(undefined,MAIN.GetFillZero("",40));
+					//Senderからfffff....宛のTAKA数量取得
+					let AmountToZeroAddress = await TargetAccount.GetSendAmountToAddress(undefined,"ffffffffffffffffffffffffffffffffffffffff");
 
 					//使いまわされていないか確認
 					let IndexPerTagOrder = 0;
@@ -484,8 +494,13 @@ exports.Transaction = class{
 						let txid = TxidsPerTag[index];
 
 						let TX = exports.GetTx(txid);
-						let objtx = await TX.GetObjTx();
-						if (objtx["type"] > 100){
+						let ObjtxPerTag = await TX.GetObjTx();
+
+						if (objtx["pubkey"] != ObjtxPerTag["pubkey"]){
+							continue;
+						}
+
+						if (ObjtxPerTag["type"] > 100){
 							IndexPerTag = IndexPerTag + 1;
 						}
 					}
@@ -665,8 +680,23 @@ exports.Transaction = class{
 		let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		let objtx = await this.GetObjTx(rawtx);
 
+
+
+		/* payでかつfee支払い用アドレスの場合 */
+		if (objtx["tag"] == "pay" && (objtx["toaddress"] == "ffffffffffffffffffffffffffffffffffffffff" || objtx["toaddress"] == "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")){
+			return target;
+		}
+
+		/* tagrewardの場合 */
+		if (objtx["tag"] == "tagreward"){
+			return target;
+		}
+
+
+
+
 		/* ユーザー定義のtagの場合 */
-		if (objtx["tag"] != "pay" && objtx["tag"] != "tagreward"){
+		if (objtx["tag"] != "pay"){
 			if (!powtarget){
 				let TagOrderTx = await exports.GetTagOrderTx(objtx["tag"]);
 				if (TagOrderTx){
@@ -685,7 +715,7 @@ exports.Transaction = class{
 
 
 		/* payまたはtagrewardなど一般的なtagの場合 */
-		if (objtx["tag"] == "pay" || objtx["tag"] == "tagreward" || target == 0){
+		if (objtx["tag"] == "pay" || target == 0){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			let time = objtx["time"];

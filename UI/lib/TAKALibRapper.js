@@ -251,6 +251,11 @@ global.TAKA = {
 		};
 
 		async SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data){
+			//tagrewardのFee支払い
+			if (type == 11){
+				await this.SendTransaction(privkey,1,"pay","eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",1,"");
+			};
+
 			//tag関連のデータの取得
 			if (type > 100){
 				let TagData = this.TAKAAPI.gettag(tag);

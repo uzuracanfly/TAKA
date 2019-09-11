@@ -567,7 +567,7 @@ h2 {
 											}
 
 											//FeeTx作成
-											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay","0000000000000000000000000000000000000000",1,"");
+											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay","ffffffffffffffffffffffffffffffffffffffff",1,"");
 
 
 											//送信ロード画面
@@ -740,7 +740,7 @@ h2 {
 
 												//tagrewardのデータ生成
 												let objdata = {
-													"rewardtxid":FeeTxResult["txid"],
+													"RewardAddress":RewardPrivkeyKeys["address"],
 													"UsingRawTxIndex":UsingRawTxIndex,
 													"tag":tag,
 													"EncryptoPrivkey":EncryptoPrivkey,

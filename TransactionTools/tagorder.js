@@ -83,7 +83,7 @@ exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powt
 	let TargetAccount = new ACCOUNT.account(privkey);
 
 	//tag利用料支払いのトランザクションを発行
-	let paytxid = await TRANSACTION.SendPayTransaction(privkey,MAIN.GetFillZero("", 40),1);
+	let paytxid = await TRANSACTION.SendPayTransaction(privkey,"ffffffffffffffffffffffffffffffffffffffff",1);
 
 
 	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);

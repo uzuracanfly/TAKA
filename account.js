@@ -111,7 +111,7 @@ exports.account = class{
 		for (let index in TransactionIdsPerAccountAndTag){
 			let txid = TransactionIdsPerAccountAndTag[index];
 
-			if (LessIndex && result.length-1 >= LessIndex){
+			if (LessIndex && result.length+1 >= LessIndex){
 				break;
 			}
 
