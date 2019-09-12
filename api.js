@@ -100,28 +100,30 @@ exports.SetServer = function(){
 							}
 
 
-							if (tag != "pay" && tag != "tagreward" && TagTxids.length > 0){
-								let TagOrderTx = await TRANSACTION.GetTagOrderTx(tag);
-								let TagOrderObjTx = await TagOrderTx.GetObjTx();
+							if (tag != "pay" && tag != "tagorder" && tag != "tagreward" && tag != "tagaddpermit"){
+								let TAGORDERTX = await TRANSACTION.GetTagOrderTx(tag);
+								if (TAGORDERTX){
+									let TagOrderObjTx = await TAGORDERTX.GetObjTx();
 
-								let TagOrderData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]);
-								let TagOrderObjData = TagOrderData.GetObjData();
+									let TagOrderData = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderObjTx["data"]);
+									let TagOrderObjData = TagOrderData.GetObjData();
 
-								let ownerpubkey = TagOrderObjTx["pubkey"];
-								let OwnerAccount = new ACCOUNT.account(ownerpubkey);
+									let ownerpubkey = TagOrderObjTx["pubkey"];
+									let OwnerAccount = new ACCOUNT.account(ownerpubkey);
 
-								let TagPermitAddresss = await TRANSACTION.GetTagPermitAddresss(tag);
+									let TagPermitAddresss = await TRANSACTION.GetTagPermitAddresss(tag);
 
-								callback["owner"] = {
-									"pubkey":ownerpubkey,
-									"address":(await OwnerAccount.GetKeys())["address"]
-								};
-								callback["permissiontype"] = TagOrderObjData["permissiontype"];
-								callback["powtarget"] = TagOrderObjData["powtarget"];
-								callback["DataMaxSizeInByte"] = TagOrderObjData["DataMaxSizeInByte"];
-								callback["FeeToAddress"] = TagOrderObjData["FeeToAddress"];
-								callback["FeeAmount"] = TagOrderObjData["FeeAmount"];
-								callback["TagPermitAddresss"] = TagPermitAddresss;
+									callback["owner"] = {
+										"pubkey":ownerpubkey,
+										"address":(await OwnerAccount.GetKeys())["address"]
+									};
+									callback["permissiontype"] = TagOrderObjData["permissiontype"];
+									callback["powtarget"] = TagOrderObjData["powtarget"];
+									callback["DataMaxSizeInByte"] = TagOrderObjData["DataMaxSizeInByte"];
+									callback["FeeToAddress"] = TagOrderObjData["FeeToAddress"];
+									callback["FeeAmount"] = TagOrderObjData["FeeAmount"];
+									callback["TagPermitAddresss"] = TagPermitAddresss;
+								}
 							};
 
 							response.write(JSON.stringify(callback));

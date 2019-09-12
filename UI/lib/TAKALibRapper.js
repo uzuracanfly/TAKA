@@ -251,14 +251,15 @@ global.TAKA = {
 		};
 
 		async SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data){
-			//tagrewardのFee支払い
-			if (type == 11){
-				await this.SendTransaction(privkey,1,"pay","eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",1,"");
+			//tagorder等のFee支払い
+			if (type == 11 || type == 12 || type == 13){
+				await this.SendTransaction(privkey,1,"pay","ffffffffffffffffffffffffffffffffffffffff",1,"");
 			};
 
 			//tag関連のデータの取得
 			if (type > 100){
 				let TagData = this.TAKAAPI.gettag(tag);
+
 				if ("FeeAmount" in TagData && TagData["FeeAmount"] > 0){
 					//tag使用料支払い
 					await this.SendTransaction(privkey,1,"pay",TagData["FeeToAddress"],TagData["FeeAmount"],"");

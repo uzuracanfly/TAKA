@@ -566,94 +566,66 @@ h2 {
 												FeeAmount = 0;
 											}
 
-											//FeeTx作成
-											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay","ffffffffffffffffffffffffffffffffffffffff",1,"");
 
 
-											//送信ロード画面
-											let TopLoadForm = new form(
+											//TagOrderのデータ生成
+											let objdata = {
+												"tag":tag,
+												"permissiontype":permissiontype,
+												"powtarget":powtarget,
+												"DataMaxSizeInByte":DataMaxSizeInByte,
+												"FeeToAddress":FeeToAddress,
+												"FeeAmount":FeeAmount,
+											};
+
+											let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData("",objdata);
+											let rawdata = TXDATA.GetRawData();
+
+
+
+											//TagOrderTx作成
+											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],12,"tagorder","0000000000000000000000000000000000000000",0,rawdata);
+
+											TopLoadForm = new form(
 												[
 													["title","Sending....."]
 												],
 												"TopLoadForm"
 											);
 
-
-											result.then(function(FeeTxResult){
+											result.then(function(TxResult){
 												TopLoadForm.DeleteForm();
-												if (!FeeTxResult || !FeeTxResult["txid"]){
-													let TopFailForm = new form(
-														[
-															["title","FAIL"]
-														],
-														"TopFailForm"
-													);
-													return false;
-												}
 
-
-
-												//TagOrderのデータ生成
-												let objdata = {
-													"feetxid":FeeTxResult["txid"],
-													"permissiontype":permissiontype,
-													"powtarget":powtarget,
-													"DataMaxSizeInByte":DataMaxSizeInByte,
-													"FeeToAddress":FeeToAddress,
-													"FeeAmount":FeeAmount,
-												};
-
-												let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData("",objdata);
-												let rawdata = TXDATA.GetRawData();
-
-
-
-												//TagOrderTx作成
-												let TagOrderResult = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],12,tag,"0000000000000000000000000000000000000000",0,rawdata);
-
-												TopLoadForm = new form(
+												let TopResultForm = new form(
 													[
-														["title","Sending....."]
+														["title","Result"],
+														["head","Result"],
+														["input","result","result"],
+														[
+															"button",
+															"State",
+															function()
+															{
+																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
+															}
+														],
+														["head","RawTx"],
+														["input","rawtx","rawtx"],
+														[
+															"button",
+															"Done",
+															function()
+															{
+																TopResultForm.DeleteForm();
+																TopTagOrderForm.DeleteForm();
+															}
+														]
 													],
-													"TopLoadForm"
+													"TopResultForm"
 												);
 
-												TagOrderResult.then(function(TxResult){
-													TopLoadForm.DeleteForm();
-
-													let TopResultForm = new form(
-														[
-															["title","Result"],
-															["head","Result"],
-															["input","result","result"],
-															[
-																"button",
-																"State",
-																function()
-																{
-																	window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
-																}
-															],
-															["head","RawTx"],
-															["input","rawtx","rawtx"],
-															[
-																"button",
-																"Done",
-																function()
-																{
-																	TopResultForm.DeleteForm();
-																	TopTagOrderForm.DeleteForm();
-																}
-															]
-														],
-														"TopResultForm"
-													);
-
-													document.getElementById("result").value = TxResult["txid"];
-													document.getElementById("rawtx").value = TxResult["rawtx"];
-												}).catch(function(e){
-													console.log(e);
-												});
+												document.getElementById("result").value = TxResult["txid"];
+												document.getElementById("rawtx").value = TxResult["rawtx"];
 											}).catch(function(e){
 												console.log(e);
 											});
@@ -740,9 +712,9 @@ h2 {
 
 												//tagrewardのデータ生成
 												let objdata = {
+													"tag":tag,
 													"RewardAddress":RewardPrivkeyKeys["address"],
 													"UsingRawTxIndex":UsingRawTxIndex,
-													"tag":tag,
 													"EncryptoPrivkey":EncryptoPrivkey,
 												};
 
@@ -831,13 +803,14 @@ h2 {
 
 											//tagrewardのデータ生成
 											let objdata = {
+												"tag":tag,
 												"address":addaddress,
 											};
 
 											let TXDATA = new TAKA.TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData("",objdata);
 											let rawdata = TXDATA.GetRawData();
 
-											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],13,tag,"0000000000000000000000000000000000000000",0,rawdata);
+											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],13,"tagaddpermit","0000000000000000000000000000000000000000",0,rawdata);
 
 
 											//送信ロード画面

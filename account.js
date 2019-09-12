@@ -123,6 +123,29 @@ exports.account = class{
 	};
 
 
+	//アカウントが生成したトランザクションリスト
+	async GetSendTxList(address="",tag=""){
+		await this.SetUpClass();
+		if (!address){
+			address = (await this.GetKeys())["address"];
+		}
+		if (!tag){
+			tag = "pay"
+		}
+
+		let TransactionIdsPerAccountAndTag = DATABASE.get("TransactionIdsPerSenderAndTag",address+"_"+tag);
+
+		let result = [];
+		for (let index in TransactionIdsPerAccountAndTag){
+			let txid = TransactionIdsPerAccountAndTag[index];
+
+			result.push(txid);
+		}
+
+		return result;
+	};
+
+
 	async GetBalance(address="",LessIndex=0){
 		await this.SetUpClass();
 		if (!address){
@@ -168,11 +191,11 @@ exports.account = class{
 			let TX = TRANSACTION.GetTx(txid);
 			let objtx = await TX.GetObjTx();
 
-			if (objtx["toaddress"] != toaddress){
-				continue;
-			}
+			let SenderKeys = await this.GetKeys(objtx["pubkey"]);
 
-			amount = amount + objtx["amount"];
+			if (SenderKeys["address"] == address && objtx["toaddress"] == toaddress){
+				amount = amount + objtx["amount"];
+			};
 		}
 
 		return amount;

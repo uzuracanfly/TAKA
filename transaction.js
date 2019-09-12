@@ -7,6 +7,12 @@ const CONFIG = require('./config.js');
 const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.database["address"],CONFIG.database["port"],CONFIG.database["database"]);
 const FS = require('fs');
 
+const TRANSACTIONTOOLS_TAGREWARD = require('./TransactionTools/tagreward');
+const TRANSACTIONTOOLS_DATABASE = require('./TransactionTools/database.js');
+const TRANSACTIONTOOLS_TAGORDER = require('./TransactionTools/tagorder.js');
+const TRANSACTIONTOOLS_TAGADDPERMIT = require('./TransactionTools/tagaddpermit.js');
+const TRANSACTIONTOOLS_CONTRACT = require('./TransactionTools/contract.js');
+
 
 exports.Transaction = class{
 	constructor(rawtx="",privkey="",objtx=""){
@@ -293,14 +299,31 @@ exports.Transaction = class{
 
 
 
+
+
 			/*
-			Pay以外はtoaddressに指定できない
+			tagorder & tagreward & tagaddpermit
+			の場合はFeeが必要
 			*/
-			/*
-			if (objtx["type"] != 1 && objtx["toaddress"] != MAIN.GetFillZero("", 40)){
-				return 0;
+			if (objtx["type"] == 11 || objtx["type"] == 12 || objtx["type"] == 13){
+				let AmountToFeeAddress = await TargetAccount.GetSendAmountToAddress(undefined,"ffffffffffffffffffffffffffffffffffffffff");
+
+				let LiquidationTargetTxidIndex = 1;
+				LiquidationTargetTxidIndex = LiquidationTargetTxidIndex + (await TargetAccount.GetSendTxList(undefined,"tagorder")).length;
+				LiquidationTargetTxidIndex = LiquidationTargetTxidIndex + (await TargetAccount.GetSendTxList(undefined,"tagreward")).length;
+				LiquidationTargetTxidIndex = LiquidationTargetTxidIndex + (await TargetAccount.GetSendTxList(undefined,"tagaddpermit")).length;
+				let NeedSumFee = LiquidationTargetTxidIndex * 1;
+
+				if (AmountToFeeAddress < NeedSumFee){
+					return 0;
+				}
 			};
-			*/
+
+
+
+
+
+
 
 
 
@@ -316,23 +339,14 @@ exports.Transaction = class{
 			};
 			if (objtx["type"] == 11){
 				try{
-					let tagreward = require('./TransactionTools/tagreward.js');
-					let Tagreward = new tagreward.TagrewardData(objtx["data"]);
+					let Tagreward = new TRANSACTIONTOOLS_TAGREWARD.TagrewardData(objtx["data"]);
 					let TagrewardObjData = Tagreward.GetObjData();
 
 					if (objtx["toaddress"] != MAIN.GetFillZero("", 40)){
 						return 0;
 					};
-
-					//Senderからeeeee....宛のTAKA数量取得
-					let AmountToZeroAddress = await TargetAccount.GetSendAmountToAddress(undefined,"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
-
-					let NeedSumFee = objtx["index"] * 1;
-
-					if (AmountToZeroAddress < NeedSumFee){
-						return 0;
-					}
 				}catch(e){
+					//console.log(e);
 					return 0;
 				};
 			};
@@ -345,61 +359,30 @@ exports.Transaction = class{
 			tag order関連
 			> 否定条件
 			・指定tagにすでにtxが存在する
-			・txのtag orderのデータのfeetxidのpubkeyとtxのpubkeyが違うまたは数量が足りない
 			*/
+			if (objtx["type"] == 12 && objtx["tag"] != "tagorder"){
+				return 0;
+			};
+			if (objtx["type"] != 12 && objtx["tag"] == "tagorder"){
+				return 0;
+			};
 			if (objtx["type"] == 12){
 				try{
-					let tagorder = require('./TransactionTools/tagorder.js');
-					let Tagorder = new tagorder.TagOrderData(objtx["data"]);
+					let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
 					let TagorderObjData = Tagorder.GetObjData();
 
 					if (objtx["toaddress"] != MAIN.GetFillZero("", 40)){
 						return 0;
 					};
 
-					let tagtxs = exports.GetTagTxids(objtx["tag"]);
-					if (tagtxs.length > 0){
-						return 0;
-					};
-
-					let feetx = exports.GetTx(TagorderObjData["feetxid"]);
-					let feetxobj = await feetx.GetObjTx();
-					if (feetxobj["pubkey"] != objtx["pubkey"]){
-						return 0;
-					}
-					if (feetxobj["amount"] < 1){
-						return 0;
-					}
-					if (feetxobj["toaddress"] != "ffffffffffffffffffffffffffffffffffffffff"){
+					//システムの予約済みのタグを指定している場合
+					if (TagorderObjData["tag"] == "pay" || TagorderObjData["tag"] == "tagorder" || TagorderObjData["tag"] == "tagreward" || TagorderObjData["tag"] == "tagaddpermit"){
 						return 0;
 					}
 
-					//Senderからfffff....宛のTAKA数量取得
-					let AmountToZeroAddress = await TargetAccount.GetSendAmountToAddress(undefined,"ffffffffffffffffffffffffffffffffffffffff");
-
-					//使いまわされていないか確認
-					let IndexPerTagOrder = 0;
-					let tags = exports.GetTags();
-					for (let index in tags){
-						let tag = tags[index];
-
-						let TAGORDERTXForConfirmation = await exports.GetTagOrderTx(tag);
-						if (!TAGORDERTXForConfirmation){
-							continue;
-						}
-						let TagOrderObjTxForConfirmation = await TAGORDERTXForConfirmation.GetObjTx();
-						let TAGORDERForConfirmation = new tagorder.TagOrderData(TagOrderObjTxForConfirmation["data"]);
-						let TagorderObjDataForConfirmation = TAGORDERForConfirmation.GetObjData();
-						if (TagorderObjDataForConfirmation["feetxid"] == TagorderObjData["feetxid"]){
-							return 0;
-						}
-						if (TagOrderObjTxForConfirmation["pubkey"] == objtx["pubkey"]){
-							IndexPerTagOrder = IndexPerTagOrder + 1;
-						}
-					}
-					let NeedSumFee = (IndexPerTagOrder+1) * 1;
-
-					if (AmountToZeroAddress < NeedSumFee){
+					let TAGORDERTX = await exports.GetTagOrderTx(TagorderObjData["tag"]);
+					//tagorderが見つかった場合
+					if (TAGORDERTX){
 						return 0;
 					}
 
@@ -418,22 +401,34 @@ exports.Transaction = class{
 			> 否定条件
 			・タグの管理者自身が追加していない
 			*/
+			if (objtx["type"] == 13 && objtx["tag"] != "tagaddpermit"){
+				return 0;
+			};
+			if (objtx["type"] != 13 && objtx["tag"] == "tagaddpermit"){
+				return 0;
+			};
 			if (objtx["type"] == 13){
 				try{
-					let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
-					let Tagaddpermit = new tagaddpermit.TagAddPermitData(objtx["data"]);
+					let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
 					let TagaddpermitObjData = Tagaddpermit.GetObjData();
 
 					if (objtx["toaddress"] != MAIN.GetFillZero("", 40)){
 						return 0;
 					};
 
-					let TagOrderTx = await exports.GetTagOrderTx(objtx["tag"]);
-					if ((await TagOrderTx.GetObjTx())["pubkey"] != objtx["pubkey"]){
+					/* 送り主とtagorderの送り主が同一ではない場合 */
+					let TAGORDERTX = await exports.GetTagOrderTx(TagaddpermitObjData["tag"]);
+					//tagorderが見つからなかった場合
+					if (!TAGORDERTX){
+						return 0;
+					}
+					let tagordertxobj = await TAGORDERTX.GetObjTx();
+
+					if (tagordertxobj["pubkey"] != objtx["pubkey"]){
 						return 0;
 					}
 				}catch(e){
-					//MAIN.note(2,"Confirmation",e);
+					//console.log(e);
 					return 0;
 				};
 
@@ -454,67 +449,62 @@ exports.Transaction = class{
 				 2、指定されたアドレスのみ
 			*/
 			if (objtx["type"] > 100){
-				let tagtxids = exports.GetTagTxids(objtx["tag"]);
-				if (tagtxids.length > 0){
-					let tagordertxid = tagtxids[0];
+				let TAGORDERTX = await exports.GetTagOrderTx(objtx["tag"]);
+				//tagorderが見つからなかった場合
+				if (!TAGORDERTX){
+					return 0;
+				}
+				let tagordertxobj = await TAGORDERTX.GetObjTx();
 
-					let tagordertx = exports.GetTx(tagordertxid);
-					let tagordertxobj = await tagordertx.GetObjTx();
-					if (tagordertxobj["type"] != 12){
+				//tagorderのデータを取得
+				let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(tagordertxobj["data"]);
+				let TagorderObjData = Tagorder.GetObjData();
+
+
+
+				/*
+					パーミッションの確認
+					0、制限なし
+					1、owner以外すべて制限
+					2、指定されたアドレスのみ
+				*/
+				if (TagorderObjData["permissiontype"] == 1 && tagordertxobj["pubkey"] != objtx["pubkey"]){
+					return 0;
+				}
+
+
+				if (TagorderObjData["permissiontype"] == 2 && tagordertxobj["pubkey"] != objtx["pubkey"]){
+					let TagPermitAddresss = await exports.GetTagPermitAddresss(objtx["tag"]);
+
+					//TagAddPermitAddresssの中にトランザクション発行元が許可されているか
+					if (TagPermitAddresss.indexOf((await TargetAccount.GetKeys())["address"]) == -1){
 						return 0;
 					};
-
-					let tagorder = require('./TransactionTools/tagorder.js');
-					let Tagorder = new tagorder.TagOrderData(tagordertxobj["data"]);
-					let TagorderObjData = Tagorder.GetObjData();
-					if (TagorderObjData["permissiontype"] == 1 && tagordertxobj["pubkey"] != objtx["pubkey"]){
-						return 0;
-					}
+				};
 
 
-					if (TagorderObjData["permissiontype"] == 2 && tagordertxobj["pubkey"] != objtx["pubkey"]){
-						let TagPermitAddresss = await exports.GetTagPermitAddresss(objtx["tag"]);
-
-						//TagAddPermitAddresssの中にトランザクション発行元が許可されているか
-						if (TagPermitAddresss.indexOf((await TargetAccount.GetKeys())["address"]) == -1){
-							return 0;
-						};
-					};
 
 
-					//dataサイズが上限を超えていないか
-					if (TagorderObjData["DataMaxSizeInByte"] < objtx["data"].length/2){
-						return 0;
-					};
+				//dataサイズが上限を超えていないか
+				if (TagorderObjData["DataMaxSizeInByte"] < objtx["data"].length/2){
+					return 0;
+				};
 
 
-					//SenderからFeeToAddress宛のTAKA数量取得
-					let AmountToFeeToAddress = await TargetAccount.GetSendAmountToAddress(undefined,TagorderObjData["FeeToAddress"]);
 
-					//tag内におけるSenderのtx数から支払っておくべきfeeの数量を取得
-					let IndexPerTag = 0;
-					let TxidsPerTag = exports.GetTagTxids(objtx["tag"]);
-					for (let index in TxidsPerTag){
-						let txid = TxidsPerTag[index];
 
-						let TX = exports.GetTx(txid);
-						let ObjtxPerTag = await TX.GetObjTx();
+				/* tagorderで指定されているFeeが支払われているか確認 */
 
-						if (objtx["pubkey"] != ObjtxPerTag["pubkey"]){
-							continue;
-						}
+				//SenderからFeeToAddress宛のTAKA数量取得
+				let AmountToFeeToAddress = await TargetAccount.GetSendAmountToAddress(undefined,TagorderObjData["FeeToAddress"]);
 
-						if (ObjtxPerTag["type"] > 100){
-							IndexPerTag = IndexPerTag + 1;
-						}
-					}
-					let NeedSumFee = (IndexPerTag+1) * TagorderObjData["FeeAmount"];
+				//tag内におけるSenderのtx数から支払っておくべきfeeの数量を取得
+				let LiquidationTargetTxidIndex = 1;
+				LiquidationTargetTxidIndex = LiquidationTargetTxidIndex + (await TargetAccount.GetSendTxList(undefined,objtx["tag"])).length;
+				let NeedSumFee = LiquidationTargetTxidIndex * TagorderObjData["FeeAmount"];
 
-					//Fee不足
-					if (AmountToFeeToAddress < NeedSumFee){
-						return 0;
-					}
-				}else{
+				//Fee不足
+				if (AmountToFeeToAddress < NeedSumFee){
 					return 0;
 				}
 			};
@@ -531,16 +521,18 @@ exports.Transaction = class{
 			/*
 			contract
 			*/
-			let CONTRACT = require('./TransactionTools/contract.js');
 			if (objtx["type"] == 111){
 				try{
-					let objdata = new CONTRACT.SetFunctionData(objtx["data"]).GetObjData();
+					let objdata = new TRANSACTIONTOOLS_CONTRACT.SetFunctionData(objtx["data"]).GetObjData();
+
 
 					//contractの設定権限の有無
-					let tagtxids = exports.GetTagTxids(objtx["tag"]);
-					let tagordertxid = tagtxids[0];
-					let tagordertx = exports.GetTx(tagordertxid);
-					let tagordertxobj = await tagordertx.GetObjTx();
+					let TAGORDERTX = await exports.GetTagOrderTx(objtx["tag"]);
+					//tagorderが見つからなかった場合
+					if (!TAGORDERTX){
+						return 0;
+					}
+					let tagordertxobj = await TAGORDERTX.GetObjTx();
 					if (tagordertxobj["pubkey"] != objtx["pubkey"]){
 						let TagPermitAddresss = await exports.GetTagPermitAddresss(objtx["tag"]);
 						let keys = await TargetAccount.GetKeys();
@@ -686,13 +678,14 @@ exports.Transaction = class{
 
 
 
-		/* payでかつfee支払い用アドレスの場合 */
-		if (objtx["tag"] == "pay" && (objtx["toaddress"] == "ffffffffffffffffffffffffffffffffffffffff" || objtx["toaddress"] == "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")){
+
+		/* tagorderなどの場合 */
+		if (objtx["tag"] == "tagorder" || objtx["tag"] == "tagreward" || objtx["tag"] == "tagaddpermit"){
 			return target;
 		}
 
-		/* tagrewardの場合 */
-		if (objtx["tag"] == "tagreward"){
+		/* payでかつfee支払い用アドレスの場合 */
+		if (objtx["tag"] == "pay" && (objtx["toaddress"] == "ffffffffffffffffffffffffffffffffffffffff" || objtx["toaddress"] == "0000000000000000000000000000000000000000")){
 			return target;
 		}
 
@@ -705,8 +698,8 @@ exports.Transaction = class{
 				let TagOrderTx = await exports.GetTagOrderTx(objtx["tag"]);
 				if (TagOrderTx){
 					let TagOrderTxData = (await TagOrderTx.GetObjTx())["data"];
-					let tagorder = require('./TransactionTools/tagorder.js');
-					let Tagorder = new tagorder.TagOrderData(TagOrderTxData);
+
+					let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(TagOrderTxData);
 					let TagorderObjData = Tagorder.GetObjData();
 					powtarget = TagorderObjData["powtarget"];
 				};
@@ -715,6 +708,8 @@ exports.Transaction = class{
 		if (powtarget){
 			target = BigInt("0x"+powtarget);
 		}
+
+
 
 
 
@@ -755,6 +750,8 @@ exports.Transaction = class{
 				}
 			};
 		};
+
+
 
 
 		return target;
@@ -953,48 +950,40 @@ exports.SendPayTransaction = async function(privkey,toaddress,amount,TimeoutToNo
 
 exports.GetTagOrderTx = async function(tag){
 	try{
-		let tagtxs = exports.GetTagTxids(tag);
-		if (tagtxs.length > 0){
-			let tagordertxid = tagtxs[0];
-
-			let tagordertx = exports.GetTx(tagordertxid);
-			if (!tagordertx){
-				return 0;
-			}
-			let tagordertxobj = await tagordertx.GetObjTx();
-			if (tagordertxobj["type"] != 12){
-				return 0;
-			};
-
-			return tagordertx;
-		}else{
-			return 0;
+		let txids = DATABASE.get("TagOrderTransactionIdPerTag",tag);
+		if (txids.length <= 0){
+			return false;
 		}
+		let TX = exports.GetTx(txids[0]);
+		return TX;
 	}catch(e){
 		MAIN.note(2,"GetTagOrderTx",e);
-		return 0;
+		return false;
 	}
 }
 
 
 exports.GetTagPermitAddresss = async function(tag){
-	let tagtxids = exports.GetTagTxids(tag);
+	try{
+		let txids = DATABASE.get("TagaddpermitTransactionIdPerTag",tag);
+		let PermitAddresss = [];
+		for (let index in txids){
+			let txid = txids[index];
 
-	let PermitAddresss = [];
-	for (let index in tagtxids){
-		let tagtxid = tagtxids[index];
+			let TX = exports.GetTx(txid);
+			let objtx = await TX.GetObjTx();
 
-		let tagtx = exports.GetTx(tagtxid);
-		let tagtxobj = await tagtx.GetObjTx();
-		if (tagtxobj["type"] == 13){
-			let tagaddpermit = require('./TransactionTools/tagaddpermit.js');
-			let Tagaddpermit = new tagaddpermit.TagAddPermitData(tagtxobj["data"]);
+			let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
 			let TagaddpermitObjData = Tagaddpermit.GetObjData();
+
 			PermitAddresss.push(TagaddpermitObjData["address"]);
 		}
-	};
 
-	return PermitAddresss;
+		return PermitAddresss;
+	}catch(e){
+		MAIN.note(2,"GetTagPermitAddresss",e);
+		return 0;
+	}
 };
 
 
@@ -1071,23 +1060,6 @@ exports.SetImportTags = async function(type,tag){
 未確認トランザクションの走査と確認
 */
 exports.RunCommit = async function(){
-	async function commit(TargetTransaction){
-		DATABASE.add("ConfirmedTransactions",(await TargetTransaction.GetTxid()),(await TargetTransaction.GetRawTx()));
-
-		DATABASE.add("TransactionIdsPerTag",(await TargetTransaction.GetObjTx())["tag"],(await TargetTransaction.GetTxid()));
-		DATABASE.add("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+(await TargetTransaction.GetObjTx())["tag"],(await TargetTransaction.GetTxid()));
-		DATABASE.add("TransactionIdsPerAccountAndTag",(await TargetTransaction.GetObjTx())["toaddress"]+"_"+(await TargetTransaction.GetObjTx())["tag"],(await TargetTransaction.GetTxid()));
-		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],(await TargetTransaction.GetTxid()));
-		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.GetObjTx())["toaddress"],(await TargetTransaction.GetTxid()));
-		DATABASE.add("TransactionIdsPerAll","live",await TargetTransaction.GetTxid());
-
-		MAIN.note(0,"transaction_RunCommit_commit","[commit transaction] txid : "+(await TargetTransaction.GetTxid()));
-		return 1;
-	}
-
-
-
-
 	//シード適用
 	let ConfirmedTransactions = DATABASE.get("ConfirmedTransactions");
 	if (ConfirmedTransactions.length==0){
@@ -1155,13 +1127,35 @@ exports.RunCommit = async function(){
 					let rawtx = UnconfirmedTransactions[mindex];
 
 					let TargetTransaction = new exports.Transaction(rawtx);
+					let objtx = await TargetTransaction.GetObjTx();
 
 
 					MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 
 					let txbool = await TargetTransaction.Confirmation();
 					if (txbool){
-						await commit(TargetTransaction);
+						DATABASE.add("ConfirmedTransactions",(await TargetTransaction.GetTxid()),(await TargetTransaction.GetRawTx()));
+
+						DATABASE.add("TransactionIdsPerTag",objtx["tag"],(await TargetTransaction.GetTxid()));
+						DATABASE.add("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],(await TargetTransaction.GetTxid()));
+						DATABASE.add("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],(await TargetTransaction.GetTxid()));
+						DATABASE.add("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],(await TargetTransaction.GetTxid()));
+						DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],(await TargetTransaction.GetTxid()));
+						DATABASE.add("TransactionIdsPerAccount",objtx["toaddress"],(await TargetTransaction.GetTxid()));
+						DATABASE.add("TransactionIdsPerAll","live",await TargetTransaction.GetTxid());
+
+						if (objtx["type"] == 12){
+							let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
+							let TagorderObjData = Tagorder.GetObjData();
+							DATABASE.add("TagOrderTransactionIdPerTag",TagorderObjData["tag"],await TargetTransaction.GetTxid());
+						}
+						if (objtx["type"] == 13){
+							let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
+							let TagaddpermitObjData = Tagaddpermit.GetObjData();
+							DATABASE.add("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],await TargetTransaction.GetTxid());
+						}
+
+						MAIN.note(0,"transaction_RunCommit_commit","[commit transaction] txid : "+(await TargetTransaction.GetTxid()));
 					}else{
 						MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
 					}

@@ -15,8 +15,8 @@ exports.TagOrderData = class{
 
 	GetRawData(objdata=this.objdata){
 
-		let feetxid = objdata["feetxid"];
-		feetxid = MAIN.GetFillZero(feetxid, 64);
+		let tag = new HEX.HexText().string_to_utf8_hex_string(objdata["tag"]);
+		let taglen = tag.length.toString(16);
 
 		let permissiontype = objdata["permissiontype"].toString(16);
 		permissiontype = MAIN.GetFillZero(permissiontype, 2);
@@ -31,7 +31,7 @@ exports.TagOrderData = class{
 		let FeeAmount = objdata["FeeAmount"].toString(16);
 		FeeAmount = MAIN.GetFillZero(FeeAmount, 16);
 
-		let data = feetxid + permissiontype + powtarget + DataMaxSizeInByte + FeeToAddress + FeeAmount;
+		let data = MAIN.GetFillZero(taglen,16) + tag + permissiontype + powtarget + DataMaxSizeInByte + FeeToAddress + FeeAmount;
 
 		return data;
 	};
@@ -53,7 +53,8 @@ exports.TagOrderData = class{
 			return cuthex
 		};
 
-		let feetxid = cut(64);
+		let tag = VariableCut(16);
+		tag = new HEX.HexText().utf8_hex_string_to_string(tag);
 		let permissiontype = parseInt(cut(2),16);
 		let powtarget = cut(64);
 		let DataMaxSizeInByte = parseInt(cut(16),16);
@@ -61,7 +62,7 @@ exports.TagOrderData = class{
 		let FeeAmount = parseInt(cut(16),16);
 
 		let objdata = {
-			"feetxid":feetxid,
+			"tag":tag,
 			"permissiontype":permissiontype,
 			"powtarget":powtarget,
 			"DataMaxSizeInByte":DataMaxSizeInByte,
@@ -79,18 +80,19 @@ exports.TagOrderData = class{
 
 
 exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powtarget="0000000000000000000000000000000000000000000000000000000000000000",DataMaxSizeInByte=10000,FeeToAddress="",FeeAmount=0){
+	/* Feeを追加 */
+	let FeeResult = await TRANSACTION.SendPayTransaction(privkey,"ffffffffffffffffffffffffffffffffffffffff",1);
+	if (!FeeResult){
+		return false;
+	}
+
 
 	let TargetAccount = new ACCOUNT.account(privkey);
-
-	//tag利用料支払いのトランザクションを発行
-	let paytxid = await TRANSACTION.SendPayTransaction(privkey,"ffffffffffffffffffffffffffffffffffffffff",1);
-
-
-	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
+	let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagorder");
 	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objdata = {
-		"feetxid":paytxid,
+		"tag":tag,
 		"permissiontype":permissiontype,
 		"powtarget":powtarget,
 		"DataMaxSizeInByte":parseInt(DataMaxSizeInByte),
@@ -104,7 +106,7 @@ exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powt
 		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 		"type":12,
 		"time":Math.floor(Date.now()/1000),
-		"tag":tag,
+		"tag":"tagorder",
 		"index":FormTxList.length+1,
 		"MerkleRoot":MerkleRoot,
 		"toaddress":"",

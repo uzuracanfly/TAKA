@@ -14,10 +14,13 @@ exports.TagAddPermitData = class{
 
 	GetRawData(objdata=this.objdata){
 
+		let tag = new HEX.HexText().string_to_utf8_hex_string(objdata["tag"]);
+		let taglen = tag.length.toString(16);
+
 		let address = objdata["address"];
 		address = MAIN.GetFillZero(address, 40);
 
-		let data = address;
+		let data = MAIN.GetFillZero(taglen,16) + tag + address;
 
 		return data;
 	};
@@ -39,9 +42,12 @@ exports.TagAddPermitData = class{
 			return cuthex
 		};
 
+		let tag = VariableCut(16);
+		tag = new HEX.HexText().utf8_hex_string_to_string(tag);
 		let address = cut(40);
 
 		let objdata = {
+			"tag":tag,
 			"address":address,
 		};
 
@@ -55,13 +61,21 @@ exports.TagAddPermitData = class{
 
 
 exports.SendTagAddPermitTransaction = async function(privkey,tag,addaddress){
+	/* Feeを追加 */
+	let FeeResult = await TRANSACTION.SendPayTransaction(privkey,"ffffffffffffffffffffffffffffffffffffffff",1);
+	if (!FeeResult){
+		return false;
+	}
+
+
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 
-	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
+	let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagaddpermit");
 	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objdata = {
+		"tag":tag,
 		"address":addaddress,
 	};
 
@@ -71,7 +85,7 @@ exports.SendTagAddPermitTransaction = async function(privkey,tag,addaddress){
 		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 		"type":13,
 		"time":Math.floor(Date.now()/1000),
-		"tag":tag,
+		"tag":"tagaddpermit",
 		"index":FormTxList.length+1,
 		"MerkleRoot":MerkleRoot,
 		"toaddress":"",

@@ -20,15 +20,15 @@ exports.TagrewardData = class{
 	GetRawData(objdata=this.objdata){
 		let data = "";
 
+		let tag = new HEX.HexText().string_to_utf8_hex_string(objdata["tag"]);
+		let taglen = tag.length.toString(16);
+		data = data + MAIN.GetFillZero(taglen,16) + tag;
+
 		let RewardAddress = objdata["RewardAddress"];
 		data = data + MAIN.GetFillZero(RewardAddress,40);
 
 		let UsingRawTxIndex = objdata["UsingRawTxIndex"].toString(16);
 		data = data + MAIN.GetFillZero(UsingRawTxIndex,16);
-
-		let tag = new HEX.HexText().string_to_utf8_hex_string(objdata["tag"]);
-		let taglen = tag.length.toString(16);
-		data = data + MAIN.GetFillZero(taglen,16) + tag;
 
 		let EncryptoPrivkey = objdata["EncryptoPrivkey"];
 		let EncryptoPrivkeyLen = EncryptoPrivkey.length.toString(16);
@@ -54,15 +54,16 @@ exports.TagrewardData = class{
 			return cuthex
 		};
 
+		let tag = VariableCut(16);
+		tag = new HEX.HexText().utf8_hex_string_to_string(tag);
 		let RewardAddress = cut(40);
 		let UsingRawTxIndex = parseInt(cut(16),16);
-		let tag = VariableCut();
 		let EncryptoPrivkey = VariableCut();
 
 		let objdata = {
+			"tag":tag,
 			"RewardAddress":RewardAddress,
 			"UsingRawTxIndex":UsingRawTxIndex,
-			"tag":new HEX.HexText().utf8_hex_string_to_string(tag),
 			"EncryptoPrivkey":EncryptoPrivkey,
 		}
 
@@ -96,8 +97,8 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 
 
 		/* Feeを追加 */
-		let result = await TRANSACTION.SendPayTransaction(privkey,"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",1);
-		if (!result){
+		let FeeResult = await TRANSACTION.SendPayTransaction(privkey,"ffffffffffffffffffffffffffffffffffffffff",1);
+		if (!FeeResult){
 			return false;
 		}
 
@@ -125,9 +126,9 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(commonkey,RewardPrivkey);
 
 		let objdata = {
+			"tag":tag,
 			"RewardAddress":(await RewardAccount.GetKeys())["address"],
 			"UsingRawTxIndex":UsingRawTxIndex,
-			"tag":tag,
 			"EncryptoPrivkey":EncryptoPrivkey,
 		};
 
