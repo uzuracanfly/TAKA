@@ -5,6 +5,7 @@ const CONFIG = require('./config.js');
 const MAIN = require('./main.js');
 const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.database["address"],CONFIG.database["port"],CONFIG.database["database"]);
 const TRANSACTION = require('./transaction.js');
+const HEX = require('./hex.js');
 
 
 
@@ -47,7 +48,10 @@ exports.GetNode = function(address){
 		return false;
 	}
 
-	return nodes[0];
+	let node = new HEX.HexText().utf8_hex_string_to_string(nodes[0]);
+	node = JSON.parse(node);
+
+	return node;
 }
 
 exports.SetNode = function(address,type,state){
@@ -69,7 +73,10 @@ exports.SetNode = function(address,type,state){
 
 	MAIN.note(1,"SetNode",address+" state:"+state);
 
-	DATABASE.set("nodelist",address,{"time":Math.floor(Date.now()/1000),"type":type,"state":state});
+	let data = {"time":Math.floor(Date.now()/1000),"type":type,"state":state};
+	data = JSON.stringify(data);
+	data = new HEX.HexText().string_to_utf8_hex_string(data);
+	DATABASE.set("nodelist",address,data);
 
 	return 1;
 }
