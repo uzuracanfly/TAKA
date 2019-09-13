@@ -23,6 +23,20 @@ Show account data.
 
 
 
+
+
+# getsendamounttoaddress
+
+### parameters
+	getsendamounttoaddress [key] [toaddress] [LessIndex]
+
+### example
+	sudo curl http://127.0.0.1 -d '{"function":"getsendamounttoaddress","args":{"key":"ee54d6211a9e1b3756fe6866bfc4411e98c41e1e","toaddress":"80ba149c1e71ca4576198998418bc47d4e297ab2"}}'
+
+
+
+
+
 # gettag
 
 ### parameters

@@ -83,6 +83,24 @@ exports.SetServer = function(){
 
 
 
+						if (postData["function"] == "getsendamounttoaddress"){
+							let key = postData["args"]["key"];
+							let toaddress = postData["args"]["toaddress"];
+
+							let LessIndex = 0;
+							if ("LessIndex" in postData["args"] && postData["args"]["LessIndex"]){
+								LessIndex = postData["args"]["LessIndex"];
+							}
+
+							let TargetAccount = new ACCOUNT.account(key);
+							let callback = await TargetAccount.GetSendAmountToAddress(undefined,toaddress,LessIndex);
+
+							response.write(JSON.stringify(callback));
+							response.end();
+						}
+
+
+
 
 						if(postData["function"] == "gettag"){
 							let tag = postData["args"]["tag"];

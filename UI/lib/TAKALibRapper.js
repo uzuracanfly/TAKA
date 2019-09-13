@@ -72,6 +72,26 @@ global.TAKA = {
 		};
 
 
+		getsendamounttoaddress(key,toaddress,LessIndex=0,callback="",CallbackArgs=""){
+			let args = {
+				"function":"getsendamounttoaddress",
+				"args":{
+					"key":key,
+					"toaddress":toaddress,
+					"LessIndex":LessIndex,
+				}
+			};
+
+			let result;
+			if (!callback){
+				result = this.post(args);
+			}else{
+				result = this.PostAsync(args,callback,CallbackArgs);
+			};
+			return result;
+		};
+
+
 		gettag(tag){
 			let args = {
 				"function":"gettag",
@@ -251,9 +271,17 @@ global.TAKA = {
 		};
 
 		async SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data){
+			let AccountData = this.TAKAAPI.getaccount(privkey,0);
+
+
 			//tagorder等のFee支払い
 			if (type == 11 || type == 12 || type == 13){
-				await this.SendTransaction(privkey,1,"pay","ffffffffffffffffffffffffffffffffffffffff",1,"");
+				let sendamounttoaddress = this.TAKAAPI.getsendamounttoaddress(privkey,"ffffffffffffffffffffffffffffffffffffffff");
+				let NeedAmount = AccountData["txids"]["tagorder"]["txs"].length + AccountData["txids"]["tagreward"]["txs"].length + AccountData["txids"]["tagaddpermit"]["txs"].length;
+				//console.log(sendamounttoaddress,NeedAmount);
+				if (sendamounttoaddress <= NeedAmount){
+					await this.SendTransaction(privkey,1,"pay","ffffffffffffffffffffffffffffffffffffffff",1,"");
+				}
 			};
 
 			//tag関連のデータの取得
@@ -262,7 +290,12 @@ global.TAKA = {
 
 				if ("FeeAmount" in TagData && TagData["FeeAmount"] > 0){
 					//tag使用料支払い
-					await this.SendTransaction(privkey,1,"pay",TagData["FeeToAddress"],TagData["FeeAmount"],"");
+					let sendamounttoaddress = this.TAKAAPI.getsendamounttoaddress(privkey,TagData["FeeToAddress"]);
+					let NeedAmount = AccountData["txids"][tag]["txs"].length * TagData["FeeAmount"];
+					//console.log(sendamounttoaddress,NeedAmount);
+					if (sendamounttoaddress <= NeedAmount){
+						await this.SendTransaction(privkey,1,"pay",TagData["FeeToAddress"],TagData["FeeAmount"],"");
+					};
 				};
 			};
 

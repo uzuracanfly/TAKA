@@ -558,14 +558,14 @@ exports.Transaction = class{
 			};
 			if (objtx["type"] == 112){
 				try{
-					let objdata = new CONTRACT.RunFunctionData(objtx["data"]).GetObjData();
+					let objdata = new TRANSACTIONTOOLS_CONTRACT.RunFunctionData(objtx["data"]).GetObjData();
 					let FunctionArgs = objdata["FunctionArgs"];
 					let FunctionName = objdata["FunctionName"];
 					let TxContractResult = objdata["result"];
 					let TxContractSetData = objdata["SetData"];
 
 
-					let CodeResult = await CONTRACT.RunCode(TargetAccount,objtx["tag"],FunctionName,FunctionArgs);
+					let CodeResult = await TRANSACTIONTOOLS_CONTRACT.RunCode(TargetAccount,objtx["tag"],FunctionName,FunctionArgs);
 					if (!CodeResult){
 						return 0;
 					}
