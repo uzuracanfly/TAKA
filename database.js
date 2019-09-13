@@ -195,30 +195,30 @@ exports.RunCommit = async function(){
 		arg data : array
 		save data : hex
 	*/
-	function save(database,table,index,data){
-		
-		data = ConversionData(data,"");
+	async function save(database,table,index,data){
+		return new Promise(function (resolve, reject) {
+			data = ConversionData(data,"");
 
-		if ("key" in CONFIG.database && CONFIG.database["key"]){
-			const CRYPTO = require('./crypto.js');
-			data = new CRYPTO.common().GetEncryptedData(CONFIG.database["key"],data);
-		};
+			if ("key" in CONFIG.database && CONFIG.database["key"]){
+				const CRYPTO = require('./crypto.js');
+				data = new CRYPTO.common().GetEncryptedData(CONFIG.database["key"],data);
+			};
 
-		FS.mkdir("database/", function (err) {
-			FS.mkdir("database/"+database+"/", function (err) {
-				FS.mkdir("database/"+database+"/"+table+"/", function (err) {
+			FS.mkdir("database/", function (err) {
+				FS.mkdir("database/"+database+"/", function (err) {
+					FS.mkdir("database/"+database+"/"+table+"/", function (err) {
 
-					FS.writeFile("database/"+database+"/"+table+"/"+index+".json", data, "hex", (error) => {
-						if (error) {
-							console.log(error.message);
-							throw error;
-						}
+						FS.writeFile("database/"+database+"/"+table+"/"+index+".json", data, "hex", (error) => {
+							if (error) {
+								return resolve(false);
+							}
+							return resolve(true);
+						});
+
 					});
-
 				});
 			});
 		});
-		return true;
 	}
 
 
@@ -330,17 +330,17 @@ exports.RunCommit = async function(){
 			transactions.shift();
 
 			if (transaction["function"] == "set"){
-				save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
+				await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
 			};
 			if (transaction["function"] == "add"){
 				let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
 				data.push(transaction["args"]["data"]);
-				save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+				await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
 			};
 			if (transaction["function"] == "remove"){
 				let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
 				data.splice(transaction["args"]["removeindex"], 1);
-				save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+				await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
 			};
 			if (transaction["function"] == "delete"){
 				Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);

@@ -378,7 +378,7 @@ exports.RunControlTag = async function(){
 			for (let index in ImportTags){
 				let tag = ImportTags[index];
 
-				if (tag == "pay" || tag == "tagreward"){
+				if (tag == "pay" || tag == "tagorder" || tag == "tagreward" || tag == "tagaddpermit"){
 					continue;
 				}
 				if ((await TRANSACTION.GetImportTags()).indexOf(tag) == -1){

@@ -620,7 +620,7 @@ exports.Transaction = class{
 
 
 			//MerkleRootとindexsからのMerkleRootの相違
-			let pretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
+			let pretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"]);
 			let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
 			IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
 			if (IndexMerkleRoot != objtx["MerkleRoot"]){
@@ -1021,8 +1021,14 @@ exports.GetImportTags = async function(){
 		if (ImportTags.indexOf("pay") == -1){
 			ImportTags.push("pay");
 		}
+		if (ImportTags.indexOf("tagorder") == -1){
+			ImportTags.push("tagorder");
+		}
 		if (ImportTags.indexOf("tagreward") == -1){
 			ImportTags.push("tagreward");
+		}
+		if (ImportTags.indexOf("tagaddpermit") == -1){
+			ImportTags.push("tagaddpermit");
 		}
 	};
 
@@ -1060,6 +1066,39 @@ exports.SetImportTags = async function(type,tag){
 未確認トランザクションの走査と確認
 */
 exports.RunCommit = async function(){
+	async function commit(TargetTransaction){
+		let objtx = await TargetTransaction.GetObjTx();
+		let rawtx = await TargetTransaction.GetRawTx();
+		let txid = await TargetTransaction.GetTxid();
+
+		DATABASE.add("ConfirmedTransactions",txid,rawtx);
+
+		DATABASE.add("TransactionIdsPerTag",objtx["tag"],txid);
+		DATABASE.add("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],txid);
+		DATABASE.add("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],txid);
+		DATABASE.add("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],txid);
+		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],txid);
+		DATABASE.add("TransactionIdsPerAccount",objtx["toaddress"],txid);
+		DATABASE.add("TransactionIdsPerAll","live",txid);
+
+		if (objtx["type"] == 12){
+			let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
+			let TagorderObjData = Tagorder.GetObjData();
+			DATABASE.add("TagOrderTransactionIdPerTag",TagorderObjData["tag"],txid);
+		}
+		if (objtx["type"] == 13){
+			let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
+			let TagaddpermitObjData = Tagaddpermit.GetObjData();
+			DATABASE.add("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],txid);
+		}
+
+		MAIN.note(0,"transaction_RunCommit_commit","[commit transaction] txid : "+txid);
+		return 1;
+	}
+
+
+
+
 	//シード適用
 	let ConfirmedTransactions = DATABASE.get("ConfirmedTransactions");
 	if (ConfirmedTransactions.length==0){
@@ -1127,35 +1166,13 @@ exports.RunCommit = async function(){
 					let rawtx = UnconfirmedTransactions[mindex];
 
 					let TargetTransaction = new exports.Transaction(rawtx);
-					let objtx = await TargetTransaction.GetObjTx();
 
 
 					MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 
 					let txbool = await TargetTransaction.Confirmation();
 					if (txbool){
-						DATABASE.add("ConfirmedTransactions",(await TargetTransaction.GetTxid()),(await TargetTransaction.GetRawTx()));
-
-						DATABASE.add("TransactionIdsPerTag",objtx["tag"],(await TargetTransaction.GetTxid()));
-						DATABASE.add("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],(await TargetTransaction.GetTxid()));
-						DATABASE.add("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],(await TargetTransaction.GetTxid()));
-						DATABASE.add("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],(await TargetTransaction.GetTxid()));
-						DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],(await TargetTransaction.GetTxid()));
-						DATABASE.add("TransactionIdsPerAccount",objtx["toaddress"],(await TargetTransaction.GetTxid()));
-						DATABASE.add("TransactionIdsPerAll","live",await TargetTransaction.GetTxid());
-
-						if (objtx["type"] == 12){
-							let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
-							let TagorderObjData = Tagorder.GetObjData();
-							DATABASE.add("TagOrderTransactionIdPerTag",TagorderObjData["tag"],await TargetTransaction.GetTxid());
-						}
-						if (objtx["type"] == 13){
-							let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
-							let TagaddpermitObjData = Tagaddpermit.GetObjData();
-							DATABASE.add("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],await TargetTransaction.GetTxid());
-						}
-
-						MAIN.note(0,"transaction_RunCommit_commit","[commit transaction] txid : "+(await TargetTransaction.GetTxid()));
+						await commit(TargetTransaction);
 					}else{
 						MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
 					}
