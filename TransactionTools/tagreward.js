@@ -112,8 +112,8 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagreward");
 		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
+		let TagTxids = await TRANSACTION.GetTagTxids(tag);
 		let TagRewardWithTime = Math.floor(Date.now()/1000);
-		let TagTxids = await TRANSACTION.GetTagTxids(tag,TagRewardWithTime);
 		TagTxids = TagTxids.sort(exports.TxidLengthCompare);
 		let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(TagTxids);
 

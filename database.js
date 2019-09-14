@@ -311,7 +311,7 @@ exports.RunCommit = async function(){
 							break;
 						}
 
-						await sleep(0.1);
+						await sleep(0.01);
 					}
 
 				};
@@ -350,7 +350,7 @@ exports.RunCommit = async function(){
 			}
 		};
 
-		await sleep(0.1);
+		await sleep(0.01);
 	};
 
 };
