@@ -189,7 +189,7 @@ global.TAKA = {
 			this.TAKAAPI = new TAKA.API(apiurl);
 		};
 
-		async SendTransaction(privkey,type,tag,toaddress,amount,data){
+		async SendTransaction(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000)){
 			let outthis = this;
 			return new Promise(async function (resolve, reject) {
 
@@ -203,7 +203,6 @@ global.TAKA = {
 					txs = AccountData["txids"][tag]["txs"];
 				}
 				let index = txs.length;
-				let time = Math.floor(Date.now()/1000);
 
 				let objtx = {
 					"pubkey":keys["pubkey"],
@@ -270,7 +269,7 @@ global.TAKA = {
 			});
 		};
 
-		async SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data){
+		async SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000)){
 			let AccountData = this.TAKAAPI.getaccount(privkey,0);
 
 
@@ -299,7 +298,7 @@ global.TAKA = {
 				};
 			};
 
-			let result = await this.SendTransaction(privkey,type,tag,toaddress,amount,data);
+			let result = await this.SendTransaction(privkey,type,tag,toaddress,amount,data,time);
 			return result;
 		};
 	}

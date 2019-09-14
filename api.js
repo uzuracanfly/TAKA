@@ -111,7 +111,7 @@ exports.SetServer = function(){
 								return 0;
 							}
 
-							let TagTxids = TRANSACTION.GetTagTxids(tag);
+							let TagTxids = await TRANSACTION.GetTagTxids(tag);
 
 							let callback = {
 								"txids":TagTxids,

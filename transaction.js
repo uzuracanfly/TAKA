@@ -904,22 +904,31 @@ exports.GetTags = function(){
 	return result;
 };
 
-exports.GetTagTxids = function(tag){
+exports.GetTagTxids = async function(tag,LessTime=0){
 	if (!tag){
 		return [];
 	}
 
 	let txids = DATABASE.get("TransactionIdsPerTag",tag);
 
-	return txids;
+	let result = [];
+	if (LessTime){
+		for (let index in txids){
+			let txid = txids[index];
+
+			let TX = exports.GetTx(txid);
+			let TxTime = (await TX.GetObjTx())["time"];
+
+			if (TxTime < LessTime){
+				result.push(txid);
+			}
+		}
+	}else{
+		result = txids;
+	};
+
+	return result;
 }
-
-exports.GetTagMerkleRoot = function(tag){
-	let txids = exports.GetTagTxids(tag);
-
-	let MerkleRoot = new HASHS.hashs().GetMarkleroot(txids);
-	return MerkleRoot;
-};
 
 exports.SendPayTransaction = async function(privkey,toaddress,amount,TimeoutToNonceScan=0){
 	amount = parseInt(amount);

@@ -686,10 +686,8 @@ h2 {
 
 
 												let TagData = TAKAAPI.gettag(tag);
+												let TagRewardWithTime = Math.floor(Date.now()/1000);
 												let TagTxids = TagData["txids"];
-												if (tag == "pay" && TagTxids.indexOf(FeeTxResult["txid"]) == -1){
-													TagTxids.push(FeeTxResult["txid"]);
-												};
 												TagTxids = TagTxids.sort(TAKA.TRANSACTIONTOOLS_TAGREWARD.TxidLengthCompare);
 												let TagtxidsMarkleroot = new TAKA.HASHS.hashs().GetMarkleroot(TagTxids);
 
@@ -731,7 +729,7 @@ h2 {
 												);
 
 												//TagrewardTx作成
-												let TagrewardResult = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],11,"tagreward","0000000000000000000000000000000000000000",0,rawdata);
+												let TagrewardResult = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],11,"tagreward","0000000000000000000000000000000000000000",0,rawdata,TagRewardWithTime);
 
 
 												///Tagrewardの結果発表

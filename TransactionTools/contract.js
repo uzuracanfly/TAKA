@@ -312,7 +312,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs,Add
 			Array.prototype.push.apply(tagtxids, TxidsPerAccountAndTag);
 		}
 	}else{
-		tagtxids = TRANSACTION.GetTagTxids(tag);
+		tagtxids = await TRANSACTION.GetTagTxids(tag);
 	}
 	if (lastonly){
 		tagtxids.reverse();

@@ -112,10 +112,8 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagreward");
 		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
-		let TagTxids = TRANSACTION.GetTagTxids(tag);
-		if (tag == "pay" && TagTxids.indexOf(paytxid) == -1){
-			TagTxids.push(paytxid);
-		};
+		let TagRewardWithTime = Math.floor(Date.now()/1000);
+		let TagTxids = await TRANSACTION.GetTagTxids(tag,TagRewardWithTime);
 		TagTxids = TagTxids.sort(exports.TxidLengthCompare);
 		let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(TagTxids);
 
@@ -137,7 +135,7 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		let objtx = {
 			"pubkey":(await TargetAccount.GetKeys())["pubkey"],
 			"type":11,
-			"time":Math.floor(Date.now()/1000),
+			"time":TagRewardWithTime,
 			"tag":"tagreward",
 			"index":FormTxList.length+1,
 			"MerkleRoot":MerkleRoot,
@@ -223,7 +221,7 @@ exports.RunMining = async function(){
 		/*
 		tagrewardトランザクションを走査してprivkeyを集める
 		*/
-		let tagrewardtxids = TRANSACTION.GetTagTxids("tagreward");
+		let tagrewardtxids = await TRANSACTION.GetTagTxids("tagreward");
 		let Rewards = [];
 		for (let index in tagrewardtxids){
 			try{
@@ -240,7 +238,7 @@ exports.RunMining = async function(){
 
 
 				//tagのtxリストから共通鍵作る
-				let tagtxids = TRANSACTION.GetTagTxids(TagRewardObjData["tag"]);
+				let tagtxids = await TRANSACTION.GetTagTxids(TagRewardObjData["tag"],TagRewardObjTx["time"]);
 				tagtxids = tagtxids.sort(exports.TxidLengthCompare);
 				let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(tagtxids);
 				let UsingRawTx = await TRANSACTION.GetTx(tagtxids[TagRewardObjData["UsingRawTxIndex"]-1]).GetRawTx();
@@ -315,7 +313,7 @@ exports.RunControlTag = async function(){
 	while (true){
 		try{
 			let TagsRewardPerYear = {};
-			let TxidsTagreward = TRANSACTION.GetTagTxids("tagreward");
+			let TxidsTagreward = await TRANSACTION.GetTagTxids("tagreward");
 			for (let index in TxidsTagreward){
 				let txid = TxidsTagreward[index];
 
@@ -353,7 +351,7 @@ exports.RunControlTag = async function(){
 
 
 				let SumSize = 0;
-				let TxidsPerTag = TRANSACTION.GetTagTxids(tag);
+				let TxidsPerTag = await TRANSACTION.GetTagTxids(tag);
 				for (let index in TxidsPerTag){
 					let txid = TxidsPerTag[index];
 
@@ -386,7 +384,7 @@ exports.RunControlTag = async function(){
 				}
 
 				let SumSize = 0;
-				let TxidsPerTag = TRANSACTION.GetTagTxids(tag);
+				let TxidsPerTag = await TRANSACTION.GetTagTxids(tag);
 				for (let index in TxidsPerTag){
 					let txid = TxidsPerTag[index];
 
