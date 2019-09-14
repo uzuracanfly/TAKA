@@ -378,8 +378,6 @@ exports.RunControlTag = async function(){
 			add
 
 			条件
-			・費用対サイズが見た目的にいい
-			and
 			・不正にかさましされていない
 			and
 			・過去に追加された履歴がない
@@ -389,24 +387,6 @@ exports.RunControlTag = async function(){
 					continue;
 				}
 
-
-				let SumSize = 0;
-				let TxidsPerTag = await TRANSACTION.GetTagTxids(tag);
-				for (let index in TxidsPerTag){
-					let txid = TxidsPerTag[index];
-
-					let TX = TRANSACTION.GetTx(txid);
-					let rawtx = await TX.GetRawTx();
-
-					SumSize = SumSize + (rawtx.length/2);
-				}
-
-
-
-				/* 費用対サイズが悪い */
-				if (TagsRewardPerYear[tag] / SumSize * 1000000 < 1){
-					continue;
-				}
 
 
 				//不正によってかさましされた数量
@@ -432,17 +412,17 @@ exports.RunControlTag = async function(){
 
 
 				/* 過去に追加された過去がある */
-				RunControlTagAddTags = DATABASE.get("RunControlTagAddTag",tag);
-				if (RunControlTagAddTags.length > 0){
+				RunControlTagAddTagLogs = DATABASE.get("RunControlTagAddTagLog",tag);
+				if (RunControlTagAddTagLogs.length > 0){
 					continue;
 				};
 
 
 
 
-				let RunControlTagAddTag = {"tag":tag,"time":Math.floor(Date.now()/1000)};
-				RunControlTagAddTag = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(RunControlTagAddTag));
-				DATABASE.set("RunControlTagAddTag",tag,RunControlTagAddTag);
+				let RunControlTagAddTagLog = {"tag":tag,"time":Math.floor(Date.now()/1000)};
+				RunControlTagAddTagLog = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(RunControlTagAddTagLog));
+				DATABASE.set("RunControlTagAddTagLog",tag,RunControlTagAddTagLog);
 
 
 
