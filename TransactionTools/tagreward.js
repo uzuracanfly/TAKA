@@ -214,8 +214,6 @@ exports.TxidLengthCompare = function(TxidA, TxidB){
 
 
 exports.RunMining = async function(){
-	let UsedRewardPrivkey = [];
-
 	while (true){
 
 		/*
@@ -230,7 +228,10 @@ exports.RunMining = async function(){
 				let TagRewardObjTx = await tx.GetObjTx();
 				let TAGREWARDDATA = new exports.TagrewardData(TagRewardObjTx["data"]);
 				let TagRewardObjData = TAGREWARDDATA.GetObjData();
+				let PlanRewardAccount = new ACCOUNT.account(TagRewardObjData["RewardAddress"]);
 
+
+				if (await PlanRewardAccount.GetBalance() <= 0){continue;};
 
 				if (TagRewardObjTx["time"]+60*1 > Math.floor(Date.now()/1000) || TagRewardObjTx["time"]+60*10 < Math.floor(Date.now()/1000)){continue;};
 
@@ -251,6 +252,26 @@ exports.RunMining = async function(){
 				let EncryptoPrivkey = TagRewardObjData["EncryptoPrivkey"];
 
 				let RewardPrivkey = new CRYPTO.common().GetDecryptedData(commonkey,EncryptoPrivkey);
+				let RewardAccount = new ACCOUNT.account(RewardPrivkey);
+				let RewardKeys = await RewardAccount.GetKeys();
+
+
+				//表記されていたアドレスと違う = 不正 されたことをログに保存
+				if (TagRewardObjData["RewardAddress"] != RewardKeys["address"]){
+					let TagRewardCheetah = {"tag":TagRewardObjData["tag"],"amount":await PlanRewardAccount.GetBalance(),"time":TagRewardObjTx["time"],"TagRewardTxid":txid};
+					TagRewardCheetah = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(TagRewardCheetah));
+
+
+					let TagRewardCheetahs = DATABASE.get("TagRewardCheetah",TagRewardObjData["tag"]);
+					if (TagRewardCheetahs.indexOf(TagRewardCheetah) == -1){
+						DATABASE.add("TagRewardCheetah",tag,TagRewardCheetah);
+					}
+				}
+
+
+				if (await RewardAccount.GetBalance() <= 0){continue;};
+
+
 				//console.log(commonkey);
 				//console.log(EncryptoPrivkey);
 				//console.log(RewardPrivkey);
@@ -283,11 +304,21 @@ exports.RunMining = async function(){
 				continue;
 			}
 
-			if (sendamount > 0 && UsedRewardPrivkey.indexOf(RewardPrivkey) == -1){
+			//秘密鍵取得をログに保存
+			let TagMiningResult = {"tag":tag,"amount":sendamount,"time":Math.floor(Date.now()/1000),"RewardSentTxid":""};
+			TagMiningResult = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(TagMiningResult));
+			DATABASE.add("TagMiningResult_FoundPrivkey",tag,TagMiningResult);
+
+			if (sendamount > 0){
 				let result = await TRANSACTION.SendPayTransaction(RewardPrivkey,(await CollectAccount.GetKeys())["address"],sendamount,10);
 				if (result){
 					MAIN.note(1,"tagreward_RunMining","[Reward] "+sendamount+" by tag of "+tag);
-					UsedRewardPrivkey.push(RewardPrivkey);
+
+
+					//秘密鍵から残高を取得をログに保存
+					let TagMiningResult = {"tag":tag,"amount":sendamount,"time":Math.floor(Date.now()/1000),"RewardSentTxid":result};
+					TagMiningResult = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(TagMiningResult));
+					DATABASE.add("TagMiningResult_hooray",tag,TagMiningResult);
 				}
 			}
 		}
@@ -343,7 +374,16 @@ exports.RunControlTag = async function(){
 			}
 
 
-			/* add */
+			/*
+			add
+
+			条件
+			・費用対サイズが見た目的にいい
+			and
+			・不正にかさましされていない
+			and
+			・過去に追加された履歴がない
+			*/
 			for (let tag in TagsRewardPerYear){
 				if ((await TRANSACTION.GetImportTags()).indexOf(tag) > -1){
 					continue;
@@ -362,16 +402,67 @@ exports.RunControlTag = async function(){
 				}
 
 
-				if (TagsRewardPerYear[tag] / SumSize * 1000000 >= 1){
-					let result = await TRANSACTION.SetImportTags("add",tag);
-					if (result){
-						MAIN.note(1,"RunControlTag",`ADD ${tag}`);
-					};
+
+				/* 費用対サイズが悪い */
+				if (TagsRewardPerYear[tag] / SumSize * 1000000 < 1){
+					continue;
 				}
+
+
+				//不正によってかさましされた数量
+				let TagRewardCheetahs = DATABASE.get("TagRewardCheetah",tag);
+				let CheetahAmountPerYear = 0;
+				for (let index in TagRewardCheetahs){
+					let TagRewardCheetah = TagRewardCheetahs[index];
+					TagRewardCheetah = new HEX.HexText().utf8_hex_string_to_string(TagRewardCheetah);
+					TagRewardCheetah = JSON.parse(TagRewardCheetah);
+
+					if (TagRewardCheetah["time"] < Math.floor(Date.now()/1000)-60*60*24*30*12){
+						continue;
+					};
+
+					CheetahAmountPerYear = CheetahAmountPerYear + TagRewardCheetah["amount"];
+				}
+
+				/* 不正にかさましされている */
+				if (TagsRewardPerYear[tag]/2 < CheetahAmountPerYear){
+					continue;
+				}
+
+
+
+				/* 過去に追加された過去がある */
+				RunControlTagAddTags = DATABASE.get("RunControlTagAddTag",tag);
+				if (RunControlTagAddTags.length > 0){
+					continue;
+				};
+
+
+
+
+				let RunControlTagAddTag = {"tag":tag,"time":Math.floor(Date.now()/1000)};
+				RunControlTagAddTag = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(RunControlTagAddTag));
+				DATABASE.set("RunControlTagAddTag",tag,RunControlTagAddTag);
+
+
+
+
+
+				let result = await TRANSACTION.SetImportTags("add",tag);
+				if (result){
+					MAIN.note(1,"RunControlTag",`ADD ${tag}`);
+				};
 			}
 
 
-			/* remove */
+			/*
+			remove
+
+			条件
+			・費用対サイズが悪すぎる
+			or
+			・不正がrewardの大半を占めている場合
+			*/
 			let ImportTags = await TRANSACTION.GetImportTags();
 			for (let index in ImportTags){
 				let tag = ImportTags[index];
@@ -399,6 +490,34 @@ exports.RunControlTag = async function(){
 					let result = await TRANSACTION.SetImportTags("remove",tag);
 					if (result){
 						MAIN.note(1,"RunControlTag",`REMOVE ${tag}`);
+						continue;
+					}
+				}
+
+
+
+
+
+				//不正によってかさましされた数量
+				let TagRewardCheetahs = DATABASE.get("TagRewardCheetah",tag);
+				let CheetahAmountPerYear = 0;
+				for (let index in TagRewardCheetahs){
+					let TagRewardCheetah = TagRewardCheetahs[index];
+
+					TagRewardCheetah = JSON.parse(new HEX.HexText().utf8_hex_string_to_string(TagRewardCheetah));
+
+					if (TagRewardCheetah["time"] < Math.floor(Date.now()/1000)-60*60*24*30*12){
+						continue;
+					};
+
+					CheetahAmountPerYear = CheetahAmountPerYear + TagRewardCheetah["amount"];
+				}
+
+				if (TagsRewardPerYear[tag]/2 < CheetahAmountPerYear){
+					let result = await TRANSACTION.SetImportTags("remove",tag);
+					if (result){
+						MAIN.note(1,"RunControlTag",`REMOVE ${tag}`);
+						continue;
 					}
 				}
 			}
