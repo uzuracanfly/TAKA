@@ -264,7 +264,7 @@ exports.RunMining = async function(){
 
 					let TagRewardCheetahs = DATABASE.get("TagRewardCheetah",TagRewardObjData["tag"]);
 					if (TagRewardCheetahs.indexOf(TagRewardCheetah) == -1){
-						DATABASE.add("TagRewardCheetah",tag,TagRewardCheetah);
+						DATABASE.add("TagRewardCheetah",TagRewardObjData["tag"],TagRewardCheetah);
 					}
 				}
 
