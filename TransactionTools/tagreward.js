@@ -343,6 +343,8 @@ exports.RunControlTag = async function(){
 
 	while (true){
 		try{
+
+			// 報酬 / 年 をタグごとに取得
 			let TagsRewardPerYear = {};
 			let TxidsTagreward = await TRANSACTION.GetTagTxids("tagreward");
 			for (let index in TxidsTagreward){
