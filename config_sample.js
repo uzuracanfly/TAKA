@@ -1,8 +1,8 @@
 exports.database = {
-	"address":DATABASE_ADDRESS,
-	"port":DATABASE_PORT,
+	"address":"127.0.0.1",
+	"port":20195,
 	"database":"TAKA",
-	"key":DATABASE_KEY,
+	"key":"",
 }
 
 exports.broadcast = {
@@ -22,9 +22,9 @@ exports.API = {
 	"port":API_PORT,
 	"AccessPoint":API_ACCESSPOINT,
 	"exchange":{
-		"EtherscanAPI":{"URL":"https://api.etherscan.io/api","APIKEY":API_EXCHANGE_ETHERSCANAPI_APIKEY},
-		"ETHPrivkey":API_EXCHANGE_ETAKAPRIVKEY,
-		"TAKAPrivkey":API_EXCHANGE_TAKAPrivkey,
+		"EtherscanAPI":{"URL":"https://api.etherscan.io/api","APIKEY":""},
+		"ETHPrivkey":"",
+		"TAKAPrivkey":"",
 	},
 }
 

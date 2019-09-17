@@ -16,18 +16,6 @@ const CRYPTO = require('./crypto.js');
 		/*
 			Configの設定
 		*/
-		let DATABASE_ADDRESS = await MAIN.GetConsole("[Database] Use Address (127.0.0.1) : ");
-		if (!DATABASE_ADDRESS){
-			DATABASE_ADDRESS = "127.0.0.1";
-		};
-		let DATABASE_PORT = await MAIN.GetConsole("[Database] Use Port (20195) : ");
-		if (!DATABASE_PORT){
-			DATABASE_PORT = "20195";
-		};
-		let DATABASE_KEY = await MAIN.GetConsole("[Database] Use Key () : ");
-		if (!DATABASE_KEY){
-			DATABASE_KEY = "";
-		};
 		let API_ADDRESS = await MAIN.GetConsole("[API] Use Address (0.0.0.0) : ");
 		if (!API_ADDRESS){
 			API_ADDRESS = "0.0.0.0";
@@ -40,19 +28,6 @@ const CRYPTO = require('./crypto.js');
 		if (!API_ACCESSPOINT){
 			API_ACCESSPOINT = "http://"+IP.address()+":"+API_PORT;
 		};
-		let API_EXCHANGE_ETHERSCANAPI_APIKEY = await MAIN.GetConsole('[API] Exchange Etherscan API Key () : ');
-		if (!API_EXCHANGE_ETHERSCANAPI_APIKEY){
-			API_EXCHANGE_ETHERSCANAPI_APIKEY = "";
-		}
-		let API_EXCHANGE_ETAKAPRIVKEY = await MAIN.GetConsole('[API] Exchange Privkey To ETAKA () : ');
-		if (!API_EXCHANGE_ETAKAPRIVKEY){
-			let key = SR.randomBuffer(32);
-			API_EXCHANGE_ETAKAPRIVKEY = key.toString('hex');
-		}
-		let API_EXCHANGE_TAKAPrivkey = await MAIN.GetConsole('[API] Exchange Privkey To TAKA () : ');
-		if (!API_EXCHANGE_TAKAPrivkey){
-			API_EXCHANGE_TAKAPrivkey = await new CRYPTO.signature().CreatePrivkey();
-		}
 
 
 		let IMPORTTAGS = await MAIN.GetConsole('[ImportTags] ([]) : ');
@@ -77,22 +52,13 @@ const CRYPTO = require('./crypto.js');
 
 
 		let ConfigData = FS.readFileSync("./config_sample.js", 'utf8');
-		ConfigData = ConfigData.replace( 'DATABASE_ADDRESS', '"'+DATABASE_ADDRESS+'"' );
-		ConfigData = ConfigData.replace( 'DATABASE_PORT', DATABASE_PORT );
-		ConfigData = ConfigData.replace( 'DATABASE_KEY', '"'+DATABASE_KEY+'"' );
-
 		ConfigData = ConfigData.replace( 'API_ADDRESS', '"'+API_ADDRESS+'"' );
 		ConfigData = ConfigData.replace( 'API_PORT', API_PORT );
 		ConfigData = ConfigData.replace( 'API_ACCESSPOINT', '"'+API_ACCESSPOINT+'"' );
 
-		ConfigData = ConfigData.replace( 'API_EXCHANGE_ETHERSCANAPI_APIKEY', '"'+API_EXCHANGE_ETHERSCANAPI_APIKEY+'"' );
-		ConfigData = ConfigData.replace( 'API_EXCHANGE_ETAKAPRIVKEY', '"'+API_EXCHANGE_ETAKAPRIVKEY+'"' );
-		ConfigData = ConfigData.replace( 'API_EXCHANGE_TAKAPrivkey', '"'+API_EXCHANGE_TAKAPrivkey+'"' );
-
 		ConfigData = ConfigData.replace( 'IMPORTTAGS', IMPORTTAGS );
 
 		ConfigData = ConfigData.replace( 'TAGREWARD_MININGTAGS', TAGREWARD_MININGTAGS );
-		ConfigData = ConfigData.replace( 'TAGREWARD_COLLECTPRIVKEY', '"'+TAGREWARD_COLLECTPRIVKEY+'"' );
 		ConfigData = ConfigData.replace( 'TAGREWARD_COLLECTPRIVKEY', '"'+TAGREWARD_COLLECTPRIVKEY+'"' );
 		ConfigData = ConfigData.replace( 'TAGREWARD_CONTROLTAG', TAGREWARD_CONTROLTAG );
 
