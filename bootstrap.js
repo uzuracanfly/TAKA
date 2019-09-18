@@ -60,7 +60,7 @@ exports.DownloadDataBase = async function(){
 			FS.mkdir("bootstrap/", function (err) {
 				FS.mkdir("database/", function (err) {
 					FS.writeFile(`bootstrap/bootstrap.zip`, ZipData, "hex", (error) => {
-						FS.createReadStream( (`bootstrap/bootstrap.zip` ).pipe( UNZIP.Extract( { path: './database/' } )) );
+						FS.createReadStream(`bootstrap/bootstrap.zip`).pipe( UNZIP.Extract({ path: './database/' }) );
 						return resolve(true);
 					});
 				});
