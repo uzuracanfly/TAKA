@@ -34,13 +34,13 @@ function CommandAction(commands){
 			if (commands.length >= 3){
 				LessIndex = parseInt(commands[2]);
 			};
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getaccount","args":{"key":key,"LessIndex":LessIndex}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"getaccount","args":{"key":key,"LessIndex":LessIndex}});
 		}else if (commands[0] == "gettag"){
 			let tag = commands[1];
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettag","args":{"tag":tag}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"gettag","args":{"tag":tag}});
 		}else if (commands[0] == "gettx"){
 			let txid = commands[1];
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"gettx","args":{"txid":txid}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"gettx","args":{"txid":txid}});
 
 
 
@@ -48,18 +48,18 @@ function CommandAction(commands){
 
 
 		}else if (commands[0] == "getimporttag"){
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getimporttag","args":{}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"getimporttag","args":{}});
 		}else if (commands[0] == "setimporttag"){
 			let type = commands[1];
 			let tag = commands[2];
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"setimporttag","args":{"type":type,"tag":tag}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"setimporttag","args":{"type":type,"tag":tag}});
 		}else if (commands[0] == "getminingtags"){
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"getminingtags","args":{}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"getminingtags","args":{}});
 		}else if (commands[0] == "setminingtags"){
 			let type = commands[1];
 			let tag = commands[2];
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"setminingtags","args":{"type":type,"tag":tag}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"setminingtags","args":{"type":type,"tag":tag}});
 
 
 
@@ -72,7 +72,7 @@ function CommandAction(commands){
 
 		}else if (commands[0] == "sendtx"){
 			let rawtx = commands[1];
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtx","args":{"rawtx":rawtx}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"sendtx","args":{"rawtx":rawtx}});
 
 
 
@@ -85,12 +85,12 @@ function CommandAction(commands){
 			let key = commands[1];
 			let toaddress = commands[2];
 			let amount = commands[3];
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendpaytx","args":{"key":key,"toaddress":toaddress,"amount":amount}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"sendpaytx","args":{"key":key,"toaddress":toaddress,"amount":amount}});
 		}else if (commands[0] == "sendtagrewardtx"){
 			let key = commands[1];
 			let tag = commands[2];
 			let amount = commands[3];
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagrewardtx","args":{"key":key,"tag":tag,"amount":amount}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"sendtagrewardtx","args":{"key":key,"tag":tag,"amount":amount}});
 		}else if (commands[0] == "senddatabasetx"){
 			let key = commands[1];
 			let tag = commands[2];
@@ -99,7 +99,7 @@ function CommandAction(commands){
 			if (commands.length >= 5){
 				commonkey = commands[4];
 			};
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"senddatabasetx","args":{"key":key,"tag":tag,"data":data,"commonkey":commonkey}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"senddatabasetx","args":{"key":key,"tag":tag,"data":data,"commonkey":commonkey}});
 		}else if (commands[0] == "sendtagordertx"){
 			let key = commands[1];
 			let tag = commands[2];
@@ -121,13 +121,13 @@ function CommandAction(commands){
 				FeeAmount = commands[7];
 			};
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagordertx","args":{"key":key,"tag":tag,"permissiontype":permissiontype,"powtarget":powtarget,"DataMaxSizeInByte":DataMaxSizeInByte,"FeeToAddress":FeeToAddress,"FeeAmount":FeeAmount}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"sendtagordertx","args":{"key":key,"tag":tag,"permissiontype":permissiontype,"powtarget":powtarget,"DataMaxSizeInByte":DataMaxSizeInByte,"FeeToAddress":FeeToAddress,"FeeAmount":FeeAmount}});
 		}else if (commands[0] == "sendtagaddpermittx"){
 			let key = commands[1];
 			let tag = commands[2];
 			let addaddress = commands[3];
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendtagaddpermittx","args":{"key":key,"tag":tag,"addaddress":addaddress}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"sendtagaddpermittx","args":{"key":key,"tag":tag,"addaddress":addaddress}});
 		}else if (commands[0] == "sendsetcontracttransaction"){
 			let key = commands[1];
 			let tag = commands[2];
@@ -139,7 +139,7 @@ function CommandAction(commands){
 				CodePath = commands[6];
 			};
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendsetcontracttransaction","args":{"key":key,"tag":tag,"FunctionName":FunctionName,"CodeType":CodeType,"CodeData":CodeData,"CodePath":CodePath}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"sendsetcontracttransaction","args":{"key":key,"tag":tag,"FunctionName":FunctionName,"CodeType":CodeType,"CodeData":CodeData,"CodePath":CodePath}});
 		}else if (commands[0] == "sendruncontracttransaction"){
 			let key = commands[1];
 			let tag = commands[2];
@@ -151,7 +151,7 @@ function CommandAction(commands){
 				AddAddressIndex = commands[5];
 			};
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"sendruncontracttransaction","args":{"key":key,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddAddressIndex":AddAddressIndex}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"sendruncontracttransaction","args":{"key":key,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddAddressIndex":AddAddressIndex}});
 		}else if (commands[0] == "callruncontracttransaction"){
 			let address = commands[1];
 			let tag = commands[2];
@@ -167,7 +167,7 @@ function CommandAction(commands){
 				lastonly = parseInt(commands[6]);
 			};
 
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"callruncontracttransaction","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddressIndexs":AddressIndexs,"lastonly":lastonly}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"callruncontracttransaction","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddressIndexs":AddressIndexs,"lastonly":lastonly}});
 		}else if (commands[0] == "runcode"){
 			let address = commands[1];
 			let tag = commands[2];
@@ -182,7 +182,7 @@ function CommandAction(commands){
 			if (commands.length >= 7){
 				lastonly = parseInt(commands[6]);
 			};
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"runcode","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddressIndexs":AddressIndexs,"lastonly":lastonly}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"runcode","args":{"address":address,"tag":tag,"FunctionName":FunctionName,"FunctionArgs":FunctionArgs,"AddressIndexs":AddressIndexs,"lastonly":lastonly}});
 
 
 
@@ -199,7 +199,7 @@ function CommandAction(commands){
 			let ReceiverAddress = commands[3];
 			let amount = commands[4];
 			
-			result = SendPostbyjson("http://127.0.0.1:"+CONFIG.API["port"],{"function":"exchange","args":{"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount}});
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"exchange","args":{"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount}});
 		};
 
 		resolve(result);

@@ -21,8 +21,8 @@ exports.API = {
 	"address":API_ADDRESS,
 	"port":API_PORT,
 	"AccessPoint":API_ACCESSPOINT,
-	"WhiteMethodList":[],
-	"BlackMethodList":[],
+	"WhiteFunctionList":[],//Local connections do not apply
+	"BlackFunctionList":["sendpaytx","sendtagrewardtx","senddatabasetx","sendtagordertx","sendtagaddpermittx","sendsetcontracttransaction","sendruncontracttransaction"],//Local connections do not apply
 	"exchange":{
 		"EtherscanAPI":{"URL":"https://api.etherscan.io/api","APIKEY":""},
 		"ETHPrivkey":"",

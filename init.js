@@ -6,6 +6,7 @@ const IP = require('ip');
 
 const MAIN = require('./main.js');
 const CRYPTO = require('./crypto.js');
+const BOOTSTRAP = require('./bootstrap.js');
 
 (async () => {
 	try{
@@ -46,8 +47,27 @@ const CRYPTO = require('./crypto.js');
 		}
 		let TAGREWARD_CONTROLTAG = await MAIN.GetConsole('[TagReward] Use Control Tag (false) : ');
 		if (!TAGREWARD_CONTROLTAG){
-			TAGREWARD_CONTROLTAG = "false";
+			TAGREWARD_CONTROLTAG = false;
 		};
+
+
+
+		let BOOTSTRAP_BOOL = await MAIN.GetConsole('[bootstrap] Use bootstrap(download the database from the other node.) (true) : ');
+		if (!BOOTSTRAP_BOOL){
+			BOOTSTRAP_BOOL = true;
+		};
+
+
+
+		if (BOOTSTRAP_BOOL != "false"){
+			console.log("bootstrap downloading.....");
+			let result = await BOOTSTRAP.DownloadDataBase();
+			if (result){
+				console.log("done.");
+			}else{
+				console.log("error.");
+			}
+		}
 
 
 
@@ -84,6 +104,7 @@ const CRYPTO = require('./crypto.js');
 		{"name":"TagrewardRunMining","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()},"time":1000},
 		{"name":"exchange","function":function(){let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()},"time":1000},
 		{"name":"ControlTag","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunControlTag()},"time":1000},
+		{"name":"bootstrap","function":function(){let BOOTSTRAP = require('./bootstrap.js');BOOTSTRAP.RunSaveDataBase()},"time":1000},
 		{
 			"name":"TEST",
 			"function":function(){
