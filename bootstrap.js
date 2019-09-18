@@ -24,7 +24,18 @@ exports.RunSaveDataBase = async function(){
 				archive.on('error',  (err) =>  {throw err;});
 				archive.pipe(output);
 
-				archive.directory(`database/${CONFIG.database["database"]}`,`${CONFIG.database["database"]}`);
+				let list = FS.readdirSync(`database/${CONFIG.database["database"]}`);
+				for (let index in list){
+					let value = list[index];
+
+					//ブラックリスト
+					if ((["nodelist"]).indexOf(value) > -1){
+						continue;
+					}
+
+					archive.directory(`database/${CONFIG.database["database"]}/${value}`,`${value}`);
+				}
+
 				archive.finalize();
 			});
 		}catch(e){
@@ -59,11 +70,13 @@ exports.DownloadDataBase = async function(){
 			let ZipData = res.getBody('hex');
 			FS.mkdir("bootstrap/", function (err) {
 				FS.mkdir("database/", function (err) {
-					FS.writeFile(`bootstrap/bootstrap.zip`, ZipData, "hex", (error) => {
-						FS.createReadStream(`bootstrap/bootstrap.zip`)
-						.pipe( UNZIP.Extract({ path: './database/' }) )
-						.on('close', function () {
-							return resolve(true);
+					FS.mkdir(`database/${CONFIG.database["database"]}/`, function (err) {
+						FS.writeFile(`bootstrap/bootstrap.zip`, ZipData, "hex", (error) => {
+							FS.createReadStream(`bootstrap/bootstrap.zip`)
+							.pipe( UNZIP.Extract({ path: `./database/${CONFIG.database["database"]}` }) )
+							.on('close', function () {
+								return resolve(true);
+							});
 						});
 					});
 				});
