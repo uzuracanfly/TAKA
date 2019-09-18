@@ -29,7 +29,7 @@ exports.RunSaveDataBase = async function(){
 					let value = list[index];
 
 					//ブラックリスト
-					if ((["nodelist"]).indexOf(value) > -1){
+					if ((["nodelist","TagMiningResult_FoundPrivkey","TagMiningResult_hooray"]).indexOf(value) > -1){
 						continue;
 					}
 
