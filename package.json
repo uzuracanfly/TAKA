@@ -34,7 +34,7 @@
     "socket.io": "^2.2.0",
     "supersphincs": "^6.1.4",
     "sync-request": "^6.1.0",
-    "unzip": "^0.1.11",
+    "unzip2": "^0.2.5",
     "web3": "^1.2.1"
   }
 }

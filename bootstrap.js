@@ -1,7 +1,7 @@
 let FS = require('fs');
 let ARCHIVER = require('archiver');
 const REQUEST = require('sync-request');
-var UNZIP = require('unzip');
+var UNZIP = require('unzip2');
 
 
 exports.RunSaveDataBase = async function(){
@@ -60,8 +60,11 @@ exports.DownloadDataBase = async function(){
 			FS.mkdir("bootstrap/", function (err) {
 				FS.mkdir("database/", function (err) {
 					FS.writeFile(`bootstrap/bootstrap.zip`, ZipData, "hex", (error) => {
-						FS.createReadStream(`bootstrap/bootstrap.zip`).pipe( UNZIP.Extract({ path: './database/' }) );
-						return resolve(true);
+						FS.createReadStream(`bootstrap/bootstrap.zip`)
+						.pipe( UNZIP.Extract({ path: './database/' }) )
+						.on('close', function () {
+							return resolve(true);
+						});
 					});
 				});
 			});
