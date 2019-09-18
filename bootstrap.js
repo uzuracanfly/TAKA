@@ -3,12 +3,11 @@ let ARCHIVER = require('archiver');
 const REQUEST = require('sync-request');
 var UNZIP = require('unzip');
 
-const CONFIG = require('./config.js');
-const MAIN = require('./main.js');
-const BROADCAST = require('./broadcast.js');
-
 
 exports.RunSaveDataBase = async function(){
+	const CONFIG = require('./config.js');
+	const MAIN = require('./main.js');
+
 	while (true){
 		try{
 			FS.mkdir("bootstrap/", function (err) {
@@ -40,38 +39,30 @@ exports.RunSaveDataBase = async function(){
 
 
 
+
+
 exports.DownloadDataBase = async function(){
 	return new Promise(function(resolve, reject) {
-		let NodeList = BROADCAST.GetNodeList();
 
-		for (let index in NodeList){
-			try{
-				let NodeAddress = NodeList[index];
-
-				let headers = {
-					'Content-Type':'application/zip'
-				};
-
-				//リクエスト送信
-				let res = REQUEST(
-					'GET',
-					`https://${NodeAddress}/bootstrap`, 
-					{
-						headers: headers,
-					}
-				);
-				let ZipData = res.getBody('hex');
-				FS.mkdir("bootstrap/", function (err) {
-					FS.writeFile(`bootstrap/bootstrap.zip`, ZipData, "hex", (error) => {
-						FS.createReadStream( (`bootstrap/bootstrap.zip` ).pipe( UNZIP.Extract( { path: './database/' } )) );
-						return resolve(true);
-					});
-				});
-			}catch(e){
-				MAIN.note(1,"DownloadDataBase",e);
-				continue;
-			}
+		let headers = {
+			'Content-Type':'application/zip'
 		};
+
+		//リクエスト送信
+		let res = REQUEST(
+			'GET',
+			`https://neko.taka.site/bootstrap`, 
+			{
+				headers: headers,
+			}
+		);
+		let ZipData = res.getBody('hex');
+		FS.mkdir("bootstrap/", function (err) {
+			FS.writeFile(`bootstrap/bootstrap.zip`, ZipData, "hex", (error) => {
+				FS.createReadStream( (`bootstrap/bootstrap.zip` ).pipe( UNZIP.Extract( { path: './database/' } )) );
+				return resolve(true);
+			});
+		});
 
 		return resolve(false);
 	});
