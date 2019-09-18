@@ -21,6 +21,7 @@ exports.API = {
 	"address":API_ADDRESS,
 	"port":API_PORT,
 	"AccessPoint":API_ACCESSPOINT,
+	"UsingMethodList":[],
 	"exchange":{
 		"EtherscanAPI":{"URL":"https://api.etherscan.io/api","APIKEY":""},
 		"ETHPrivkey":"",

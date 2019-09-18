@@ -38,6 +38,15 @@ exports.SetServer = function(){
 
 
 
+						if (("UsingMethodList" in CONFIG.API) && (CONFIG.API["UsingMethodList"].length > 0) && !(postData["function"] in CONFIG.API["UsingMethodList"])){
+							response.write(JSON.stringify(false));
+							response.end();
+							return false;
+						}
+
+
+
+
 
 						//curl http:/cation/json' -d '{"function":"getaccount","args":{"key":"5f2ba01ab3d8c3a418cf0232f83a0cd18e5a8a09"}}'
 						if(postData["function"] == "getaccount"){
