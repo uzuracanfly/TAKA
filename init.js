@@ -61,7 +61,7 @@ const BOOTSTRAP = require('./bootstrap.js');
 
 		if (BOOTSTRAP_BOOL != "false"){
 			console.log("bootstrap downloading.....");
-			let result = await BOOTSTRAP.DownloadDataBase();
+			let result = await BOOTSTRAP.DownloadDataBase("TAKA");
 			if (result){
 				console.log("done.");
 			}else{

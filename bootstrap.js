@@ -52,7 +52,7 @@ exports.RunSaveDataBase = async function(){
 
 
 
-exports.DownloadDataBase = async function(){
+exports.DownloadDataBase = async function(database){
 	return new Promise(function(resolve, reject) {
 		try{
 			let headers = {
@@ -70,10 +70,10 @@ exports.DownloadDataBase = async function(){
 			let ZipData = res.getBody('hex');
 			FS.mkdir("bootstrap/", function (err) {
 				FS.mkdir("database/", function (err) {
-					FS.mkdir(`database/${CONFIG.database["database"]}/`, function (err) {
+					FS.mkdir(`database/${database}/`, function (err) {
 						FS.writeFile(`bootstrap/bootstrap.zip`, ZipData, "hex", (error) => {
 							FS.createReadStream(`bootstrap/bootstrap.zip`)
-							.pipe( UNZIP.Extract({ path: `./database/${CONFIG.database["database"]}` }) )
+							.pipe( UNZIP.Extract({ path: `./database/${database}` }) )
 							.on('close', function () {
 								return resolve(true);
 							});
