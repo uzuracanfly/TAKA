@@ -1071,6 +1071,27 @@ exports.SetImportTags = async function(type,tag){
 
 
 
+exports.TagCompare = function(TagA, TagB){
+	if (TagA == "pay"){
+		return -1;
+	}
+	if (TagA == "tagorder" && TagB != "pay"){
+		return -1;
+	}
+	if (TagA == "tagaddpermit" && TagB != "pay" && TagB != "tagorder"){
+		return -1;
+	}
+
+	return 1;
+}
+
+
+
+
+
+
+
+
 /*
 未確認トランザクションの走査と確認
 */
@@ -1122,17 +1143,6 @@ exports.RunCommit = async function(){
 
 
 	while (true){
-		function TagCompare(TagA, TagB){
-			let comparison = 0;
-
-			if (TagA == "pay"){
-				comparison = -1;
-			}else{
-				comparison = 1;
-			}
-
-			return comparison;
-		}
 		async function RawTxOldCompare(RawTxA, RawTxB){
 			let comparison = 0;
 
@@ -1143,7 +1153,8 @@ exports.RunCommit = async function(){
 
 			if (ObjTxA["time"] < ObjTxB["time"]){
 				comparison = -1;
-			}else{
+			}
+			if (ObjTxA["time"] > ObjTxB["time"]){
 				comparison = 1;
 			}
 
@@ -1152,7 +1163,7 @@ exports.RunCommit = async function(){
 
 
 		let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
-		UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(TagCompare);
+		UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(exports.TagCompare);
 		for (let index in UnconfirmedTransactionsTags){
 			let tag = UnconfirmedTransactionsTags[index];
 

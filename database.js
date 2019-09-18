@@ -3,6 +3,7 @@ const HTTP = require('http');
 const FS = require('fs');
 const bPROMISE = require('bluebird');
 const CRYPTO = require('crypto');
+const CLUSTER = require('cluster');
 
 const CONFIG = require('./config.js');
 
@@ -222,7 +223,7 @@ exports.RunCommit = async function(){
 	}
 
 
-	function Delete(database,table,index){
+	async function Delete(database,table,index){
 		FS.unlinkSync("database/"+database+"/"+table+"/"+index+".json");
 		return true;
 	}
@@ -299,20 +300,24 @@ exports.RunCommit = async function(){
 					let ResultsKey = CRYPTO.randomBytes(16).toString('base64').substring(0, 16);
 					transactions.push({"function":"load","args":{"database":database,"table":table,"index":index},"ResultsKey":ResultsKey});
 
-					while (true){
-						if (ResultsKey in ResultValues){
-							let result = ResultValues[ResultsKey];
+					if (CLUSTER.isMaster) {
+						let worker = CLUSTER.fork();
+					}else{
+						while (true){
+							if (ResultsKey in ResultValues){
+								let result = ResultValues[ResultsKey];
 
-							response.write(JSON.stringify(result));
-							response.end();
+								response.write(JSON.stringify(result));
+								response.end();
 
-							delete ResultValues[ResultsKey];
+								delete ResultValues[ResultsKey];
 
-							break;
+								break;
+							}
+
+							await sleep(0.001);
 						}
-
-						await sleep(0.1);
-					}
+					};
 
 				};
 			});
@@ -343,14 +348,14 @@ exports.RunCommit = async function(){
 				await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
 			};
 			if (transaction["function"] == "delete"){
-				Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+				await Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
 			};
 			if (transaction["function"] == "load"){
 				ResultValues[transaction["ResultsKey"]] = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
 			}
 		};
 
-		await sleep(0.1);
+		await sleep(0.001);
 	};
 
 };
