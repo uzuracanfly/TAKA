@@ -1122,7 +1122,7 @@ exports.RunCommit = async function(){
 			DATABASE.add("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],txid);
 		}
 
-		MAIN.note(0,"transaction_RunCommit_commit","[commit transaction] txid : "+txid);
+		MAIN.note(1,"transaction_RunCommit_commit","[commit transaction] txid : "+txid);
 		return 1;
 	}
 

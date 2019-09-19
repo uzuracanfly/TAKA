@@ -410,13 +410,15 @@ exports.SetServer = function(){
 		}
 
 
-		/* すでにこちらがクライアント側として接続済み */
+		
 		let nodedata = exports.GetNode(address);
 		if (nodedata){
-			if (nodedata["type"] == "client" && nodedata["state"] == 1){
-				return false;
-			};
 			while (true){
+				nodedata = exports.GetNode(address);
+				//すでにこちらがクライアント側として接続済み
+				if (nodedata["type"] == "client" && nodedata["state"] == 1){
+					return false;
+				};
 				if (nodedata["time"]+10 < Math.floor(Date.now()/1000)){
 					break;
 				}
@@ -433,6 +435,12 @@ exports.SetServer = function(){
 
 
 		socket.on('disconnect', async function(){
+			let nodedata = exports.GetNode(address);
+			//すでにこちらがクライアント側として接続済み
+			if (nodedata["type"] == "client"){
+				return false;
+			};
+
 			MAIN.note(1,"SetServer_disconnect","Disconnect Node : "+address);
 
 			exports.SetNode(address,"server",0);
@@ -494,13 +502,16 @@ exports.SetClient = async function(){
 		socket.on('connect', async function(){
 			socket.headbeatTimeout = 15000;
 
-			/* すでにこちらがサーバー側として接続済み */
+
+
 			let nodedata = exports.GetNode(address);
 			if (nodedata){
-				if (nodedata["type"] == "server" && nodedata["state"] == 1){
-					return false;
-				};
 				while (true){
+					nodedata = exports.GetNode(address);
+					//すでにこちらがサーバー側として接続済み
+					if (nodedata["type"] == "server" && nodedata["state"] == 1){
+						return false;
+					};
 					if (nodedata["time"]+10 < Math.floor(Date.now()/1000)){
 						break;
 					}
@@ -533,6 +544,12 @@ exports.SetClient = async function(){
 		});
 
 		socket.on('disconnect', async function(){
+			let nodedata = exports.GetNode(address);
+			//すでにこちらがサーバー側として接続済み
+			if (nodedata["type"] == "server"){
+				return false;
+			};
+
 			MAIN.note(1,"SetClient_disconnect","Disconnect Node : "+address);
 
 			exports.SetNode(address,"client",0);

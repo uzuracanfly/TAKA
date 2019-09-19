@@ -21,35 +21,41 @@ exports.SetServer = function(){
 	let http = require('http');
 
 	http.createServer(async function(request,response) {
-		(async () => {
+		try{
+			(async () => {
 
-			response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8','Access-Control-Allow-Origin': '*'});
+				response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8','Access-Control-Allow-Origin': '*'});
 
 
-			if(request.method === 'POST') {
-				let ArgsData = "";
-				request.on('data', function(chunk) {
-					ArgsData += chunk;
-				}).on('end', async function() {
-					ArgsData = JSON.parse(ArgsData);
+				if(request.method === 'POST') {
+					let ArgsData = "";
+					request.on('data', function(chunk) {
+						ArgsData += chunk;
+					}).on('end', async function() {
+						ArgsData = JSON.parse(ArgsData);
 
-					RunAPIMethods(ArgsData,request,response);
-				});
-			}else{
-				let ArgsData = URL.parse(request.url,true).query;
-				let ParseArgsData = {};
-				// 連想配列から取り出す
-				for (let key in ArgsData) {
-					try{
-						ParseArgsData[key] = JSON.parse(ArgsData[key]);
-					}catch(e){
-						ParseArgsData[key] = ArgsData[key];
+						RunAPIMethods(ArgsData,request,response);
+					});
+				}else{
+					let ArgsData = URL.parse(request.url,true).query;
+					let ParseArgsData = {};
+					// 連想配列から取り出す
+					for (let key in ArgsData) {
+						try{
+							ParseArgsData[key] = JSON.parse(ArgsData[key]);
+						}catch(e){
+							ParseArgsData[key] = ArgsData[key];
+						}
 					}
-				}
 
-				RunAPIMethods(ParseArgsData,request,response);
-			}
-		})();
+					RunAPIMethods(ParseArgsData,request,response);
+				}
+			})();
+		}catch(e){
+			MAIN.note(2,"SetServer",e);
+			response.write(JSON.stringify(false));
+			response.end();
+		}
 	}).listen(CONFIG.API["port"], CONFIG.API["address"]);
 }
 
