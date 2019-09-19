@@ -232,16 +232,10 @@ global.TAKA = {
 					lasttxtime = outthis.TAKAAPI.gettx(lasttxid)["objtx"]["time"];
 				}
 
-				if (tag != "pay" && tag != "tagreward"){
-					let TagTxids = outthis.TAKAAPI.gettag(tag)["txids"];
-					if (TagTxids.length > 0){
-						let objfirsttx = outthis.TAKAAPI.gettx(TagTxids[0])["objtx"];
+				if (tag != "pay" && tag != "tagorder" && tag != "tagreward" && tag != "tagaddpermit"){
+					let TagData = outthis.TAKAAPI.gettag(tag);
 
-						let FIRSTTXDATA = new TAKA.TRANSACTIONTOOLS_TAGORDER.TagOrderData(objfirsttx["data"]);
-						let objdata = FIRSTTXDATA.GetObjData();
-
-						target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),objdata["powtarget"],lasttxtime);
-					};
+					target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),TagData["powtarget"],lasttxtime);
 				}else{
 					target = await TargetTransaction.GetPOWTarget(await TargetTransaction.GetRawTx(),null,lasttxtime);
 				}
