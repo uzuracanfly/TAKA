@@ -293,7 +293,10 @@ global.TAKA = {
 				if ("FeeAmount" in TagData && TagData["FeeAmount"] > 0){
 					//tag使用料支払い
 					let sendamounttoaddress = this.TAKAAPI.getsendamounttoaddress(privkey,TagData["FeeToAddress"]);
-					let NeedAmount = AccountData["txids"][tag]["txs"].length * TagData["FeeAmount"];
+					let NeedAmount = 0;
+					if (tag in AccountData["txids"]){
+						NeedAmount = NeedAmount + AccountData["txids"][tag]["txs"].length * TagData["FeeAmount"];
+					}
 					//console.log(sendamounttoaddress,NeedAmount);
 					if (sendamounttoaddress <= NeedAmount){
 						await this.SendTransaction(privkey,1,"pay",TagData["FeeToAddress"],TagData["FeeAmount"],"");

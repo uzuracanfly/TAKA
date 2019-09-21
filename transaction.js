@@ -735,17 +735,15 @@ exports.Transaction = class{
 			};
 
 
-			let needtime = 60*10 - (time - lasttxtime);
+			let TimeFromBeforeTx = time - lasttxtime;
 
 			target = target_upper;
-			if (needtime > 0){
-				if (needtime > 60*5){
-					target = BigInt("0x0000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-				}
-				if (needtime > 60*9){
-					target = BigInt("0x000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-				}
-			};
+			if (TimeFromBeforeTx < 60*5){
+				target = BigInt("0x0000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			}
+			if (TimeFromBeforeTx < 60*1){
+				target = BigInt("0x000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			}
 		};
 
 
