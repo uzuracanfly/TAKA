@@ -1203,6 +1203,6 @@ exports.RunCommit = async function(){
 			}
 		};
 
-		await MAIN.sleep(10);
+		await MAIN.sleep(1);
 	}
 }
