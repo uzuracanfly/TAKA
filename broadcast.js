@@ -108,46 +108,6 @@ function SetActionEvents(socket,address){
 
 
 
-	/* 未承認のトランザクション追加 */
-	socket.on('GetUnconfirmedTransactions', function (data) {
-		try{
-			let txs = [];
-			let tags = TRANSACTION.GetTags();
-			for (let index in tags){
-				let tag = tags[index];
-
-				if (!tag){
-					continue;
-				}
-
-				let rawtxs = DATABASE.get("UnconfirmedTransactions",tag);
-
-				if (rawtxs.length == 0){
-					continue;
-				};
-
-				rawtx = rawtxs[0]
-
-				txs.push(rawtx);
-			};
-
-			socket.emit('UnconfirmedTransactions', txs);
-		}catch(e){
-			MAIN.note(2,"SetActionEvents",e);
-		}
-	});
-
-	socket.on('UnconfirmedTransactions', async function(data){
-		try{
-			BroadcastUnconfirmedTransactions[address] = data;
-		}catch(e){
-			MAIN.note(2,"SetActionEvents",e);
-		}
-	});
-
-
-
-
 
 	/*
 		選出して生のトランザクションをお届け
@@ -155,10 +115,37 @@ function SetActionEvents(socket,address){
 		parameter : {"ConfirmedTxids":[ConfirmedTxids],"count":count,"NeedTags":[]}
 		response : [rawtxs]
 	*/
-	socket.on('GetConfirmedTransactions', async function (data) {
+	socket.on('GetTransactions', async function (data) {
 		try{
 			let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
 			let rawtxs = [];
+			let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
+			for (let index in UnconfirmedTransactions){
+				let rawtx = UnconfirmedTransactions[index];
+
+				if (rawtxs.length >= data["count"]){
+					break;
+				}
+
+				let TargetTransaction = new TRANSACTION.Transaction(rawtx);
+				let txid = await TargetTransaction.GetTxid();
+				let objtx = await TargetTransaction.GetObjTx();
+
+				if ((data["ConfirmedTxids"]).indexOf(txid) > 0){
+					continue;
+				}
+				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(objtx["tag"]) == -1){
+					continue;
+				}
+
+				//1分経っていまだに未承認のトランザクションは受け入れない
+				if (objtx["time"]+60*1 < Math.floor(Date.now()/1000)){
+					continue;
+				}
+
+
+				rawtxs.push(rawtx);
+			}
 			for (let index in TransactionIdsPerAll){
 				let txid = TransactionIdsPerAll[index];
 
@@ -180,17 +167,17 @@ function SetActionEvents(socket,address){
 				rawtxs.push(rawtx);
 			}
 
-			socket.emit('ConfirmedTransactions', rawtxs);
+			socket.emit('transactions', rawtxs);
 		}catch(e){
-			MAIN.note(2,"GetConfirmedTransactions",e);
+			MAIN.note(2,"GetTransactions",e);
 		};
 	});
 
-	socket.on('ConfirmedTransactions', async function (rawtxs) {
+	socket.on('transactions', async function (rawtxs) {
 		try{
-			BroadcastConfirmedTransactions[address] = rawtxs;
+			BroadcastTransactions[address] = rawtxs;
 		}catch(e){
-			MAIN.note(2,"ConfirmedTransactions",e);
+			MAIN.note(2,"transactions",e);
 		};
 	});
 };
@@ -205,7 +192,7 @@ function SetActionEvents(socket,address){
 
 
 
-async function RuningGetConfirmedTransactions(socket,address){
+async function RuningGetTransactions(socket,address){
 	try{
 		/* 承認済みトランザクションリストまとめ */
 		let ConfirmedTxids = TRANSACTION.GetAllTxids();
@@ -223,19 +210,19 @@ async function RuningGetConfirmedTransactions(socket,address){
 			ConfirmedTxids.push(txid);
 		};
 
-		if (address in BroadcastConfirmedTransactions){
-			delete BroadcastConfirmedTransactions[address];
+		if (address in BroadcastTransactions){
+			delete BroadcastTransactions[address];
 		};
-		socket.emit('GetConfirmedTransactions',{"ConfirmedTxids":ConfirmedTxids,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
+		socket.emit('GetTransactions',{"ConfirmedTxids":ConfirmedTxids,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
 
 
 
 
 
-		/* BroadcastConfirmedTransactions取得まで待機 */
+		/* BroadcastTransactions取得まで待機 */
 		let timecount = 0;
 		while (timecount < 10){
-			if (address in BroadcastConfirmedTransactions){
+			if (address in BroadcastTransactions){
 				break;
 			};
 
@@ -246,9 +233,9 @@ async function RuningGetConfirmedTransactions(socket,address){
 
 
 
-		if (address in BroadcastConfirmedTransactions){
-			for (let index in BroadcastConfirmedTransactions[address]){
-				let rawtx = BroadcastConfirmedTransactions[address][index];
+		if (address in BroadcastTransactions){
+			for (let index in BroadcastTransactions[address]){
+				let rawtx = BroadcastTransactions[address][index];
 
 				if (!rawtx){
 					continue;
@@ -260,72 +247,8 @@ async function RuningGetConfirmedTransactions(socket,address){
 			};
 		};
 	}catch(e){
-		MAIN.note(2,"RuningGetConfirmedTransactions",e);
+		MAIN.note(2,"RuningGetTransactions",e);
 	}
-};
-
-async function RuningGetUnConfirmedTransactions(socket,address){
-	try{
-		if (address in BroadcastUnconfirmedTransactions){
-			delete BroadcastUnconfirmedTransactions[address];
-		};
-		socket.emit('GetUnconfirmedTransactions');
-
-
-
-
-		/* BroadcastUnconfirmedTransactions取得まで待機 */
-		let timecount = 0;
-		while (timecount < 10){
-			if (address in BroadcastUnconfirmedTransactions){
-				break;
-			};
-
-			timecount = timecount + 1;
-			await MAIN.sleep(1);
-		}
-
-
-
-
-		if (address in BroadcastUnconfirmedTransactions){
-			let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
-			
-			for (let index in BroadcastUnconfirmedTransactions[address]){
-				let rawtx = BroadcastUnconfirmedTransactions[address][index];
-
-				if (!rawtx){
-					continue;
-				}
-
-
-				//すでに未承認で待機中
-				let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
-				if (UnconfirmedTransactions.indexOf(rawtx) > -1){
-					continue;
-				};
-
-
-				let TargetTransaction = new TRANSACTION.Transaction(rawtx);
-				let txid = await TargetTransaction.GetTxid();
-				let objtx = await TargetTransaction.GetObjTx();
-
-				//1分経っていまだに未承認のトランザクションは受け入れない
-				if (objtx["time"]+60*1 < Math.floor(Date.now()/1000)){
-					continue;
-				}
-
-				//すでに承認済み
-				if (TransactionIdsPerAll.indexOf(txid) > -1){
-					continue;
-				};
-
-				await TargetTransaction.commit(undefined,false,false,-1);
-			};
-		};
-	}catch(e){
-		MAIN.note(2,"RuningGetUnConfirmedTransactions",e);
-	};
 };
 
 async function RuningGetNodeList(socket,address){
@@ -386,9 +309,8 @@ async function RuningGetNodeList(socket,address){
 
 
 
-let BroadcastConfirmedTransactions = {};
+let BroadcastTransactions = {};
 let BroadcastNodeList = {};
-let BroadcastUnconfirmedTransactions = {};
 
 exports.SetServer = function(){
 	const APP = require('express')();
@@ -457,8 +379,7 @@ exports.SetServer = function(){
 				break;
 			};
 
-			await RuningGetConfirmedTransactions(socket,address);
-			await RuningGetUnConfirmedTransactions(socket,address);
+			await RuningGetTransactions(socket,address);
 			await RuningGetNodeList(socket,address);
 
 			await MAIN.sleep(1);
@@ -535,8 +456,7 @@ exports.SetClient = async function(){
 					break;
 				};
 
-				await RuningGetConfirmedTransactions(socket,address);
-				await RuningGetUnConfirmedTransactions(socket,address);
+				await RuningGetTransactions(socket,address);
 				await RuningGetNodeList(socket,address);
 
 				await MAIN.sleep(1);

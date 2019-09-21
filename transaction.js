@@ -716,7 +716,7 @@ exports.Transaction = class{
 		/* payまたは自動指定が必要なタグの場合 */
 		if (objtx["tag"] == "pay" || target == 0){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
-			let target_upper = BigInt("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			let target_upper = BigInt("0x000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 			let time = objtx["time"];
 
 
@@ -739,14 +739,11 @@ exports.Transaction = class{
 
 			target = target_upper;
 			if (needtime > 0){
-				if (needtime > 60*3){
-					target = BigInt("0x000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-				}
-				if (needtime > 60*6){
-					target = BigInt("0x00000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+				if (needtime > 60*5){
+					target = BigInt("0x0000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 				}
 				if (needtime > 60*9){
-					target = BigInt("0x0000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+					target = BigInt("0x000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 				}
 			};
 		};
@@ -1203,6 +1200,6 @@ exports.RunCommit = async function(){
 			}
 		};
 
-		await MAIN.sleep(1);
+		await MAIN.sleep(10);
 	}
 }

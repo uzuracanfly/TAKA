@@ -10,33 +10,40 @@ exports.RunSaveDataBase = async function(){
 
 	while (true){
 		try{
-			FS.mkdir("bootstrap/", function (err) {
-				let output = FS.createWriteStream(`bootstrap/bootstrap.zip`);
-				
-				let archive = ARCHIVER('zip', {
-					zlib: { level: 9 } // Sets the compression level.
+			FS.mkdir("bootstrap/", async function (err) {
+				FS.mkdir("database/", async function (err) {
+					FS.mkdir(`database/${CONFIG.database["database"]}/`, async function (err) {
+
+						let output = FS.createWriteStream(`bootstrap/bootstrap.zip`);
+						
+						let archive = ARCHIVER('zip', {
+							zlib: { level: 9 } // Sets the compression level.
+						});
+
+						output.on('end', () => {
+							MAIN.note(2,"RunSaveDataBase","Data has been drained");
+						}); 
+						archive.on('warning', (err) =>  {throw err;});
+						archive.on('error',  (err) =>  {throw err;});
+						archive.pipe(output);
+
+
+						let list = FS.readdirSync(`database/${CONFIG.database["database"]}`);
+						for (let index in list){
+							let value = list[index];
+
+							//ブラックリスト
+							if ((["nodelist","TagMiningResult_FoundPrivkey","TagMiningResult_hooray"]).indexOf(value) > -1){
+								continue;
+							}
+
+							archive.directory(`database/${CONFIG.database["database"]}/${value}`,`${value}`);
+						}
+
+						archive.finalize();
+					});
 				});
-
-				output.on('end', () => {
-					MAIN.note(2,"RunSaveDataBase","Data has been drained");
-				}); 
-				archive.on('warning', (err) =>  {throw err;});
-				archive.on('error',  (err) =>  {throw err;});
-				archive.pipe(output);
-
-				let list = FS.readdirSync(`database/${CONFIG.database["database"]}`);
-				for (let index in list){
-					let value = list[index];
-
-					//ブラックリスト
-					if ((["nodelist","TagMiningResult_FoundPrivkey","TagMiningResult_hooray"]).indexOf(value) > -1){
-						continue;
-					}
-
-					archive.directory(`database/${CONFIG.database["database"]}/${value}`,`${value}`);
-				}
-
-				archive.finalize();
+		
 			});
 		}catch(e){
 			MAIN.note(2,"RunSaveDataBase",e);
