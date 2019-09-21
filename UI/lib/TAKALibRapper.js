@@ -270,7 +270,16 @@ global.TAKA = {
 			//tagorder等のFee支払い
 			if (type == 11 || type == 12 || type == 13){
 				let sendamounttoaddress = this.TAKAAPI.getsendamounttoaddress(privkey,"ffffffffffffffffffffffffffffffffffffffff");
-				let NeedAmount = AccountData["txids"]["tagorder"]["txs"].length + AccountData["txids"]["tagreward"]["txs"].length + AccountData["txids"]["tagaddpermit"]["txs"].length;
+				let NeedAmount = 0;
+				if ("tagorder" in AccountData["txids"]){
+					NeedAmount = NeedAmount + AccountData["txids"]["tagorder"]["txs"].length;
+				}
+				if ("tagreward" in AccountData["txids"]){
+					NeedAmount = NeedAmount + AccountData["txids"]["tagreward"]["txs"].length;
+				}
+				if ("tagaddpermit" in AccountData["txids"]){
+					NeedAmount = NeedAmount + AccountData["txids"]["tagaddpermit"]["txs"].length;
+				}
 				//console.log(sendamounttoaddress,NeedAmount);
 				if (sendamounttoaddress <= NeedAmount){
 					await this.SendTransaction(privkey,1,"pay","ffffffffffffffffffffffffffffffffffffffff",1,"");
