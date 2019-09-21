@@ -295,7 +295,7 @@ global.TAKA = {
 					let sendamounttoaddress = this.TAKAAPI.getsendamounttoaddress(privkey,TagData["FeeToAddress"]);
 					let NeedAmount = 0;
 					if (tag in AccountData["txids"]){
-						NeedAmount = NeedAmount + AccountData["txids"][tag]["txs"].length * TagData["FeeAmount"];
+						NeedAmount = NeedAmount + (AccountData["txids"][tag]["txs"].length * TagData["FeeAmount"]);
 					}
 					//console.log(sendamounttoaddress,NeedAmount);
 					if (sendamounttoaddress <= NeedAmount){
