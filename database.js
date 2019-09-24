@@ -3,7 +3,6 @@ const HTTP = require('http');
 const FS = require('fs');
 const bPROMISE = require('bluebird');
 const CRYPTO = require('crypto');
-const CLUSTER = require('cluster');
 
 const CONFIG = require('./config.js');
 
@@ -230,7 +229,6 @@ exports.RunCommit = async function(){
 
 
 	let transactions = [];
-	let ResultValues = {};
 
 	HTTP.createServer(async function(request, response) {
 		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
@@ -255,10 +253,8 @@ exports.RunCommit = async function(){
 						result = [data];
 					}
 
-					transactions.push({"function":"set","args":{"database":database,"table":table,"index":index,"data":result}});
+					transactions.push({"function":"set","args":{"database":database,"table":table,"index":index,"data":result},"request":request,"response":response});
 
-					response.write(JSON.stringify(true));
-					response.end();
 				};
 				if(postData["function"] == "add"){
 					let database = postData["args"]["database"];
@@ -266,10 +262,8 @@ exports.RunCommit = async function(){
 					let index = postData["args"]["index"];
 					let data = postData["args"]["data"];
 
-					transactions.push({"function":"add","args":{"database":database,"table":table,"index":index,"data":data}});
+					transactions.push({"function":"add","args":{"database":database,"table":table,"index":index,"data":data},"request":request,"response":response});
 
-					response.write(JSON.stringify(true));
-					response.end();
 				};
 				if(postData["function"] == "remove"){
 					let database = postData["args"]["database"];
@@ -277,47 +271,23 @@ exports.RunCommit = async function(){
 					let index = postData["args"]["index"];
 					let removeindex = parseInt(postData["args"]["removeindex"]);
 
-					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index,"removeindex":removeindex}});
+					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index,"removeindex":removeindex},"request":request,"response":response});
 
-					response.write(JSON.stringify(true));
-					response.end();
 				};
 				if(postData["function"] == "delete"){
 					let database = postData["args"]["database"];
 					let table = postData["args"]["table"];
 					let index = postData["args"]["index"];
 
-					transactions.push({"function":"delete","args":{"database":database,"table":table,"index":index}});
+					transactions.push({"function":"delete","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
 
-					response.write(JSON.stringify(true));
-					response.end();
 				};
 				if(postData["function"] == "get"){
 					let database = postData["args"]["database"];
 					let table = postData["args"]["table"];
 					let index = postData["args"]["index"];
 					
-					let ResultsKey = CRYPTO.randomBytes(16).toString('base64').substring(0, 16);
-					transactions.push({"function":"load","args":{"database":database,"table":table,"index":index},"ResultsKey":ResultsKey});
-
-					if (CLUSTER.isMaster) {
-						let worker = CLUSTER.fork();
-					}else{
-						while (true){
-							if (ResultsKey in ResultValues){
-								let result = ResultValues[ResultsKey];
-
-								response.write(JSON.stringify(result));
-								response.end();
-
-								delete ResultValues[ResultsKey];
-
-								break;
-							}
-
-							await sleep(0.001);
-						}
-					};
+					transactions.push({"function":"load","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
 
 				};
 			});
@@ -336,22 +306,37 @@ exports.RunCommit = async function(){
 
 			if (transaction["function"] == "set"){
 				await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
+
+				(transaction["response"]).write(JSON.stringify(true));
+				(transaction["response"]).end();
 			};
 			if (transaction["function"] == "add"){
 				let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
 				data.push(transaction["args"]["data"]);
 				await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+
+				(transaction["response"]).write(JSON.stringify(true));
+				(transaction["response"]).end();
 			};
 			if (transaction["function"] == "remove"){
 				let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
 				data.splice(transaction["args"]["removeindex"], 1);
 				await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+
+				(transaction["response"]).write(JSON.stringify(true));
+				(transaction["response"]).end();
 			};
 			if (transaction["function"] == "delete"){
 				await Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+
+				(transaction["response"]).write(JSON.stringify(true));
+				(transaction["response"]).end();
 			};
 			if (transaction["function"] == "load"){
-				ResultValues[transaction["ResultsKey"]] = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+				let result = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+
+				(transaction["response"]).write(JSON.stringify(result));
+				(transaction["response"]).end();
 			}
 		};
 
