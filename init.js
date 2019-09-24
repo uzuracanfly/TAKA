@@ -2,6 +2,9 @@ const CLUSTER = require('cluster');
 const FS = require('fs');
 const SR = require('secure-random');
 const IP = require('ip');
+const {
+	Worker, isMainThread, parentPort, workerData, threadId
+} = require('worker_threads');
 
 
 const MAIN = require('./main.js');
@@ -119,27 +122,23 @@ const BOOTSTRAP = require('./bootstrap.js');
 		},
 	];
 
-
-
-	if (CLUSTER.isMaster) {
+	if (isMainThread) {
 		for (let index in FunctionList) {
-			let worker = CLUSTER.fork();
-			FunctionList[index]["pid"] = worker.process.pid;
-		}
+			const worker = new Worker(__filename);
 
-		CLUSTER.on('exit', (worker, code, signal) => {
-			MAIN.note(1,"init",`worker ${worker.process.pid} died`);
-		});
-	}else{
-		let worker_id = CLUSTER.worker.id;
-		
-		setTimeout(function()
-			{
-				FunctionList[worker_id-1]["function"]();
+			worker.on('error', (err) => {
+				MAIN.note(3,"init",err);
+			});
+			worker.on('exit', (code) => {
+				MAIN.note(1,"init",`Worker died`);
+			});
+		};
+	} else {
 
-				MAIN.note(1,"init",`Worker ${process.pid} to ${FunctionList[worker_id-1]["name"]} started`);
-			},
-			FunctionList[worker_id-1]["time"]
-		);
+		await MAIN.sleep(FunctionList[threadId-1]["time"] / 1000);
+
+		FunctionList[threadId-1]["function"]();
+
+		MAIN.note(1,"init",`Worker ${process.pid} to ${FunctionList[threadId-1]["name"]} started`);
 	}
 })();
