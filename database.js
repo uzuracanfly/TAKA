@@ -78,6 +78,96 @@ exports.ChangeMemDatabase = class{
 exports.RunCommit = async function(){
 
 
+	let transactions = [];
+
+	HTTP.createServer(async function(request, response) {
+		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+
+		if(request.method === 'POST') {
+			let postData = "";
+			request.on('data', async function(chunk) {
+				postData += chunk;
+			}).on('end', async function() {
+				postData = JSON.parse(postData);
+
+				if(postData["function"] == "set"){
+					let database = postData["args"]["database"];
+					let table = postData["args"]["table"];
+					let index = postData["args"]["index"];
+					let data = postData["args"]["data"];
+
+					let result = [];
+					if (data instanceof Array){
+						result = data;
+					}else{
+						result = [data];
+					}
+
+					transactions.push({"function":"set","args":{"database":database,"table":table,"index":index,"data":result},"request":request,"response":response});
+
+				};
+				if(postData["function"] == "add"){
+					let database = postData["args"]["database"];
+					let table = postData["args"]["table"];
+					let index = postData["args"]["index"];
+					let data = postData["args"]["data"];
+
+					transactions.push({"function":"add","args":{"database":database,"table":table,"index":index,"data":data},"request":request,"response":response});
+
+				};
+				if(postData["function"] == "remove"){
+					let database = postData["args"]["database"];
+					let table = postData["args"]["table"];
+					let index = postData["args"]["index"];
+					let removeindex = parseInt(postData["args"]["removeindex"]);
+
+					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index,"removeindex":removeindex},"request":request,"response":response});
+
+				};
+				if(postData["function"] == "delete"){
+					let database = postData["args"]["database"];
+					let table = postData["args"]["table"];
+					let index = postData["args"]["index"];
+
+					transactions.push({"function":"delete","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
+
+				};
+				if(postData["function"] == "get"){
+					let database = postData["args"]["database"];
+					let table = postData["args"]["table"];
+					let index = postData["args"]["index"];
+					
+					transactions.push({"function":"load","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
+
+				};
+			});
+		};
+
+	}).listen(CONFIG.database["port"], CONFIG.database["address"]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	const GetFillZero = function(hex, hexlength){
 		let needzeroffill = hexlength-hex.length;
 		if (needzeroffill > 0){
@@ -226,76 +316,6 @@ exports.RunCommit = async function(){
 		FS.unlinkSync("database/"+database+"/"+table+"/"+index+".json");
 		return true;
 	}
-
-
-	let transactions = [];
-
-	HTTP.createServer(async function(request, response) {
-		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
-
-		if(request.method === 'POST') {
-			let postData = "";
-			request.on('data', async function(chunk) {
-				postData += chunk;
-			}).on('end', async function() {
-				postData = JSON.parse(postData);
-
-				if(postData["function"] == "set"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-					let data = postData["args"]["data"];
-
-					let result = [];
-					if (data instanceof Array){
-						result = data;
-					}else{
-						result = [data];
-					}
-
-					transactions.push({"function":"set","args":{"database":database,"table":table,"index":index,"data":result},"request":request,"response":response});
-
-				};
-				if(postData["function"] == "add"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-					let data = postData["args"]["data"];
-
-					transactions.push({"function":"add","args":{"database":database,"table":table,"index":index,"data":data},"request":request,"response":response});
-
-				};
-				if(postData["function"] == "remove"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-					let removeindex = parseInt(postData["args"]["removeindex"]);
-
-					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index,"removeindex":removeindex},"request":request,"response":response});
-
-				};
-				if(postData["function"] == "delete"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-
-					transactions.push({"function":"delete","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
-
-				};
-				if(postData["function"] == "get"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-					
-					transactions.push({"function":"load","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
-
-				};
-			});
-		};
-
-	}).listen(CONFIG.database["port"], CONFIG.database["address"]);
-
-
 
 
 	while (true){
