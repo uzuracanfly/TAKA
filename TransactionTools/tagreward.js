@@ -310,7 +310,7 @@ exports.RunMining = async function(){
 			DATABASE.add("TagMiningResult_FoundPrivkey",tag,TagMiningResult);
 
 			if (sendamount > 0){
-				let result = await TRANSACTION.SendPayTransaction(RewardPrivkey,(await CollectAccount.GetKeys())["address"],sendamount,10);
+				let result = await TRANSACTION.SendPayTransaction(RewardPrivkey,(await CollectAccount.GetKeys())["address"],sendamount);
 				if (result){
 					MAIN.note(1,"tagreward_RunMining","[Reward] "+sendamount+" by tag of "+tag);
 

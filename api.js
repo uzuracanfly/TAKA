@@ -641,6 +641,7 @@ async function RunAPIMethods(ArgsData,request,response){
 			"search":FS.readFileSync('UI/picture/search.png'),
 			"Japan":FS.readFileSync('UI/picture/Japan.png'),
 			"United-Kingdom":FS.readFileSync('UI/picture/United-Kingdom.png'),
+			"GetNonceForWeb":FS.readFileSync('GetNonceForWeb_bundle.js'),
 		};
 
 		
