@@ -2,6 +2,7 @@ const CLUSTER = require('cluster');
 const FS = require('fs');
 const SR = require('secure-random');
 const IP = require('ip');
+const CP = require('child_process');
 
 
 const MAIN = require('./main.js');
@@ -87,6 +88,19 @@ const BOOTSTRAP = require('./bootstrap.js');
 				console.log(e);
 				throw e;
 			}
+
+
+			let BundleList = [
+				{"origin":"GetNonceForWeb.js","bundle":"GetNonceForWeb_bundle.js"},
+				{"origin":"UI/lib/ETHCoindRapper.js","bundle":"UI/lib/ETHCoindRapper_bundle.js"},
+				{"origin":"UI/lib/TAKALibRapper.js","bundle":"UI/lib/TAKALibRapper_bundle.js"},
+			];
+			for (let index in BundleList){
+				let BundleData = BundleList[index];
+
+				let child = CP.spawn("browserify",[BundleData["origin"],"-o",BundleData["bundle"]]);
+			};
+
 			console.log("Done!Restart please!");
 			process.exit(0);
 		});

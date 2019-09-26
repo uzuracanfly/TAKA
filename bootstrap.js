@@ -89,7 +89,7 @@ exports.DownloadDataBase = async function(database){
 				});
 			});
 		}catch(e){
-			MAIN.note(2,"DownloadDataBase",e);
+			console.log(e);
 			return resolve(false);
 		};
 	});
