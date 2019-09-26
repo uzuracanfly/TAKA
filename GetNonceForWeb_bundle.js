@@ -16,7 +16,8 @@ onmessage = async function(e) {
 
 		let TargetTransaction = new TRANSACTION.Transaction(rawtx);
 		let objtx = await TargetTransaction.GetObjTx();
-
+		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		while (true){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 
@@ -34,6 +35,9 @@ onmessage = async function(e) {
 			};
 
 
+			if (nonce > parseInt("ffffffffffffffff",16)){
+				break;
+			};
 			if (TimeoutToNonceScan){
 				if (Math.floor(Date.now()/1000) >= StartTime + TimeoutToNonceScan){
 					postMessage(-1);
@@ -1125,7 +1129,7 @@ exports.SetMiningTags = async function(type,tag){
 exports.TxidLengthCompare = function(TxidA, TxidB){
 	let comparison = 0;
 
-	if (parseInt(TxidA,16) > parseInt(TxidB,16)){
+	if (parseInt(TxidA,16) < parseInt(TxidB,16)){
 		comparison = -1;
 	}else{
 		comparison = 1;
@@ -1710,7 +1714,7 @@ exports.Contract = {
 
 
 exports.Note = {
-	"loglevel":0
+	"loglevel":1
 }
 },{}],9:[function(require,module,exports){
 (function (Buffer){
@@ -23939,49 +23943,46 @@ exports.Transaction = class{
 			rawtx=this.rawtx;
 		}
 
-		let objtx = await this.GetObjTx(rawtx);
-		let nonce = objtx["nonce"];
 
-		let outthis = this;
+		let objtx = await this.GetObjTx(rawtx);
+		if (!target){
+			target = await this.GetPOWTarget(rawtx);
+		}
+		let StartTime = Math.floor(Date.now()/1000);
+
+		let ProcessCount = 4;
+		if (TimeoutToNonceScan == -1){
+			ProcessCount = 1;
+		};
 
 
 		return new Promise(async function (resolve, reject) {
 			let ChildList = [];
 			new Promise(async function (mresolve, mreject) {
-				if (!target){
-					target = await outthis.GetPOWTarget(rawtx);
-				}
-				let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-				let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-
-				let StartTime = Math.floor(Date.now()/1000);
-
-				let args = {"nonce":nonce,"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
-
-				
-				for (let index=0;index<4;index++){
+				let args = {};
+				for (let index=0;index<ProcessCount;index++){
 					//index0移行はランダムで最初のnonce決める
 					if (index > 0){
-						nonce = Math.floor( Math.random() * (18446744073709551617));
-					}
+						args = {"nonce":Math.floor( Math.random() * parseInt("ffffffffffffffff",16) ),"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
+					}else{
+						args = {"nonce":objtx["nonce"],"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
+					};
 
 					if(typeof CP.spawn == 'function') {
 						let child = CP.fork("GetNonceForNode.js");
 						ChildList.push(child);
-						child.send(args);
-
 						child.on('message', (data) => {
 							return mresolve(parseInt(data));
 						});
+						child.send(args);
 					}else{
 						let child = new Worker(CONFIG.API["AccessPoint"]+"/lib/"+'GetNonceForWeb');
 						ChildList.push(child);
-						child.postMessage(args);
-
 						child.onmessage = function(e) {
 							return mresolve(parseInt(e.data));
 						}
+						child.postMessage(args);
 					}
 				};
 			}).then(async function(nonce){

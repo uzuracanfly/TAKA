@@ -17,7 +17,8 @@ process.on('message', async function(args) {
 
 		let TargetTransaction = new TRANSACTION.Transaction(rawtx);
 		let objtx = await TargetTransaction.GetObjTx();
-
+		let txid = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+		let numtxid = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		while (true){
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
 
@@ -35,6 +36,9 @@ process.on('message', async function(args) {
 			};
 
 
+			if (nonce > parseInt("ffffffffffffffff",16)){
+				break;
+			};
 			if (TimeoutToNonceScan){
 				if (Math.floor(Date.now()/1000) >= StartTime + TimeoutToNonceScan){
 					process.send(-1);

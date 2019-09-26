@@ -199,7 +199,7 @@ exports.SetMiningTags = async function(type,tag){
 exports.TxidLengthCompare = function(TxidA, TxidB){
 	let comparison = 0;
 
-	if (parseInt(TxidA,16) > parseInt(TxidB,16)){
+	if (parseInt(TxidA,16) < parseInt(TxidB,16)){
 		comparison = -1;
 	}else{
 		comparison = 1;
@@ -233,7 +233,7 @@ exports.RunMining = async function(){
 
 				if (await PlanRewardAccount.GetBalance() <= 0){continue;};
 
-				if (TagRewardObjTx["time"]+60*1 > Math.floor(Date.now()/1000) || TagRewardObjTx["time"]+60*10 < Math.floor(Date.now()/1000)){continue;};
+				if (TagRewardObjTx["time"]+60*1 > Math.floor(Date.now()/1000) || TagRewardObjTx["time"]+60*30 < Math.floor(Date.now()/1000)){continue;};
 
 				if ((await exports.GetMiningTags()).length>0 && (await exports.GetMiningTags()).indexOf(TagRewardObjData["tag"]) == -1){continue;};
 
