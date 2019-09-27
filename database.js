@@ -46,8 +46,8 @@ exports.ChangeMemDatabase = class{
 	}
 
 
-	remove(table,index,removeindex){
-		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"remove","args":{"database":this.database,"table":table,"index":index,"removeindex":parseInt(removeindex)}});
+	remove(table,index,removeindex=null,removevalue=null){
+		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"remove","args":{"database":this.database,"table":table,"index":index,"removeindex":removeindex,"removevalue":removevalue}});
 		return result;
 	}
 
@@ -119,9 +119,18 @@ exports.RunCommit = async function(){
 					let database = postData["args"]["database"];
 					let table = postData["args"]["table"];
 					let index = postData["args"]["index"];
-					let removeindex = parseInt(postData["args"]["removeindex"]);
 
-					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index,"removeindex":removeindex},"request":request,"response":response});
+					let removeindex = null;
+					if ("removeindex" in postData["args"]){
+						removeindex = parseInt(postData["args"]["removeindex"]);
+					};
+					let removevalue = null;
+					if ("removevalue" in postData["args"]){
+						removevalue = postData["args"]["removevalue"];
+					};
+					
+
+					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index,"removeindex":removeindex,"removevalue":removevalue},"request":request,"response":response});
 
 				};
 				if(postData["function"] == "delete"){
@@ -340,7 +349,12 @@ exports.RunCommit = async function(){
 			};
 			if (transaction["function"] == "remove"){
 				let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-				data.splice(transaction["args"]["removeindex"], 1);
+				if (transaction["args"]["removeindex"] != null){
+					data.splice(transaction["args"]["removeindex"], 1);
+				};
+				if (transaction["args"]["removevalue"] != null){
+					data = data.filter(n => n !== transaction["args"]["removevalue"]);
+				};
 				await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
 
 				(transaction["response"]).write(JSON.stringify(true));

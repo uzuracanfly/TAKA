@@ -238,7 +238,13 @@ exports.Transaction = class{
 
 
 
-	//トランザクション有効性
+	/*
+		トランザクション有効性
+
+		0 : 無効
+		1 : 有効
+		2 : 有効 (現存の同じindexのtxは排除)
+	*/
 	async Confirmation(rawtx=this.rawtx){
 		try{
 			await this.SetUpClass();
@@ -630,12 +636,6 @@ exports.Transaction = class{
 
 
 
-			//indexの相違
-			if (pretxlist.length+1 != objtx["index"]){
-				return 0;
-			}
-
-
 			//トランザクション以前での残高の有無
 			let balance = await TargetAccount.GetBalance(undefined,objtx["index"]);
 			if (balance < objtx["amount"]){
@@ -654,6 +654,37 @@ exports.Transaction = class{
 				if (objtx["time"] <= (await lasttx.GetObjTx())["time"]){
 					return 0;
 				}
+			}
+
+
+
+
+
+
+			//indexの相違
+			if (pretxlist.length+1 != objtx["index"]){
+				//書き換え必要性
+
+				//同じindexに位置する前のtxの情報取得
+				let PreTxidSameIndex = PreTxidSameIndexList.slice(-1)[0];
+				let NumPreTxidSameIndex = BigInt("0x"+pretxid);
+
+				let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
+				let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
+
+				let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
+				let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
+				let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
+				let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
+
+				//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
+				if (PreTxSameIndexSenderAccountTxids.slice(-1)[0] == PreTxidSameIndex && PreTxSameIndexToAccountTxids.slice(-1)[0] == PreTxidSameIndex){
+					if (numtxid < NumPreTxidSameIndex){
+						return 2;
+					}
+				}
+
+				return 0;
 			}
 
 
@@ -1140,6 +1171,35 @@ exports.RunCommit = async function(){
 		MAIN.note(1,"transaction_RunCommit_commit","[commit transaction] txid : "+txid);
 		return 1;
 	}
+	async function reset(TargetTransaction){
+		let objtx = await TargetTransaction.GetObjTx();
+		let rawtx = await TargetTransaction.GetRawTx();
+		let txid = await TargetTransaction.GetTxid();
+
+		DATABASE.delete("ConfirmedTransactions",txid);
+
+		DATABASE.remove("TransactionIdsPerTag",objtx["tag"],null,txid);
+		DATABASE.remove("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],null,txid);
+		DATABASE.remove("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],null,txid);
+		DATABASE.remove("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],null,txid);
+		DATABASE.remove("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],null,txid);
+		DATABASE.remove("TransactionIdsPerAccount",objtx["toaddress"],null,txid);
+		DATABASE.remove("TransactionIdsPerAll","live",null,txid);
+
+		if (objtx["type"] == 12){
+			let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
+			let TagorderObjData = Tagorder.GetObjData();
+			DATABASE.remove("TagOrderTransactionIdPerTag",TagorderObjData["tag"],null,txid);
+		}
+		if (objtx["type"] == 13){
+			let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
+			let TagaddpermitObjData = Tagaddpermit.GetObjData();
+			DATABASE.remove("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],null,txid);
+		}
+
+		MAIN.note(1,"transaction_RunCommit_reset","[reset transaction] txid : "+txid);
+		return 1;
+	}
 
 
 
@@ -1206,7 +1266,13 @@ exports.RunCommit = async function(){
 					MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 
 					let txbool = await TargetTransaction.Confirmation();
-					if (txbool){
+					if (txbool == 1){
+						await commit(TargetTransaction);
+					}else if (txbool == 2){
+						let SendAccountTxids = await TargetTransaction.TargetAccount.GetFormTxList();
+						let ResetTxid = SendAccountTxids.slice(-1)[0];
+						let RESETTX = exports.GetTx(ResetTxid);
+						await reset(RESETTX);
 						await commit(TargetTransaction);
 					}else{
 						MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
@@ -1218,6 +1284,6 @@ exports.RunCommit = async function(){
 			}
 		};
 
-		await MAIN.sleep(10);
+		await MAIN.sleep(1);
 	}
 }

@@ -670,8 +670,12 @@ async function RunAPIMethods(ArgsData,request,response){
 			let WalletHtml = FS.readFileSync('UI/wallet.html');
 			WalletHtml = WalletHtml.toString();
 			WalletHtml = WalletHtml.replace( "MYURL", CONFIG.API["AccessPoint"] );
-			WalletHtml = WalletHtml.replace( /PAYTAKAADDRESS/g, (await new ACCOUNT.account(CONFIG.API.exchange["TAKAPrivkey"]).GetKeys())["address"] );
-			WalletHtml = WalletHtml.replace( /PAYETAKAADDRESS/g, (await new ETHCOIND.ETHCoind(CONFIG.API.exchange["ETHPrivkey"]).GetKeys())["address"] );
+			try{
+				WalletHtml = WalletHtml.replace( /PAYTAKAADDRESS/g, (await new ACCOUNT.account(CONFIG.API.exchange["TAKAPrivkey"]).GetKeys())["address"] );
+				WalletHtml = WalletHtml.replace( /PAYETAKAADDRESS/g, (await new ETHCOIND.ETHCoind(CONFIG.API.exchange["ETHPrivkey"]).GetKeys())["address"] );
+			}catch(e){
+				//pass
+			};
 			WalletHtml = Buffer.from(WalletHtml, 'utf-8');
 			response.writeHead(200, {'Content-Type': 'text/html'});
 			response.end(WalletHtml);
