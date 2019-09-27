@@ -626,14 +626,6 @@ exports.Transaction = class{
 
 
 
-			//MerkleRootとindexsからのMerkleRootの相違
-			let pretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"]);
-			let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
-			IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
-			if (IndexMerkleRoot != objtx["MerkleRoot"]){
-				return 0;
-			};
-
 
 
 			//トランザクション以前での残高の有無
@@ -644,11 +636,13 @@ exports.Transaction = class{
 
 
 
+
 			//時間が不自然
 			let time = Math.floor(Date.now()/1000);
 			if (objtx["time"] >= time){
 				return 0;
 			}
+			let pretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"]);
 			if (pretxlist.length > 0){
 				let lasttx = exports.GetTx(pretxlist.slice(-1)[0]);
 				if (objtx["time"] <= (await lasttx.GetObjTx())["time"]){
@@ -661,13 +655,16 @@ exports.Transaction = class{
 
 
 
-			//indexの相違
-			if (pretxlist.length+1 != objtx["index"]){
+			//indexの相違 または MerkleRootとindexsからのMerkleRootの相違
+			let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
+			IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
+
+			if (pretxlist.length+1 != objtx["index"] || IndexMerkleRoot != objtx["MerkleRoot"]){
 				//書き換え必要性
 
 				//同じindexに位置する前のtxの情報取得
-				let PreTxidSameIndex = PreTxidSameIndexList.slice(-1)[0];
-				let NumPreTxidSameIndex = BigInt("0x"+pretxid);
+				let PreTxidSameIndex = pretxlist.slice(-1)[0];
+				let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
 
 				let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
 				let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
@@ -686,6 +683,8 @@ exports.Transaction = class{
 
 				return 0;
 			}
+
+
 
 
 
