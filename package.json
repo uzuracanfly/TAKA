@@ -31,7 +31,7 @@
     "request": "^2.88.0",
     "ripemd160": "^2.0.2",
     "secure-random": "^1.1.2",
-    "socket.io": "^2.2.0",
+    "socket.io": "^2.3.0",
     "supersphincs": "^6.1.4",
     "sync-request": "^6.1.0",
     "unzip2": "^0.2.5",

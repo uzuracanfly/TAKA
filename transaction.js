@@ -271,6 +271,49 @@ exports.Transaction = class{
 
 
 
+			let ResultForSuccess = 1;
+
+
+
+
+			//indexの相違
+
+			let pretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"]);
+			let numtxid = BigInt("0x"+await this.GetTxid(rawtx));
+
+			if (pretxlist.length+1 != objtx["index"]){
+				/*
+					同じindexにあるtxと入れ替えるか確認
+				*/
+
+
+				//同じindexに位置する前のtxの情報取得
+				let PreTxidSameIndex = pretxlist.slice(-1)[0];
+				let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
+
+				let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
+				let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
+
+				let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
+				let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
+				let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
+				let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
+
+
+				//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
+				if (PreTxSameIndexSenderAccountTxids.slice(-1)[0] == PreTxidSameIndex && PreTxSameIndexToAccountTxids.slice(-1)[0] == PreTxidSameIndex){
+					if (numtxid < NumPreTxidSameIndex){
+						ResultForSuccess = 2;
+					}
+				}else{
+					return 0;	
+				}
+			}
+
+
+
+
+
 			//割り当て済みの部分は自由に利用できない
 			if (objtx["type"] != 1 && objtx["type"] != 11 && objtx["type"] != 12 && objtx["type"] != 13){
 				if (objtx["type"] <= 100){
@@ -619,7 +662,6 @@ exports.Transaction = class{
 
 			//txidとtarget
 			let target = await this.GetPOWTarget(rawtx);
-			let numtxid = BigInt("0x"+await this.GetTxid(rawtx));
 			if (numtxid > target){
 				return 0;
 			};
@@ -642,9 +684,14 @@ exports.Transaction = class{
 			if (objtx["time"] >= time){
 				return 0;
 			}
-			let pretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"]);
-			if (pretxlist.length > 0){
+			if (pretxlist.length > 0 && ResultForSuccess == 1){
 				let lasttx = exports.GetTx(pretxlist.slice(-1)[0]);
+				if (objtx["time"] <= (await lasttx.GetObjTx())["time"]){
+					return 0;
+				}
+			}
+			if (pretxlist.length > 0 && ResultForSuccess == 2){
+				let lasttx = exports.GetTx(pretxlist.slice(-2,-1)[0]);
 				if (objtx["time"] <= (await lasttx.GetObjTx())["time"]){
 					return 0;
 				}
@@ -654,41 +701,25 @@ exports.Transaction = class{
 
 
 
-
-			//indexの相違 または MerkleRootとindexsからのMerkleRootの相違
-			let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
-			IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
-
-			if (pretxlist.length+1 != objtx["index"] || IndexMerkleRoot != objtx["MerkleRoot"]){
-				//書き換え必要性
-
-				//同じindexに位置する前のtxの情報取得
-				let PreTxidSameIndex = pretxlist.slice(-1)[0];
-				let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
-
-				let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
-				let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
-
-				let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
-				let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
-				let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
-				let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
-
-				//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
-				if (PreTxSameIndexSenderAccountTxids.slice(-1)[0] == PreTxidSameIndex && PreTxSameIndexToAccountTxids.slice(-1)[0] == PreTxidSameIndex){
-					if (numtxid < NumPreTxidSameIndex){
-						return 2;
-					}
-				}
-
+			//MerkleRootとindexsからのMerkleRootの相違
+			let IndexMerkleRoot = "";
+			if (ResultForSuccess == 1){
+				IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
+				IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
+			}
+			if (ResultForSuccess == 2){
+				let mpretxlist = pretxlist.slice(0,-1);
+				IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(mpretxlist);
+				IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
+			}
+			if (IndexMerkleRoot != objtx["MerkleRoot"]){
 				return 0;
 			}
 
 
 
 
-
-			return 1;
+			return ResultForSuccess;
 
 		}catch(e){
 			MAIN.note(2,"Confirmation",e);
@@ -1177,23 +1208,23 @@ exports.RunCommit = async function(){
 
 		DATABASE.delete("ConfirmedTransactions",txid);
 
-		DATABASE.remove("TransactionIdsPerTag",objtx["tag"],null,txid);
-		DATABASE.remove("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],null,txid);
-		DATABASE.remove("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],null,txid);
-		DATABASE.remove("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],null,txid);
-		DATABASE.remove("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],null,txid);
-		DATABASE.remove("TransactionIdsPerAccount",objtx["toaddress"],null,txid);
-		DATABASE.remove("TransactionIdsPerAll","live",null,txid);
+		DATABASE.remove("TransactionIdsPerTag",objtx["tag"],-1,txid);
+		DATABASE.remove("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,txid);
+		DATABASE.remove("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,txid);
+		DATABASE.remove("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,txid);
+		DATABASE.remove("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],-1,txid);
+		DATABASE.remove("TransactionIdsPerAccount",objtx["toaddress"],-1,txid);
+		DATABASE.remove("TransactionIdsPerAll","live",-1,txid);
 
 		if (objtx["type"] == 12){
 			let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
 			let TagorderObjData = Tagorder.GetObjData();
-			DATABASE.remove("TagOrderTransactionIdPerTag",TagorderObjData["tag"],null,txid);
+			DATABASE.remove("TagOrderTransactionIdPerTag",TagorderObjData["tag"],-1,txid);
 		}
 		if (objtx["type"] == 13){
 			let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
 			let TagaddpermitObjData = Tagaddpermit.GetObjData();
-			DATABASE.remove("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],null,txid);
+			DATABASE.remove("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],-1,txid);
 		}
 
 		MAIN.note(1,"transaction_RunCommit_reset","[reset transaction] txid : "+txid);
@@ -1260,6 +1291,7 @@ exports.RunCommit = async function(){
 					let rawtx = UnconfirmedTransactions[mindex];
 
 					let TargetTransaction = new exports.Transaction(rawtx);
+					let objtx = await TargetTransaction.GetObjTx();
 
 
 					MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
@@ -1268,8 +1300,8 @@ exports.RunCommit = async function(){
 					if (txbool == 1){
 						await commit(TargetTransaction);
 					}else if (txbool == 2){
-						let SendAccountTxids = await TargetTransaction.TargetAccount.GetFormTxList();
-						let ResetTxid = SendAccountTxids.slice(-1)[0];
+						let SenderAccountTxids = await TargetTransaction.TargetAccount.GetFormTxList(undefined,objtx["tag"]);
+						let ResetTxid = SenderAccountTxids.slice(-1)[0];
 						let RESETTX = exports.GetTx(ResetTxid);
 						await reset(RESETTX);
 						await commit(TargetTransaction);

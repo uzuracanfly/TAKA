@@ -46,8 +46,8 @@ exports.ChangeMemDatabase = class{
 	}
 
 
-	remove(table,index,removeindex=null,removevalue=null){
-		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"remove","args":{"database":this.database,"table":table,"index":index,"removeindex":removeindex,"removevalue":removevalue}});
+	remove(table,index,removeindex=-1,removevalue=null){
+		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"remove","args":{"database":this.database,"table":table,"index":index,"removeindex":parseInt(removeindex),"removevalue":removevalue}});
 		return result;
 	}
 
@@ -120,7 +120,7 @@ exports.RunCommit = async function(){
 					let table = postData["args"]["table"];
 					let index = postData["args"]["index"];
 
-					let removeindex = null;
+					let removeindex = -1;
 					if ("removeindex" in postData["args"]){
 						removeindex = parseInt(postData["args"]["removeindex"]);
 					};
@@ -349,7 +349,7 @@ exports.RunCommit = async function(){
 			};
 			if (transaction["function"] == "remove"){
 				let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-				if (transaction["args"]["removeindex"] != null){
+				if (transaction["args"]["removeindex"] != -1){
 					data.splice(transaction["args"]["removeindex"], 1);
 				};
 				if (transaction["args"]["removevalue"] != null){
