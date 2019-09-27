@@ -43,7 +43,7 @@ exports.DatabaseData = class{
 
 
 
-exports.SendDatabaseTransaction = async function(privkey,tag,data,commonkey=""){
+exports.SendDatabaseTransaction = async function(privkey,tag,data,AddAddressIndex="",commonkey=""){
 	try{
 		/* Feeを追加 */
 		let TAGORDERTX = await TRANSACTION.GetTagOrderTx(tag);
@@ -77,7 +77,7 @@ exports.SendDatabaseTransaction = async function(privkey,tag,data,commonkey=""){
 			"tag":tag,
 			"index":FormTxList.length+1,
 			"MerkleRoot":MerkleRoot,
-			"toaddress":"",
+			"toaddress":AddAddressIndex,
 			"amount":0,
 			"data":rawdata,
 			"sig":"",

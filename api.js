@@ -376,6 +376,11 @@ async function RunAPIMethods(ArgsData,request,response){
 				let tag = ArgsData["args"]["tag"];
 				let data = ArgsData["args"]["data"];
 
+				let AddAddressIndex = "";
+				if ("AddAddressIndex" in ArgsData["args"] && ArgsData["args"]["AddAddressIndex"]){
+					AddAddressIndex = ArgsData["args"]["AddAddressIndex"];
+				};
+
 				let commonkey = "";
 				if ("commonkey" in ArgsData["args"] && ArgsData["args"]["commonkey"]){
 					commonkey = ArgsData["args"]["commonkey"];
@@ -390,7 +395,7 @@ async function RunAPIMethods(ArgsData,request,response){
 
 
 
-				let result = TRANSACTIONTOOLS_DATABASE.SendDatabaseTransaction(key,tag,data,commonkey);
+				let result = TRANSACTIONTOOLS_DATABASE.SendDatabaseTransaction(key,tag,data,AddAddressIndex,commonkey);
 
 				result.then(function(value){
 					response.write(JSON.stringify(value));

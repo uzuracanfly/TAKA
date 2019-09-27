@@ -95,11 +95,15 @@ function CommandAction(commands){
 			let key = commands[1];
 			let tag = commands[2];
 			let data = commands[3];
-			let commonkey = "";
+			let AddAddressIndex = "";
 			if (commands.length >= 5){
-				commonkey = commands[4];
+				AddAddressIndex = commands[4];
 			};
-			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"senddatabasetx","args":{"key":key,"tag":tag,"data":data,"commonkey":commonkey}});
+			let commonkey = "";
+			if (commands.length >= 6){
+				commonkey = commands[5];
+			};
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"senddatabasetx","args":{"key":key,"tag":tag,"data":data,"AddAddressIndex":AddAddressIndex,"commonkey":commonkey}});
 		}else if (commands[0] == "sendtagordertx"){
 			let key = commands[1];
 			let tag = commands[2];
