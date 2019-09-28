@@ -58,34 +58,14 @@ exports.SendDatabaseTransaction = async function(privkey,tag,data,AddAddressInde
 
 
 
-		let TargetAccount = new ACCOUNT.account(privkey);
-
-		let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
-		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
-
 		let DatabaseData = new exports.DatabaseData(commonkey,data);
-
 		let rawdata = DatabaseData.GetRawData();
 		if (!rawdata){
 			return false;
 		}
 
-		let objtx = {
-			"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-			"type":101,
-			"time":Math.floor(Date.now()/1000),
-			"tag":tag,
-			"index":FormTxList.length+1,
-			"MerkleRoot":MerkleRoot,
-			"toaddress":AddAddressIndex,
-			"amount":0,
-			"data":rawdata,
-			"sig":"",
-			"nonce":0
-		};
-		//console.log(objtx);
-		let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-		let result = await TargetTransaction.commit();
+
+		let result = await TRANSACTION.SendTransaction(privkey,101,tag,AddAddressIndex,0,rawdata,undefined);
 
 		return result;
 	}catch(e){

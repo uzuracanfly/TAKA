@@ -122,40 +122,18 @@ exports.SendSetContractTransaction = async function(privkey,tag,FunctionName,Cod
 			}
 		};
 
-		let TargetAccount = new ACCOUNT.account(privkey);
-
-		let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
-		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
-
 		let objdata = {
 			"FunctionName":FunctionName,
 			"CodeType":parseInt(CodeType),
 			"CodeData":CodeData,
 		}
-
 		let SETFUNCTIONDATA = new exports.SetFunctionData("",objdata);
-
 		let rawdata = SETFUNCTIONDATA.GetRawData()
 		if (!rawdata){
 			return false;
 		}
 
-		let objtx = {
-			"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-			"type":111,
-			"time":Math.floor(Date.now()/1000),
-			"tag":tag,
-			"index":FormTxList.length+1,
-			"MerkleRoot":MerkleRoot,
-			"toaddress":"",
-			"amount":0,
-			"data":rawdata,
-			"sig":"",
-			"nonce":0
-		};
-		//console.log(objtx);
-		let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-		let result = await TargetTransaction.commit();
+		let result = await TRANSACTION.SendTransaction(privkey,111,tag,"0000000000000000000000000000000000000000",0,rawdata,undefined);
 
 		return result;
 	}catch(e){
@@ -462,10 +440,6 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 
 		let TargetAccount = new ACCOUNT.account(privkey);
 
-		let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
-		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
-
-
 		/*
 			コントラクト実行
 		*/
@@ -491,30 +465,14 @@ exports.SendRunContractTransaction = async function(privkey,tag,FunctionName,Fun
 			"result":CodeResult["result"],
 			"SetData":CodeResult["SetData"],
 		}
-
 		let RUNFUNCTIONDATA = new exports.RunFunctionData("",objdata);
-
 		let rawdata = RUNFUNCTIONDATA.GetRawData()
 		if (!rawdata){
 			return false;
 		}
 
-		let objtx = {
-			"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-			"type":112,
-			"time":Math.floor(Date.now()/1000),
-			"tag":tag,
-			"index":FormTxList.length+1,
-			"MerkleRoot":MerkleRoot,
-			"toaddress":AddAddressIndex,
-			"amount":0,
-			"data":rawdata,
-			"sig":"",
-			"nonce":0
-		};
-		//console.log(objtx);
-		let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-		let result = await TargetTransaction.commit();
+
+		let result = await TRANSACTION.SendTransaction(privkey,112,tag,AddAddressIndex,0,rawdata,undefined);
 
 		return result;
 	}catch(e){

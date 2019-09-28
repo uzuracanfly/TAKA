@@ -204,13 +204,25 @@ global.TAKA = {
 				}
 				let index = txs.length;
 
+				let ToAccountData = outthis.TAKAAPI.getaccount(toaddress,0);
+				let ToMerkleRoot = "";
+				let ToTxs = [];
+				if (tag in ToAccountData["txids"]){
+					ToMerkleRoot = ToAccountData["txids"][tag]["MerkleRoot"];
+					ToTxs = ToAccountData["txids"][tag]["txs"];
+				}
+				let ToIndex = ToTxs.length;
+
+
 				let objtx = {
 					"pubkey":keys["pubkey"],
 					"type":type,
 					"time":time,
 					"tag":tag,
 					"index":index+1,
+					"ToIndex":ToIndex+1,
 					"MerkleRoot":MerkleRoot,
+					"ToMerkleRoot":ToMerkleRoot,
 					"toaddress":toaddress,
 					"amount":parseInt(amount),
 					"data":data,

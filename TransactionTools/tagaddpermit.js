@@ -69,10 +69,6 @@ exports.SendTagAddPermitTransaction = async function(privkey,tag,addaddress){
 
 
 
-	let TargetAccount = new ACCOUNT.account(privkey);
-
-	let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagaddpermit");
-	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objdata = {
 		"tag":tag,
@@ -81,22 +77,8 @@ exports.SendTagAddPermitTransaction = async function(privkey,tag,addaddress){
 
 	let TagAddPermit = new exports.TagAddPermitData("",objdata);
 
-	let objtx = {
-		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-		"type":13,
-		"time":Math.floor(Date.now()/1000),
-		"tag":"tagaddpermit",
-		"index":FormTxList.length+1,
-		"MerkleRoot":MerkleRoot,
-		"toaddress":"",
-		"amount":0,
-		"data":TagAddPermit.GetRawData(),
-		"sig":"",
-		"nonce":0
-	};
-	//console.log(objtx);
-	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-	let result = await TargetTransaction.commit();
+
+	let result = await TRANSACTION.SendTransaction(privkey,13,"tagaddpermit","0000000000000000000000000000000000000000",0,TagAddPermit.GetRawData(),undefined);
 
 	return result;
 };

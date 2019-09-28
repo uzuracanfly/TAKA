@@ -86,8 +86,6 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		/*
 		報酬を報酬アドレスに用意
 		*/
-		let TargetAccount = new ACCOUNT.account(privkey);
-
 		let RewardAccount = new ACCOUNT.account();
 		let RewardPrivkey = (await RewardAccount.GetKeys())["privkey"];
 		//console.log(RewardPrivkey);
@@ -108,10 +106,6 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		/*
 		報酬トランザクション生成
 		*/
-
-		let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagreward");
-		let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
-
 		let TagTxids = await TRANSACTION.GetTagTxids(tag);
 		let TagRewardWithTime = Math.floor(Date.now()/1000);
 		TagTxids = TagTxids.sort(exports.TxidLengthCompare);
@@ -129,28 +123,12 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 			"UsingRawTxIndex":UsingRawTxIndex,
 			"EncryptoPrivkey":EncryptoPrivkey,
 		};
-
 		let Tagreward = new exports.TagrewardData("",objdata);
-		//console.log(Tagreward.GetRawData());
-		let objtx = {
-			"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-			"type":11,
-			"time":TagRewardWithTime,
-			"tag":"tagreward",
-			"index":FormTxList.length+1,
-			"MerkleRoot":MerkleRoot,
-			"toaddress":"",
-			"amount":0,
-			"data":Tagreward.GetRawData(),
-			"sig":"",
-			"nonce":0
-		};
-		//console.log(objtx);
-		let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-		let txid = await TargetTransaction.commit();
 
 
-		return txid;
+		let result = await TRANSACTION.SendTransaction(privkey,11,"tagreward","0000000000000000000000000000000000000000",0,Tagreward.GetRawData(),undefined);
+
+		return result;
 	}catch(e){
 		console.log(e);
 		return "";

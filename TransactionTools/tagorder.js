@@ -87,9 +87,6 @@ exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powt
 	}
 
 
-	let TargetAccount = new ACCOUNT.account(privkey);
-	let FormTxList = await TargetAccount.GetFormTxList(undefined,"tagorder");
-	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
 	let objdata = {
 		"tag":tag,
@@ -99,25 +96,10 @@ exports.SendTagOrderTransaction = async function(privkey,tag,permissiontype,powt
 		"FeeToAddress":FeeToAddress,
 		"FeeAmount":parseInt(FeeAmount),
 	};
-
 	let TagOrder = new exports.TagOrderData("",objdata);
 
-	let objtx = {
-		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-		"type":12,
-		"time":Math.floor(Date.now()/1000),
-		"tag":"tagorder",
-		"index":FormTxList.length+1,
-		"MerkleRoot":MerkleRoot,
-		"toaddress":"",
-		"amount":0,
-		"data":TagOrder.GetRawData(),
-		"sig":"",
-		"nonce":0
-	};
-	//console.log(objtx);
-	let TargetTransaction = new TRANSACTION.Transaction("",privkey,objtx);
-	let txid = await TargetTransaction.commit();
 
-	return txid;
+	let result = await TRANSACTION.SendTransaction(privkey,12,"tagorder","0000000000000000000000000000000000000000",0,TagOrder.GetRawData(),undefined);
+
+	return result;
 };

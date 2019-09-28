@@ -62,7 +62,9 @@ exports.Transaction = class{
 		tag length : 4桁
 		tag : tag length 桁
 		index : 16桁
+		ToIndex : 16桁
 		MerkleRoot : 64桁
+		ToMerkleRoot : 64桁
 		toaddress : 40桁
 		amount : 64桁
 		data length : 16桁
@@ -86,7 +88,9 @@ exports.Transaction = class{
 		let time = Math.floor(objtx["time"]).toString(16);
 		let tag = new HEX.HexText().string_to_utf8_hex_string(objtx["tag"]);
 		let index = objtx["index"].toString(16);
+		let ToIndex = objtx["ToIndex"].toString(16);
 		let MerkleRoot = objtx["MerkleRoot"];
+		let ToMerkleRoot = objtx["ToMerkleRoot"];
 		let toaddress = objtx["toaddress"];
 		let amount = objtx["amount"].toString(16);
 		let data = objtx["data"];
@@ -109,7 +113,9 @@ exports.Transaction = class{
 		taglen_toin = MAIN.GetFillZero(taglen_toin, 4);
 
 		let index_toin = MAIN.GetFillZero(index, 16);
+		let ToIndex_toin = MAIN.GetFillZero(ToIndex, 16);
 		let MerkleRoot_toin = MAIN.GetFillZero(MerkleRoot, 64);
+		let ToMerkleRoot_toin = MAIN.GetFillZero(ToMerkleRoot, 64);
 		let toaddress_toin = MAIN.GetFillZero(toaddress, 40);
 		let amount_toin = MAIN.GetFillZero(amount, 64);
 
@@ -129,7 +135,9 @@ exports.Transaction = class{
 		rawtx = rawtx + taglen_toin;
 		rawtx = rawtx + tag_toin;
 		rawtx = rawtx + index_toin;
+		rawtx = rawtx + ToIndex_toin;
 		rawtx = rawtx + MerkleRoot_toin;
+		rawtx = rawtx + ToMerkleRoot_toin;
 		rawtx = rawtx + toaddress_toin;
 		rawtx = rawtx + amount_toin;
 		rawtx = rawtx + datalen_toin;
@@ -140,7 +148,7 @@ exports.Transaction = class{
 			署名
 
 			sig 原文
-			pubkey + type + time + tag length + tag + index + MerkleRoot + toaddress + amount + data length + data
+			pubkey + type + time + tag length + tag + index + ToIndex + MerkleRoot + ToMerkleRoot + toaddress + amount + data length + data
 			のsha256d
 			*/
 			let sig = "";
@@ -198,7 +206,9 @@ exports.Transaction = class{
 		let time = parseInt(cut(16),16);
 		let tag = VariableCut(4);
 		let index = parseInt(cut(16),16);
+		let ToIndex = parseInt(cut(16),16);
 		let MerkleRoot = cut(64);
+		let ToMerkleRoot = cut(64);
 		let toaddress = cut(40);
 		let amount = parseInt(cut(64),16);
 		let data = VariableCut(16);
@@ -211,7 +221,9 @@ exports.Transaction = class{
 			"time":time,
 			"tag":new HEX.HexText().utf8_hex_string_to_string(tag),
 			"index":index,
+			"ToIndex":ToIndex,
 			"MerkleRoot":MerkleRoot,
+			"ToMerkleRoot":ToMerkleRoot,
 			"toaddress":toaddress,
 			"amount":amount,
 			"data":data,
@@ -243,7 +255,8 @@ exports.Transaction = class{
 
 		0 : 無効
 		1 : 有効
-		2 : 有効 (現存の同じindexのtxは排除)
+		2 : 有効 (Senderにおける現存の同じindexのtxは排除)
+		3 : 有効 (Toにおける現存の同じindexのtxは排除)
 	*/
 	async Confirmation(rawtx=this.rawtx){
 		try{
@@ -255,6 +268,7 @@ exports.Transaction = class{
 
 			let objtx = await this.GetObjTx(rawtx);
 			let TargetAccount = new ACCOUNT.account(objtx["pubkey"]);
+			let ToTargetAccount = new ACCOUNT.account(objtx["toaddress"]);
 
 
 
@@ -304,6 +318,43 @@ exports.Transaction = class{
 				if (PreTxSameIndexSenderAccountTxids.slice(-1)[0] == PreTxidSameIndex && PreTxSameIndexToAccountTxids.slice(-1)[0] == PreTxidSameIndex){
 					if (numtxid < NumPreTxidSameIndex){
 						ResultForSuccess = 2;
+					}
+				}else{
+					return 0;	
+				}
+			}
+
+
+
+
+
+			//ToIndexの相違
+
+			let ToPretxlist = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
+
+			if (ToPretxlist.length+1 != objtx["ToIndex"]){
+				/*
+					同じindexにあるtxと入れ替えるか確認
+				*/
+
+
+				//同じindexに位置する前のtxの情報取得
+				let PreTxidSameIndex = ToPretxlist.slice(-1)[0];
+				let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
+
+				let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
+				let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
+
+				let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
+				let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
+				let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
+				let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
+
+
+				//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
+				if (PreTxSameIndexSenderAccountTxids.slice(-1)[0] == PreTxidSameIndex && PreTxSameIndexToAccountTxids.slice(-1)[0] == PreTxidSameIndex){
+					if (numtxid < NumPreTxidSameIndex){
+						ResultForSuccess = 3;
 					}
 				}else{
 					return 0;	
@@ -701,9 +752,9 @@ exports.Transaction = class{
 
 
 
-			//MerkleRootとindexsからのMerkleRootの相違
+			//MerkleRootの相違
 			let IndexMerkleRoot = "";
-			if (ResultForSuccess == 1){
+			if (ResultForSuccess == 1 || ResultForSuccess == 3){
 				IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
 				IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
 			}
@@ -719,9 +770,28 @@ exports.Transaction = class{
 
 
 
+
+			//ToMerkleRootの相違
+			let IndexToMerkleRoot = "";
+			if (ResultForSuccess == 1 || ResultForSuccess == 2){
+				IndexToMerkleRoot = new HASHS.hashs().GetMarkleroot(ToPretxlist);
+				IndexToMerkleRoot = MAIN.GetFillZero(IndexToMerkleRoot, 64);
+			}
+			if (ResultForSuccess == 3){
+				let mToPretxlist = ToPretxlist.slice(0,-1);
+				IndexToMerkleRoot = new HASHS.hashs().GetMarkleroot(mToPretxlist);
+				IndexToMerkleRoot = MAIN.GetFillZero(IndexToMerkleRoot, 64);
+			}
+			if (IndexToMerkleRoot != objtx["ToMerkleRoot"]){
+				return 0;
+			}
+
+
+
 			return ResultForSuccess;
 
 		}catch(e){
+			//console.log(e);
 			MAIN.note(2,"Confirmation",e);
 			return 0;
 		};
@@ -1006,29 +1076,46 @@ exports.GetTagTxids = async function(tag,LessTime=0){
 	return result;
 }
 
-exports.SendPayTransaction = async function(privkey,toaddress,amount,TimeoutToNonceScan=60){
+
+
+exports.SendTransaction = async function(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000),TimeoutToNonceScan=60){
+	type = parseInt(type);
 	amount = parseInt(amount);
 
 	let TargetAccount = new ACCOUNT.account(privkey);
+	let ToTargetAccount = new ACCOUNT.account(toaddress);
 
 	let FormTxList = await TargetAccount.GetFormTxList(undefined,"pay");
 	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
+	let ToFormTxList = await ToTargetAccount.GetFormTxList(undefined,"pay");
+	let ToMerkleRoot = new HASHS.hashs().GetMarkleroot(ToFormTxList);
+
 	let objtx = {
 		"pubkey":(await TargetAccount.GetKeys())["pubkey"],
-		"type":1,
-		"time":Math.floor(Date.now()/1000),
-		"tag":"pay",
+		"type":type,
+		"time":time,
+		"tag":tag,
 		"index":FormTxList.length+1,
+		"ToIndex":ToFormTxList.length+1,
 		"MerkleRoot":MerkleRoot,
+		"ToMerkleRoot":ToMerkleRoot,
 		"toaddress":toaddress,
 		"amount":amount,
-		"data":"",
+		"data":data,
 		"sig":"",
 		"nonce":0
 	};
 	let TargetTransaction = new exports.Transaction("",privkey,objtx);
 	let result = await TargetTransaction.commit(undefined,undefined,undefined,TimeoutToNonceScan);
+
+	return result;
+};
+
+
+
+exports.SendPayTransaction = async function(privkey,toaddress,amount,TimeoutToNonceScan=60){
+	let result = await exports.SendTransaction(privkey,1,"pay",toaddress,amount,"",undefined,TimeoutToNonceScan);
 
 	return result;
 };
@@ -1292,6 +1379,7 @@ exports.RunCommit = async function(){
 
 					let TargetTransaction = new exports.Transaction(rawtx);
 					let objtx = await TargetTransaction.GetObjTx();
+					let ToTargetAccount = new ACCOUNT.account(objtx["toaddress"]);
 
 
 					MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
@@ -1302,6 +1390,12 @@ exports.RunCommit = async function(){
 					}else if (txbool == 2){
 						let SenderAccountTxids = await TargetTransaction.TargetAccount.GetFormTxList(undefined,objtx["tag"]);
 						let ResetTxid = SenderAccountTxids.slice(-1)[0];
+						let RESETTX = exports.GetTx(ResetTxid);
+						await reset(RESETTX);
+						await commit(TargetTransaction);
+					}else if (txbool == 3){
+						let ToAccountTxids = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
+						let ResetTxid = ToAccountTxids.slice(-1)[0];
 						let RESETTX = exports.GetTx(ResetTxid);
 						await reset(RESETTX);
 						await commit(TargetTransaction);
