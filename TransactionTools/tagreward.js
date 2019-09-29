@@ -90,7 +90,9 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		let RewardPrivkey = (await RewardAccount.GetKeys())["privkey"];
 		//console.log(RewardPrivkey);
 		let paytxid = await TRANSACTION.SendPayTransaction(privkey,(await RewardAccount.GetKeys())["address"],amount);
-
+		if (!paytxid){
+			return false;
+		}
 
 
 

@@ -285,10 +285,6 @@ exports.Transaction = class{
 
 
 
-			let ResultForSuccess = 1;
-
-
-
 
 			//indexの相違
 
@@ -296,32 +292,34 @@ exports.Transaction = class{
 			let numtxid = BigInt("0x"+await this.GetTxid(rawtx));
 
 			if (pretxlist.length+1 != objtx["index"]){
-				/*
-					同じindexにあるtxと入れ替えるか確認
-				*/
+				if (pretxlist.length > 0){
+					/*
+						同じindexにあるtxと入れ替えるか確認
+					*/
 
 
-				//同じindexに位置する前のtxの情報取得
-				let PreTxidSameIndex = pretxlist.slice(-1)[0];
-				let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
+					//同じindexに位置する前のtxの情報取得
+					let PreTxidSameIndex = pretxlist.slice(-1)[0];
+					let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
 
-				let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
-				let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
+					let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
+					let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
 
-				let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
-				let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
-				let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
-				let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
+					let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
+					let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
+					let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
+					let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
 
 
-				//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
-				if (PreTxSameIndexSenderAccountTxids.slice(-1)[0] == PreTxidSameIndex && PreTxSameIndexToAccountTxids.slice(-1)[0] == PreTxidSameIndex){
-					if (numtxid < NumPreTxidSameIndex){
-						ResultForSuccess = 2;
+					//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
+					if (PreTxSameIndexSenderAccountTxids.slice(-1)[0] == PreTxidSameIndex && PreTxSameIndexToAccountTxids.slice(-1)[0] == PreTxidSameIndex && numtxid < NumPreTxidSameIndex){
+						return 2;
+					}else{
+						return 0;
 					}
 				}else{
-					return 0;	
-				}
+					return 0;
+				};
 			}
 
 
@@ -333,32 +331,34 @@ exports.Transaction = class{
 			let ToPretxlist = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
 
 			if (ToPretxlist.length+1 != objtx["ToIndex"]){
-				/*
-					同じindexにあるtxと入れ替えるか確認
-				*/
+				if (ToPretxlist.length > 0){
+					/*
+						同じindexにあるtxと入れ替えるか確認
+					*/
 
 
-				//同じindexに位置する前のtxの情報取得
-				let PreTxidSameIndex = ToPretxlist.slice(-1)[0];
-				let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
+					//同じindexに位置する前のtxの情報取得
+					let PreTxidSameIndex = ToPretxlist.slice(-1)[0];
+					let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
 
-				let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
-				let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
+					let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
+					let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
 
-				let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
-				let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
-				let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
-				let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
+					let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
+					let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
+					let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
+					let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
 
 
-				//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
-				if (PreTxSameIndexSenderAccountTxids.slice(-1)[0] == PreTxidSameIndex && PreTxSameIndexToAccountTxids.slice(-1)[0] == PreTxidSameIndex){
-					if (numtxid < NumPreTxidSameIndex){
-						ResultForSuccess = 3;
+					//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
+					if (PreTxSameIndexSenderAccountTxids.slice(-1)[0] == PreTxidSameIndex && PreTxSameIndexToAccountTxids.slice(-1)[0] == PreTxidSameIndex && numtxid < NumPreTxidSameIndex){
+						return 3;
+					}else{
+						return 0;	
 					}
 				}else{
-					return 0;	
-				}
+					return 0;
+				};
 			}
 
 
@@ -719,6 +719,33 @@ exports.Transaction = class{
 
 
 
+			//MerkleRootの相違
+			let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
+			IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
+			if (IndexMerkleRoot != objtx["MerkleRoot"]){
+				return 0;
+			};
+
+
+
+			//ToMerkleRootの相違
+			let ToIndexMerkleRoot = new HASHS.hashs().GetMarkleroot(ToPretxlist);
+			ToIndexMerkleRoot = MAIN.GetFillZero(ToIndexMerkleRoot, 64);
+			if (ToIndexMerkleRoot != objtx["ToMerkleRoot"]){
+				return 0;
+			};
+
+
+			//indexの相違
+			if (pretxlist.length+1 != objtx["index"]){
+				return 0;
+			}
+
+
+			//ToIndexの相違
+			if (ToPretxlist.length+1 != objtx["ToIndex"]){
+				return 0;
+			}
 
 
 			//トランザクション以前での残高の有無
@@ -729,66 +756,20 @@ exports.Transaction = class{
 
 
 
-
 			//時間が不自然
 			let time = Math.floor(Date.now()/1000);
 			if (objtx["time"] >= time){
 				return 0;
 			}
-			if (pretxlist.length > 0 && ResultForSuccess == 1){
+			if (pretxlist.length > 0){
 				let lasttx = exports.GetTx(pretxlist.slice(-1)[0]);
 				if (objtx["time"] <= (await lasttx.GetObjTx())["time"]){
 					return 0;
 				}
 			}
-			if (pretxlist.length > 0 && ResultForSuccess == 2){
-				let lasttx = exports.GetTx(pretxlist.slice(-2,-1)[0]);
-				if (objtx["time"] <= (await lasttx.GetObjTx())["time"]){
-					return 0;
-				}
-			}
 
 
-
-
-
-			//MerkleRootの相違
-			let IndexMerkleRoot = "";
-			if (ResultForSuccess == 1 || ResultForSuccess == 3){
-				IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
-				IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
-			}
-			if (ResultForSuccess == 2){
-				let mpretxlist = pretxlist.slice(0,-1);
-				IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(mpretxlist);
-				IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
-			}
-			if (IndexMerkleRoot != objtx["MerkleRoot"]){
-				return 0;
-			}
-
-
-
-
-
-			//ToMerkleRootの相違
-			let IndexToMerkleRoot = "";
-			if (ResultForSuccess == 1 || ResultForSuccess == 2){
-				IndexToMerkleRoot = new HASHS.hashs().GetMarkleroot(ToPretxlist);
-				IndexToMerkleRoot = MAIN.GetFillZero(IndexToMerkleRoot, 64);
-			}
-			if (ResultForSuccess == 3){
-				let mToPretxlist = ToPretxlist.slice(0,-1);
-				IndexToMerkleRoot = new HASHS.hashs().GetMarkleroot(mToPretxlist);
-				IndexToMerkleRoot = MAIN.GetFillZero(IndexToMerkleRoot, 64);
-			}
-			if (IndexToMerkleRoot != objtx["ToMerkleRoot"]){
-				return 0;
-			}
-
-
-
-			return ResultForSuccess;
+			return 1;
 
 		}catch(e){
 			//console.log(e);
@@ -1081,14 +1062,15 @@ exports.GetTagTxids = async function(tag,LessTime=0){
 exports.SendTransaction = async function(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000),TimeoutToNonceScan=60){
 	type = parseInt(type);
 	amount = parseInt(amount);
+	toaddress = MAIN.GetFillZero(toaddress, 40);
 
 	let TargetAccount = new ACCOUNT.account(privkey);
 	let ToTargetAccount = new ACCOUNT.account(toaddress);
 
-	let FormTxList = await TargetAccount.GetFormTxList(undefined,"pay");
+	let FormTxList = await TargetAccount.GetFormTxList(undefined,tag);
 	let MerkleRoot = new HASHS.hashs().GetMarkleroot(FormTxList);
 
-	let ToFormTxList = await ToTargetAccount.GetFormTxList(undefined,"pay");
+	let ToFormTxList = await ToTargetAccount.GetFormTxList(undefined,tag);
 	let ToMerkleRoot = new HASHS.hashs().GetMarkleroot(ToFormTxList);
 
 	let objtx = {
@@ -1384,24 +1366,29 @@ exports.RunCommit = async function(){
 
 					MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 
-					let txbool = await TargetTransaction.Confirmation();
-					if (txbool == 1){
-						await commit(TargetTransaction);
-					}else if (txbool == 2){
-						let SenderAccountTxids = await TargetTransaction.TargetAccount.GetFormTxList(undefined,objtx["tag"]);
-						let ResetTxid = SenderAccountTxids.slice(-1)[0];
-						let RESETTX = exports.GetTx(ResetTxid);
-						await reset(RESETTX);
-						await commit(TargetTransaction);
-					}else if (txbool == 3){
-						let ToAccountTxids = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
-						let ResetTxid = ToAccountTxids.slice(-1)[0];
-						let RESETTX = exports.GetTx(ResetTxid);
-						await reset(RESETTX);
-						await commit(TargetTransaction);
-					}else{
-						MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
-					}
+					while (true){
+						let txbool = await TargetTransaction.Confirmation();
+						if (txbool == 1){
+							await commit(TargetTransaction);
+							break;
+						}
+						if (txbool == 2){
+							let SenderAccountTxids = await TargetTransaction.TargetAccount.GetFormTxList(undefined,objtx["tag"]);
+							let ResetTxid = SenderAccountTxids.slice(-1)[0];
+							let RESETTX = exports.GetTx(ResetTxid);
+							await reset(RESETTX);
+						}
+						if (txbool == 3){
+							let ToAccountTxids = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
+							let ResetTxid = ToAccountTxids.slice(-1)[0];
+							let RESETTX = exports.GetTx(ResetTxid);
+							await reset(RESETTX);
+						}
+						if (txbool == 0){
+							MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
+							break;
+						}
+					};
 				}catch(e){
 					MAIN.note(2,"RunCommit",e);
 				}

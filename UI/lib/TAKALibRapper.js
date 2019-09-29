@@ -190,6 +190,20 @@ global.TAKA = {
 		};
 
 		async SendTransaction(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000)){
+			function GetFillZero(hex, hexlength){
+				let needzeroffill = hexlength-hex.length;
+				if (needzeroffill > 0){
+					for (var i=needzeroffill;i>0;i--){
+						hex = "0" + hex
+					};
+				};
+
+				return hex;
+			};
+
+			toaddress = GetFillZero(toaddress, 40);
+
+
 			let outthis = this;
 			return new Promise(async function (resolve, reject) {
 
