@@ -650,6 +650,22 @@ exports.Transaction = class{
 
 
 
+
+
+
+
+
+
+
+
+
+
+			/*
+			indexによって変動する条件達
+			同じindexを廃したtxidlistで条件の確認
+			*/
+
+
 			//トランザクション以前での残高の有無
 			if (objtx["tag"] == "pay"){
 				let balance = await TargetAccount.GetBalance(undefined,objtx["index"]);
@@ -660,17 +676,70 @@ exports.Transaction = class{
 
 
 
+			let NoSamePretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["index"]);
+			let NoSameToPretxlist = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"],objtx["ToIndex"]);
 
 
 
+			//MerkleRootの相違
+			let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(NoSamePretxlist);
+			IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
+			if (IndexMerkleRoot != objtx["MerkleRoot"]){
+				return 0;
+			};
 
 
+
+			//ToMerkleRootの相違
+			let ToIndexMerkleRoot = new HASHS.hashs().GetMarkleroot(NoSameToPretxlist);
+			ToIndexMerkleRoot = MAIN.GetFillZero(ToIndexMerkleRoot, 64);
+			if (ToIndexMerkleRoot != objtx["ToMerkleRoot"]){
+				return 0;
+			};
 
 
 
 			//indexの相違
+			if (NoSamePretxlist.length+1 != objtx["index"]){
+				return 0;
+			}
+
+
+			//ToIndexの相違
+			if (NoSameToPretxlist.length+1 != objtx["ToIndex"]){
+				return 0;
+			}
+
+
+
+			//時間が不自然
+			let time = Math.floor(Date.now()/1000);
+			if (objtx["time"] >= time){
+				return 0;
+			}
+			if (NoSamePretxlist.length > 0){
+				let lasttx = exports.GetTx(NoSamePretxlist.slice(-1)[0]);
+				if (objtx["time"] <= (await lasttx.GetObjTx())["time"]){
+					return 0;
+				}
+			}
+
+
+
+
+
+
+
+
+			/*
+			現状のtxlistと比べて相違がないか確認
+			*/
 
 			let pretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"]);
+			let ToPretxlist = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
+
+
+			//indexの相違
 
 			if (pretxlist.length+1 != objtx["index"]){
 				if (pretxlist.length > 0){
@@ -716,7 +785,7 @@ exports.Transaction = class{
 						scores["PreTxSameIndex"] = scores["PreTxSameIndex"] + 2;
 					}
 
-					console.log(scores);
+					//console.log(scores);
 
 					//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
 					//送信主のTAKA量の確認
@@ -735,8 +804,6 @@ exports.Transaction = class{
 
 
 			//ToIndexの相違
-
-			let ToPretxlist = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
 
 			if (ToPretxlist.length+1 != objtx["ToIndex"]){
 				if (ToPretxlist.length > 0){
@@ -773,7 +840,7 @@ exports.Transaction = class{
 					}
 
 
-					console.log(scores);
+					//console.log(scores);
 
 
 					//同じindexに位置する前のtxのsenderとto共にそのtxが先端か確認
@@ -785,66 +852,6 @@ exports.Transaction = class{
 				}else{
 					return 0;
 				};
-			}
-
-
-
-
-
-
-
-
-
-
-
-			/*
-			indexによって変動する条件達
-			リセット完了後に条件が発動される
-			*/
-
-
-
-			//MerkleRootの相違
-			let IndexMerkleRoot = new HASHS.hashs().GetMarkleroot(pretxlist);
-			IndexMerkleRoot = MAIN.GetFillZero(IndexMerkleRoot, 64);
-			if (IndexMerkleRoot != objtx["MerkleRoot"]){
-				return 0;
-			};
-
-
-
-			//ToMerkleRootの相違
-			let ToIndexMerkleRoot = new HASHS.hashs().GetMarkleroot(ToPretxlist);
-			ToIndexMerkleRoot = MAIN.GetFillZero(ToIndexMerkleRoot, 64);
-			if (ToIndexMerkleRoot != objtx["ToMerkleRoot"]){
-				return 0;
-			};
-
-
-			//indexの相違
-			if (pretxlist.length+1 != objtx["index"]){
-				return 0;
-			}
-
-
-			//ToIndexの相違
-			if (ToPretxlist.length+1 != objtx["ToIndex"]){
-				return 0;
-			}
-
-
-
-
-			//時間が不自然
-			let time = Math.floor(Date.now()/1000);
-			if (objtx["time"] >= time){
-				return 0;
-			}
-			if (pretxlist.length > 0){
-				let lasttx = exports.GetTx(pretxlist.slice(-1)[0]);
-				if (objtx["time"] <= (await lasttx.GetObjTx())["time"]){
-					return 0;
-				}
 			}
 
 
@@ -1144,7 +1151,7 @@ exports.GetTagTxids = async function(tag,LessTime=0){
 
 
 
-exports.SendTransaction = async function(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000),BoolUntilConfirmation=true,BoolStartConfirmation=false,TimeoutToNonceScan=60){
+exports.SendTransaction = async function(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000),BoolUntilConfirmation=undefined,BoolStartConfirmation=undefined,TimeoutToNonceScan=undefined){
 	type = parseInt(type);
 	amount = parseInt(amount);
 	toaddress = MAIN.GetFillZero(toaddress, 40);
@@ -1181,8 +1188,8 @@ exports.SendTransaction = async function(privkey,type,tag,toaddress,amount,data,
 
 
 
-exports.SendPayTransaction = async function(privkey,toaddress,amount,BoolUntilConfirmation=true,BoolStartConfirmation=false,TimeoutToNonceScan=60){
-	let result = await exports.SendTransaction(privkey,1,"pay",toaddress,amount,"",undefined,BoolUntilConfirmation,BoolStartConfirmation,TimeoutToNonceScan);
+exports.SendPayTransaction = async function(privkey,toaddress,amount){
+	let result = await exports.SendTransaction(privkey,1,"pay",toaddress,amount,"");
 
 	return result;
 };
