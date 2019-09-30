@@ -232,9 +232,15 @@ exports.RunMining = async function(){
 				let EncryptoPrivkey = TagRewardObjData["EncryptoPrivkey"];
 
 				let RewardPrivkey = new CRYPTO.common().GetDecryptedData(commonkey,EncryptoPrivkey);
-				let RewardAccount = new ACCOUNT.account(RewardPrivkey);
-				let RewardKeys = await RewardAccount.GetKeys();
 
+				let RewardAccount = null;
+				let RewardKeys = null;
+				try{
+					RewardAccount = new ACCOUNT.account(RewardPrivkey);
+					RewardKeys = await RewardAccount.GetKeys();
+				}catch(e){
+					continue;
+				}
 
 				//表記されていたアドレスと違う = 不正 されたことをログに保存
 				if (TagRewardObjData["RewardAddress"] != RewardKeys["address"]){
