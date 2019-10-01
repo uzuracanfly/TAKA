@@ -125,8 +125,20 @@ exports.account = class{
 		}
 
 		if (BoolNeedApproved && result.length > 0){
-			result = result.slice(0,-1);
-		}
+			let lasttxid = result.slice(-1);
+			let LASTTX = TRANSACTION.GetTx(lasttxid);
+			let objtx = await LASTTX.GetObjTx();
+
+			let SenderAccount = new exports.account(objtx["pubkey"]);
+			let SenderAccountTxids = await SenderAccount.GetFormTxList(undefined,objtx["tag"]);
+
+			let ToAccount = new exports.account(objtx["toaddress"]);
+			let ToAccountTxids = await ToAccount.GetFormTxList(undefined,objtx["tag"]);
+
+			if (SenderAccountTxids.slice(-1)[0] == lasttxid && ToAccountTxids.slice(-1)[0] == lasttxid){
+				result = result.slice(0,-1);
+			}
+		};
 
 		return result;
 	};
