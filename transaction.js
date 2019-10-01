@@ -738,6 +738,9 @@ exports.Transaction = class{
 			let pretxlist = await TargetAccount.GetFormTxList(undefined,objtx["tag"]);
 			let ToPretxlist = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
 
+			let SenderBalance = await TargetAccount.GetBalance(undefined,undefined,objtx["time"],1);
+			let ToBalance = await ToTargetAccount.GetBalance(undefined,undefined,objtx["time"],1);
+
 
 			//indexの相違
 
@@ -757,8 +760,11 @@ exports.Transaction = class{
 
 					let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
 					let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
+					let PreTxSameIndexSenderAccountBalance = await PreTxSameIndexSenderAccount.GetBalance(undefined,undefined,PreTxSameIndexObjTx["time"],1);
+
 					let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
 					let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
+					let PreTxSameIndexToAccountBalance = await PreTxSameIndexToAccount.GetBalance(undefined,undefined,PreTxSameIndexObjTx["time"],1);
 
 
 					//Fee宛送金が最優先される
@@ -771,6 +777,7 @@ exports.Transaction = class{
 						}
 					};
 
+
 					//スコアー
 					let scores = {"PreTxSameIndex":0,"TargetTx":0};
 					if (numtxid < NumPreTxidSameIndex){
@@ -779,9 +786,9 @@ exports.Transaction = class{
 						scores["PreTxSameIndex"] = scores["PreTxSameIndex"] + 1;
 					}
 
-					if (objtx["amount"] > PreTxSameIndexObjTx["amount"]){
+					if (SenderBalance+ToBalance > PreTxSameIndexSenderAccountBalance+PreTxSameIndexToAccountBalance){
 						scores["TargetTx"] = scores["TargetTx"] + 2;
-					}else if (objtx["amount"] < PreTxSameIndexObjTx["amount"]){
+					}else if (SenderBalance+ToBalance < PreTxSameIndexSenderAccountBalance+PreTxSameIndexToAccountBalance){
 						scores["PreTxSameIndex"] = scores["PreTxSameIndex"] + 2;
 					}
 
@@ -821,8 +828,11 @@ exports.Transaction = class{
 
 					let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
 					let PreTxSameIndexSenderAccountTxids = await PreTxSameIndexSenderAccount.GetFormTxList(undefined,objtx["tag"]);
+					let PreTxSameIndexSenderAccountBalance = await PreTxSameIndexSenderAccount.GetBalance(undefined,undefined,PreTxSameIndexObjTx["time"],1);
+
 					let PreTxSameIndexToAccount = new ACCOUNT.account(PreTxSameIndexObjTx["toaddress"]);
 					let PreTxSameIndexToAccountTxids = await PreTxSameIndexToAccount.GetFormTxList(undefined,objtx["tag"]);
+					let PreTxSameIndexToAccountBalance = await PreTxSameIndexToAccount.GetBalance(undefined,undefined,PreTxSameIndexObjTx["time"],1);
 
 
 					//スコアー
@@ -833,9 +843,9 @@ exports.Transaction = class{
 						scores["PreTxSameIndex"] = scores["PreTxSameIndex"] + 1;
 					}
 
-					if (objtx["amount"] > PreTxSameIndexObjTx["amount"]){
+					if (SenderBalance+ToBalance > PreTxSameIndexSenderAccountBalance+PreTxSameIndexToAccountBalance){
 						scores["TargetTx"] = scores["TargetTx"] + 2;
-					}else if (objtx["amount"] < PreTxSameIndexObjTx["amount"]){
+					}else if (SenderBalance+ToBalance < PreTxSameIndexSenderAccountBalance+PreTxSameIndexToAccountBalance){
 						scores["PreTxSameIndex"] = scores["PreTxSameIndex"] + 2;
 					}
 

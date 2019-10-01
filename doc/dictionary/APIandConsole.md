@@ -10,7 +10,7 @@ Parameters Information
 # getaccount
 
 ### parameters
-	getaccount [key] [LessIndex]
+	getaccount [key] [LessIndex] [LessTime] [BoolNeedApproved]
 
 ### example
 New account data.

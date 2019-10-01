@@ -96,7 +96,7 @@ exports.account = class{
 
 
 	//アカウントの残高を構成するtxのリスト
-	async GetFormTxList(address="",tag="",LessIndex=0){
+	async GetFormTxList(address="",tag="",LessIndex=0,LessTime=0,BoolNeedApproved=0){
 		await this.SetUpClass();
 		if (!address){
 			address = (await this.GetKeys())["address"];
@@ -111,13 +111,22 @@ exports.account = class{
 		for (let index in TransactionIdsPerAccountAndTag){
 			let txid = TransactionIdsPerAccountAndTag[index];
 
+			let TX = TRANSACTION.GetTx(txid);
+			let objtx = TX.GetObjTx();
+
 			if (LessIndex && result.length+1 >= LessIndex){
 				break;
+			}
+			if (LessTime && objtx["time"] >= LessTime){
+				continue;
 			}
 
 			result.push(txid);
 		}
 
+		if (BoolNeedApproved && result.length > 0){
+			result = result.slice(0,-1);
+		}
 
 		return result;
 	};
@@ -146,13 +155,13 @@ exports.account = class{
 	};
 
 
-	async GetBalance(address="",LessIndex=0){
+	async GetBalance(address="",LessIndex=0,LessTime=0,BoolNeedApproved=0){
 		await this.SetUpClass();
 		if (!address){
 			address = (await this.GetKeys())["address"];
 		}
 
-		let txlist = await this.GetFormTxList(address,"pay",LessIndex);
+		let txlist = await this.GetFormTxList(address,"pay",LessIndex,LessTime,BoolNeedApproved);
 
 		let balance = 0;
 		for (let index in txlist){

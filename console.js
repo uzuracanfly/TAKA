@@ -34,7 +34,15 @@ function CommandAction(commands){
 			if (commands.length >= 3){
 				LessIndex = parseInt(commands[2]);
 			};
-			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"getaccount","args":{"key":key,"LessIndex":LessIndex}});
+			let LessTime = 0;
+			if (commands.length >= 4){
+				LessTime = parseInt(commands[3]);
+			};
+			let BoolNeedApproved = 0;
+			if (commands.length >= 5){
+				BoolNeedApproved = parseInt(commands[4]);
+			};
+			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"getaccount","args":{"key":key,"LessIndex":LessIndex,"LessTime":LessTime,"BoolNeedApproved":BoolNeedApproved}});
 		}else if (commands[0] == "gettag"){
 			let tag = commands[1];
 			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"gettag","args":{"tag":tag}});

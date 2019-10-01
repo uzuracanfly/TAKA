@@ -111,6 +111,16 @@ async function RunAPIMethods(ArgsData,request,response){
 					LessIndex = ArgsData["args"]["LessIndex"];
 				}
 
+				let LessTime = 0;
+				if ("LessTime" in ArgsData["args"] && ArgsData["args"]["LessTime"]){
+					LessTime = ArgsData["args"]["LessTime"];
+				}
+
+				let BoolNeedApproved = 0;
+				if ("BoolNeedApproved" in ArgsData["args"] && ArgsData["args"]["BoolNeedApproved"]){
+					BoolNeedApproved = ArgsData["args"]["BoolNeedApproved"];
+				}
+
 				let TargetAccount = new ACCOUNT.account(key);
 				let keys = await TargetAccount.GetKeys();
 
@@ -119,7 +129,7 @@ async function RunAPIMethods(ArgsData,request,response){
 				let tags = TRANSACTION.GetTags();
 				for (let index in tags){
 					let tag = tags[index];
-					let tagtxs = await TargetAccount.GetFormTxList(undefined,tag,LessIndex);
+					let tagtxs = await TargetAccount.GetFormTxList(undefined,tag,LessIndex,LessTime,BoolNeedApproved);
 					let TagMerkleRoot = new HASHS.hashs().GetMarkleroot(tagtxs);
 
 					txids[tag] = {
@@ -134,7 +144,7 @@ async function RunAPIMethods(ArgsData,request,response){
 					"pubkey":keys["pubkey"],
 					"address":keys["address"],
 					"txids":txids,
-					"balance":await TargetAccount.GetBalance(undefined,LessIndex),
+					"balance":await TargetAccount.GetBalance(undefined,LessIndex,LessTime,BoolNeedApproved),
 				}
 
 				response.write(JSON.stringify(callback));
