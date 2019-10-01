@@ -31,7 +31,7 @@ exports.API = {
 }
 
 
-exports.ImportTags = IMPORTTAGS
+exports.ImportTags = IMPORTTAGS;
 
 
 exports.Tagreward = {

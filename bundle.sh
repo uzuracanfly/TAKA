@@ -1,9 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 
 CONFIGFILE=`cat ./config.js`
+CONFIGSAMPLEFILE=`cat ./config_sample.js`
+
+
+
+
+array=("API_ADDRESS" "API_PORT" "API_ACCESSPOINT" "IMPORTTAGS" "TAGREWARD_MININGTAGS" "TAGREWARD_COLLECTPRIVKEY" "TAGREWARD_CONTROLTAG")
+for var in ${array[@]}
+do
+	CONFIGSAMPLEFILE=${CONFIGSAMPLEFILE//${var}/'""'}
+done
+
 
 rm ./config.js
-echo "" > config.js
+echo "$CONFIGSAMPLEFILE" > config.js
+
 
 sleep 1
 
