@@ -6,11 +6,6 @@ You need Node.js version 10 or higher.
 	curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 	sudo apt-get install -y nodejs
 
-[OPTION] Install browserify For Wab GUI<br>
-[What is browserify?](https://browserify.org/)
-
-	npm install -g browserify
-
 Download TAKA.
 
 	git clone https://github.com/uzuracanfly/TAKA.git

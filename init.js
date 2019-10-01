@@ -89,21 +89,10 @@ const BOOTSTRAP = require('./bootstrap.js');
 				throw e;
 			}
 
-
-			let BundleList = [
-				{"origin":"GetNonceForWeb.js","bundle":"GetNonceForWeb_bundle.js"},
-				{"origin":"UI/lib/ETHCoindRapper.js","bundle":"UI/lib/ETHCoindRapper_bundle.js"},
-				{"origin":"UI/lib/TAKALibRapper.js","bundle":"UI/lib/TAKALibRapper_bundle.js"},
-			];
-			for (let index in BundleList){
-				let BundleData = BundleList[index];
-
-				let child = CP.spawn("browserify",[BundleData["origin"],"-o",BundleData["bundle"]]);
-			};
-
 			console.log("Done!Restart please!");
 			process.exit(0);
 		});
+		return 1;
 	}
 
 
