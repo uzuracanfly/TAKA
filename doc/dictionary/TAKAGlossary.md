@@ -5,7 +5,7 @@ TAKAGlossary
 Individual storage area
 
 ### node
-PCs that make up the network
+Servers that make up the network
 
 ### Smart contract
 Code execution and verification without third party

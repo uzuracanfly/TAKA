@@ -38,6 +38,6 @@ Goal
 
 ### Using function.
 	(async () => {
-		let TAKAKeys = await (new TAKA.ACCOUNT.account("[MinPrivkey or address]")).GetKeys();
-		console.log(TAKAKeys);
+		let balance = await (new TAKA.ACCOUNT.account("[MinPrivkey or address]")).GetBalance();
+		console.log(balance);
 	})();
