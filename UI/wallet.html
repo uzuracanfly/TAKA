@@ -189,11 +189,11 @@ h2 {
 		let ETHAccountData = await GetETHAccount();
 
 		let formargs = [
-			["head","ETH and ETAKA Address"],
+			["head",await GetLangText("ETHとETAKAの入金アドレス","ETH and ETAKA Address")],
 			["text",ETHAccountData["address"]],
-			["head","ETH Balance"],
+			["head",await GetLangText("ETH残高","ETH Balance")],
 			["text",parseInt(ETHAccountData["ETHBalance"])/(10**18)],
-			["head","ETAKA Balance"],
+			["head",await GetLangText("ETAKA残高","ETAKA Balance")],
 			["text",ETHAccountData["ETAKABalance"]],
 			[
 				"button",
@@ -203,22 +203,29 @@ h2 {
 					let ETAKAToTAKAForm = new form(
 						[
 							["title","ETAKA => TAKA"],
-							["input","amount","amount"],
+							["input",await GetLangText("数量","amount"),"amount"],
 							[
 								"button",
 								"Done",
 								async function()
 								{
+									let TopLoadForm = new form(
+										[
+											["title",await GetLangText("送金中.....","Sending.....")]
+										],
+										"TopLoadForm"
+									);
 
 									let result = await ExchangeETAKAToTAKA(ETHAccountData["ETAKABalance"]);
+									TopLoadForm.DeleteForm();
 									if (result == 1){
 										let TopLoadForm = new form(
 											[
-												["title","Ordered."],
+												["title",await GetLangText("申請しました。","Ordered.")],
 												[
 													"button",
 													"Done",
-													function()
+													async function()
 													{
 														TopLoadForm.DeleteForm();
 													}
@@ -229,12 +236,12 @@ h2 {
 									}else if (result == 2){
 										let TopLoadForm = new form(
 											[
-												["title","Error."],
-												["text","The currency to be exchanged is not prepared."],
+												["title",await GetLangText("失敗","Error.")],
+												["text",await GetLangText("交換する通貨は準備されていません。","The currency to be exchanged is not prepared.")],
 												[
 													"button",
 													"Done",
-													function()
+													async function()
 													{
 														TopLoadForm.DeleteForm();
 													}
@@ -245,12 +252,12 @@ h2 {
 									}else if (result == 3){
 										let TopLoadForm = new form(
 											[
-												["title","Error."],
-												["text","Low ETH or ETAKA."],
+												["title",await GetLangText("失敗","Error.")],
+												["text",await GetLangText("ETHまたはETAKAが不足しています。","Low ETH or ETAKA.")],
 												[
 													"button",
 													"Done",
-													function()
+													async function()
 													{
 														TopLoadForm.DeleteForm();
 													}
@@ -282,15 +289,23 @@ h2 {
 								"Done",
 								async function()
 								{
+									let TopLoadForm = new form(
+										[
+											["title",await GetLangText("送金中.....","Sending.....")]
+										],
+										"TopLoadForm"
+									);
+
 									let result = await ExchangeTAKAToETAKA(TAKABalance);
+									TopLoadForm.DeleteForm();
 									if (result == 1){
 										let TopLoadForm = new form(
 											[
-												["title","Ordered."],
+												["title",await GetLangText("申請しました。","Ordered.")],
 												[
 													"button",
 													"Done",
-													function()
+													async function()
 													{
 														TopLoadForm.DeleteForm();
 													}
@@ -301,12 +316,12 @@ h2 {
 									}else if (result == 2){
 										let TopLoadForm = new form(
 											[
-												["title","Error."],
+												["title",await GetLangText("失敗","Error.")],
 												["text","The currency to be exchanged is not prepared."],
 												[
 													"button",
 													"Done",
-													function()
+													async function()
 													{
 														TopLoadForm.DeleteForm();
 													}
@@ -317,12 +332,12 @@ h2 {
 									}else if (result == 3){
 										let TopLoadForm = new form(
 											[
-												["title","Error."],
-												["text","Low TAKA."],
+												["title",await GetLangText("失敗","Error.")],
+												["text",await GetLangText("ETHまたはETAKAが不足しています。","Low ETH or ETAKA.")],
 												[
 													"button",
 													"Done",
-													function()
+													async function()
 													{
 														TopLoadForm.DeleteForm();
 													}
@@ -341,14 +356,14 @@ h2 {
 			],
 			[
 				"button",
-				"Withdraw ETAKA",
+				await GetLangText("ETAKA出金","Withdraw ETAKA"),
 				async function()
 				{
 					let WithdrawETAKAForm = new form(
 						[
-							["title","Withdraw ETAKA"],
-							["input","toaddress","toaddress"],
-							["input","amount","amount"],
+							["title",await GetLangText("ETAKA出金","Withdraw ETAKA")],
+							["input",await GetLangText("送金先アドレス","toaddress"),"toaddress"],
+							["input",await GetLangText("数量","amount"),"amount"],
 							[
 								"button",
 								"Done",
@@ -358,19 +373,28 @@ h2 {
 									let amount = document.getElementById("amount").value;
 									amount = parseInt(amount);
 
+
+									let TopLoadForm = new form(
+										[
+											["title",await GetLangText("送金中.....","Sending.....")]
+										],
+										"TopLoadForm"
+									);
 									let ETHPrivkey = new TAKA.HASHS.hashs().sha256(account["privkey"]);
 									let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
 
 									let txid = await COIND.SendToken(toaddress,amount);
 
+									TopLoadForm.DeleteForm();
+
 									let ResultForm = new form(
 										[
-											["title","Result"],
+											["title",await GetLangText("結果","Result")],
 											["input",txid],
 											[
 												"button",
 												"Done",
-												function()
+												async function()
 												{
 													ResultForm.DeleteForm();
 													WithdrawETAKAForm.DeleteForm();
@@ -386,7 +410,7 @@ h2 {
 					);
 				}
 			],
-			["head","TAKA Balance"],
+			["head",await GetLangText("TAKA残高","TAKA Balance")],
 			["text",TAKABalance],
 		];
 
@@ -396,6 +420,22 @@ h2 {
 			"ExchangeFormIndex"
 		);
 	};
+
+
+	async function GetLangText(JPtext,ENtext){
+		let lang = GetGetVars()["lang"];
+		if (!lang){
+			lang = "EN";
+		}
+
+		if (lang == "JP"){
+			return JPtext;
+		}
+		if (lang == "EN"){
+			return ENtext;
+		}
+	}
+
 
 
 
@@ -428,21 +468,21 @@ h2 {
 			0,
 			async function(CallbackResult,CallbackArgs){
 				let formargs = [
-					["head","Address"],
+					["head",await GetLangText("入金アドレス","Address")],
 					["text",account["address"]],
-					["head","Balance"],
+					["head",await GetLangText("残高","Balance")],
 					["text",CallbackResult["balance"]],
-					["head","Action"],
+					["head",await GetLangText("アクション","Action")],
 					[
 						"download",
-						"Save KeyFile",
+						await GetLangText("KeyFile 保存","Save KeyFile"),
 						"TAKA_KeyFile_"+account["address"]+".json",
 						"text/plain",
 						JSON.stringify(account)
 					],
 					[
 						"button",
-						"Exchange ETAKA <=> TAKA",
+						await GetLangText("交換 ETAKA <=> TAKA","Exchange ETAKA <=> TAKA"),
 						async function()
 						{
 							ExchangeForm(CallbackResult["balance"]);
@@ -450,17 +490,17 @@ h2 {
 					],
 					[
 						"button",
-						"Withdraw",
-						function()
+						await GetLangText("出金","Withdraw"),
+						async function()
 						{
 							let formargs = [
-								["title","Withdraw"],
-								["input","toaddress","toaddress"],
-								["input","amount","amount"],
+								["title",await GetLangText("出金","Withdraw")],
+								["input",await GetLangText("送金先アドレス","toaddress"),"toaddress"],
+								["input",await GetLangText("数量","amount"),"amount"],
 								[
 									"button",
 									"send",
-									function()
+									async function()
 									{
 										let toaddress = document.getElementById("toaddress").value;
 										let amount = document.getElementById("amount").value;
@@ -473,34 +513,34 @@ h2 {
 										//送信ロード画面
 										let TopLoadForm = new form(
 											[
-												["title","Sending....."]
+												["title",await GetLangText("送金中.....","Sending.....")]
 											],
 											"TopLoadForm"
 										);
 
 
-										result.then(function(TxResult){
+										result.then(async function(TxResult){
 											TopLoadForm.DeleteForm();
 
 											let TopResultForm = new form(
 												[
-													["title","Result"],
-													["head","Result"],
-													["input","result","result"],
+													["title",await GetLangText("結果","Result")],
+													["head",await GetLangText("結果","Result")],
+													["input",await GetLangText("結果","Result"),"result"],
 													[
 														"button",
-														"State",
-														function()
+														await GetLangText("状況確認","State"),
+														async function()
 														{
 															window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 														}
 													],
-													["head","RawTx"],
-													["input","rawtx","rawtx"],
+													["head",await GetLangText("生トランザクションデータ","RawTx")],
+													["input",await GetLangText("生トランザクションデータ","RawTx"),"rawtx"],
 													[
 														"button",
 														"Done",
-														function()
+														async function()
 														{
 															TopResultForm.DeleteForm();
 															TopWithdrawForm.DeleteForm();
@@ -526,22 +566,22 @@ h2 {
 					],
 					[
 						"button",
-						"Tag Order",
-						function()
+						await GetLangText("タグ申請","Tag Order"),
+						async function()
 						{
 							let TopTagOrderForm = new form(
 								[
-									["title","Tag Order"],
+									["title",await GetLangText("タグ申請","Tag Order")],
 									["input","tag","tag"],
-									["select","permissiontype",[["Permission Type",0],["Any account can add transactions.",0],["Owner only",1],["Only accounts added with 'TagAddPermit'",2]]],
-									["input","[OPTION] Pow Target (ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)","powtarget"],
-									["input","[OPTION] Data MaxSize In Byte (10000)","DataMaxSizeInByte"],
-									["input","[OPTION] Fee To Address","FeeToAddress"],
-									["input","[OPTION] Fee Amount","FeeAmount"],
+									["select","permissiontype",[[await GetLangText("すべてのアカウントがトランザクション追加可能","Any account can add transactions."),0],[await GetLangText("タグのオーナーのみトランザクション追加可能","Owner only"),1],[await GetLangText("'TagAddPermit'で加えられたアカウントのみトランザクション追加可能","Only accounts added with 'TagAddPermit'"),2]]],
+									["input",await GetLangText("[オプション] POWの難易度 (ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)","[OPTION] Pow Target (ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)"),"powtarget"],
+									["input",await GetLangText("[オプション] 最大データサイズ (10000)","[OPTION] Data MaxSize In Byte (10000)"),"DataMaxSizeInByte"],
+									["input",await GetLangText("[オプション] トランザクション生成時手数料を回収するアドレス","[OPTION] Fee To Address"),"FeeToAddress"],
+									["input",await GetLangText("[オプション] トランザクション生成時手数料","[OPTION] Fee Amount"),"FeeAmount"],
 									[
 										"button",
 										"send",
-										function()
+										async function()
 										{
 											let tag = document.getElementById("tag").value;
 											let permissiontype = parseInt(document.getElementById("permissiontype").value);
@@ -588,33 +628,33 @@ h2 {
 
 											TopLoadForm = new form(
 												[
-													["title","Sending....."]
+													["title",await GetLangText("送金中.....","Sending.....")]
 												],
 												"TopLoadForm"
 											);
 
-											result.then(function(TxResult){
+											result.then(async function(TxResult){
 												TopLoadForm.DeleteForm();
 
 												let TopResultForm = new form(
 													[
-														["title","Result"],
-														["head","Result"],
-														["input","result","result"],
+														["title",await GetLangText("結果","Result")],
+														["head",await GetLangText("結果","Result")],
+														["input",await GetLangText("結果","Result"),"result"],
 														[
 															"button",
-															"State",
-															function()
+															await GetLangText("状況確認","State"),
+															async function()
 															{
 																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 															}
 														],
-														["head","RawTx"],
-														["input","rawtx","rawtx"],
+														["head",await GetLangText("生トランザクションデータ","RawTx")],
+														["input",await GetLangText("生トランザクションデータ","RawTx"),"rawtx"],
 														[
 															"button",
 															"Done",
-															function()
+															async function()
 															{
 																TopResultForm.DeleteForm();
 																TopTagOrderForm.DeleteForm();
@@ -626,7 +666,7 @@ h2 {
 
 												document.getElementById("result").value = TxResult["txid"];
 												document.getElementById("rawtx").value = TxResult["rawtx"];
-											}).catch(function(e){
+											}).catch(async function(e){
 												console.log(e);
 											});
 										}
@@ -638,15 +678,15 @@ h2 {
 					],
 					[
 						"button",
-						"Tag Reward",
-						function()
+						await GetLangText("タグ報酬","Tag Reward"),
+						async function()
 						{
 							let TopTagrewardForm = new form(
 								[
-									["title","Tag Reward"],
-									["text","You can pay reward for node administrator keeping the specified tag."],
+									["title",await GetLangText("タグ報酬","Tag Reward")],
+									["text",await GetLangText("選択したタグのデータを保持しているノード管理者に報酬を支払う","You can pay reward for node administrator keeping the specified tag.")],
 									["input","tag","tag"],
-									["input","amount","amount"],
+									["input",await GetLangText("数量","amount"),"amount"],
 									[
 										"button",
 										"send",
@@ -662,7 +702,7 @@ h2 {
 											//送信ロード画面
 											let TopLoadForm = new form(
 												[
-													["title","Sending....."]
+													["title",await GetLangText("送金中.....","Sending.....")]
 												],
 												"TopLoadForm"
 											);
@@ -671,12 +711,12 @@ h2 {
 											let result = TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay",RewardPrivkeyKeys["address"],amount,"");
 
 
-											result.then(function(FeeTxResult){
+											result.then(async function(FeeTxResult){
 												TopLoadForm.DeleteForm();
 												if (!FeeTxResult || !FeeTxResult["txid"]){
 													let TopFailForm = new form(
 														[
-															["title","FAIL"]
+															["title",await GetLangText("失敗","FAIL")]
 														],
 														"TopFailForm"
 													);
@@ -698,7 +738,7 @@ h2 {
 												if (!commonkey){
 													let TopFailForm = new form(
 														[
-															["title","FAIL"]
+															["title",await GetLangText("失敗","FAIL")]
 														],
 														"TopFailForm"
 													);
@@ -723,7 +763,7 @@ h2 {
 
 												TopLoadForm = new form(
 													[
-														["title","Sending....."]
+														["title",await GetLangText("送金中.....","Sending.....")]
 													],
 													"TopLoadForm"
 												);
@@ -733,28 +773,28 @@ h2 {
 
 
 												///Tagrewardの結果発表
-												TagrewardResult.then(function(TxResult){
+												TagrewardResult.then(async function(TxResult){
 													TopLoadForm.DeleteForm();
 
 													let TopResultForm = new form(
 														[
-															["title","Result"],
-															["head","Result"],
-															["input","result","result"],
+															["title",await GetLangText("結果","Result")],
+															["head",await GetLangText("結果","Result")],
+															["input",await GetLangText("結果","Result"),"result"],
 															[
 																"button",
-																"State",
-																function()
+																await GetLangText("状況確認","State"),
+																async function()
 																{
 																	window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 																}
 															],
-															["head","RawTx"],
-															["input","rawtx","rawtx"],
+															["head",await GetLangText("生トランザクションデータ","RawTx")],
+															["input",await GetLangText("生トランザクションデータ","RawTx"),"rawtx"],
 															[
 																"button",
 																"Done",
-																function()
+																async function()
 																{
 																	TopResultForm.DeleteForm();
 																	TopTagrewardForm.DeleteForm();
@@ -766,11 +806,11 @@ h2 {
 
 													document.getElementById("result").value = TxResult["txid"];
 													document.getElementById("rawtx").value = TxResult["rawtx"];
-												}).catch(function(e){
+												}).catch(async function(e){
 													console.log(e);
 												});
 
-											}).catch(function(e){
+											}).catch(async function(e){
 												console.log(e);
 											});
 										}
@@ -782,19 +822,19 @@ h2 {
 					],
 					[
 						"button",
-						"Tag Add Permit",
-						function()
+						await GetLangText("タグ権限追加","Tag Add Permit"),
+						async function()
 						{
 							let TopTagAddpermForm = new form(
 								[
-									["title","Tag Add Permit"],
-									["text","If 'permissiontype' is set to 2 at the time of 'tagorder', only 'tagaddpermit' users can send transactions.Even if 'permissiontype' is other than 2, only users who have 'tagaddpermit' for 'Set Contract Transaction' can send transactions."],
+									["title",await GetLangText("タグ権限追加","Tag Add Permit")],
+									["text",await GetLangText("tagorderの時に権限タイプを2にした場合'tagaddpermit'で追加したアカウントのみトランザクションを生成できます。また権限タイプが2以外であっても'Set Contract Transaction'は'tagaddpermit'で加えられたアカウントのみトランザクション追加が可能です。","If 'permissiontype' is set to 2 at the time of 'tagorder', only 'tagaddpermit' users can send transactions.Even if 'permissiontype' is other than 2, only users who have 'tagaddpermit' for 'Set Contract Transaction' can send transactions.")],
 									["input","tag","tag"],
-									["input","Add address","addaddress"],
+									["input",await GetLangText("追加するアドレス","Add address"),"addaddress"],
 									[
 										"button",
 										"send",
-										function()
+										async function()
 										{
 											let tag = document.getElementById("tag").value;
 											let addaddress = document.getElementById("addaddress").value;
@@ -814,33 +854,33 @@ h2 {
 											//送信ロード画面
 											let TopLoadForm = new form(
 												[
-													["title","Sending....."]
+													["title",await GetLangText("送金中.....","Sending.....")]
 												],
 												"TopLoadForm"
 											);
 
-											result.then(function(TxResult){
+											result.then(async function(TxResult){
 												TopLoadForm.DeleteForm();
 
 												let TopResultForm = new form(
 													[
-														["title","Result"],
-														["head","Result"],
-														["input","result","result"],
+														["title",await GetLangText("結果","Result")],
+														["head",await GetLangText("結果","Result")],
+														["input",await GetLangText("結果","Result"),"result"],
 														[
 															"button",
-															"State",
-															function()
+															await GetLangText("状況確認","State"),
+															async function()
 															{
 																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 															}
 														],
-														["head","RawTx"],
-														["input","rawtx","rawtx"],
+														["head",await GetLangText("生トランザクションデータ","RawTx")],
+														["input",await GetLangText("生トランザクションデータ","RawTx"),"rawtx"],
 														[
 															"button",
 															"Done",
-															function()
+															async function()
 															{
 																TopResultForm.DeleteForm();
 																TopTagOrderForm.DeleteForm();
@@ -853,7 +893,7 @@ h2 {
 												document.getElementById("result").value = TxResult["txid"];
 												document.getElementById("rawtx").value = TxResult["rawtx"];
 
-											}).catch(function(e){
+											}).catch(async function(e){
 												console.log(e);
 											});
 
@@ -867,20 +907,20 @@ h2 {
 					],
 					[
 						"button",
-						"Database",
-						function()
+						await GetLangText("データベース","Database"),
+						async function()
 						{
 							let TopDatabaseForm = new form(
 								[
-									["title","Database"],
+									["title",await GetLangText("データベース","Database")],
 									["input","tag","tag"],
 									["input","data","data"],
-									["input","[OPTION] Add Address Index","AddAddressIndex"],
-									["input","[OPTION] commonkey (hex only)","commonkey"],
+									["input",await GetLangText("[オプション] indexを追加するアドレス","[OPTION] Add Address Index"),"AddAddressIndex"],
+									["input",await GetLangText("[オプション] 共通鍵","[OPTION] commonkey (hex only)"),"commonkey"],
 									[
 										"button",
 										"send",
-										function()
+										async function()
 										{
 
 
@@ -899,33 +939,33 @@ h2 {
 											//送信ロード画面
 											let TopLoadForm = new form(
 												[
-													["title","Sending....."]
+													["title",await GetLangText("送金中.....","Sending.....")]
 												],
 												"TopLoadForm"
 											);
 
-											result.then(function(TxResult){
+											result.then(async function(TxResult){
 												TopLoadForm.DeleteForm();
 
 												let TopResultForm = new form(
 													[
-														["title","Result"],
-														["head","Result"],
-														["input","result","result"],
+														["title",await GetLangText("結果","Result")],
+														["head",await GetLangText("結果","Result")],
+														["input",await GetLangText("結果","Result"),"result"],
 														[
 															"button",
-															"State",
-															function()
+															await GetLangText("状況確認","State"),
+															async function()
 															{
 																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 															}
 														],
-														["head","RawTx"],
-														["input","rawtx","rawtx"],
+														["head",await GetLangText("生トランザクションデータ","RawTx")],
+														["input",await GetLangText("生トランザクションデータ","RawTx"),"rawtx"],
 														[
 															"button",
 															"Done",
-															function()
+															async function()
 															{
 																TopResultForm.DeleteForm();
 																TopDatabaseForm.DeleteForm();
@@ -938,7 +978,7 @@ h2 {
 												document.getElementById("result").value = TxResult["txid"];
 												document.getElementById("rawtx").value = TxResult["rawtx"];
 												
-											}).catch(function(e){
+											}).catch(async function(e){
 												console.log(e);
 											});
 
@@ -952,20 +992,20 @@ h2 {
 					],
 					[
 						"button",
-						"Send Set Contract Transaction",
-						function()
+						await GetLangText("コントラクト関数設定","Send Set Contract Transaction"),
+						async function()
 						{
 							let SendSetContractTransactionForm = new form(
 								[
-									["title","Send Set Contract Transaction"],
+									["title",await GetLangText("コントラクト関数設定","Send Set Contract Transaction")],
 									["input","tag","tag"],
-									["input","FunctionName","FunctionName"],
+									["input",await GetLangText("関数名","FunctionName"),"FunctionName"],
 									["select","CodeType",[["JavaScript",1]]],
-									["textblog","CodeData","CodeData"],
+									["textblog",await GetLangText("ソースコード","CodeData"),"CodeData"],
 									[
 										"button",
 										"send",
-										function()
+										async function()
 										{
 
 
@@ -990,33 +1030,33 @@ h2 {
 											//送信ロード画面
 											let TopLoadForm = new form(
 												[
-													["title","Sending....."]
+													["title",await GetLangText("送金中.....","Sending.....")]
 												],
 												"TopLoadForm"
 											);
 
-											result.then(function(TxResult){
+											result.then(async function(TxResult){
 												TopLoadForm.DeleteForm();
 
 												let TopResultForm = new form(
 													[
-														["title","Result"],
-														["head","Result"],
-														["input","result","result"],
+														["title",await GetLangText("結果","Result")],
+														["head",await GetLangText("結果","Result")],
+														["input",await GetLangText("結果","Result"),"result"],
 														[
 															"button",
-															"State",
-															function()
+															await GetLangText("状況確認","State"),
+															async function()
 															{
 																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 															}
 														],
-														["head","RawTx"],
-														["input","rawtx","rawtx"],
+														["head",await GetLangText("生トランザクションデータ","RawTx")],
+														["input",await GetLangText("生トランザクションデータ","RawTx"),"rawtx"],
 														[
 															"button",
 															"Done",
-															function()
+															async function()
 															{
 																TopResultForm.DeleteForm();
 																SendSetContractTransactionForm.DeleteForm();
@@ -1029,7 +1069,7 @@ h2 {
 												document.getElementById("result").value = TxResult["txid"];
 												document.getElementById("rawtx").value = TxResult["rawtx"];
 												
-											}).catch(function(e){
+											}).catch(async function(e){
 												console.log(e);
 											});
 
@@ -1043,20 +1083,20 @@ h2 {
 					],
 					[
 						"button",
-						"Send Run Contract Transaction",
-						function()
+						await GetLangText("コントラクト関数実行","Send Run Contract Transaction"),
+						async function()
 						{
 							let SendRunContractTransactionForm = new form(
 								[
-									["title","Send Run Contract Transaction"],
+									["title",await GetLangText("コントラクト関数実行","Send Run Contract Transaction")],
 									["input","tag","tag"],
-									["input","FunctionName","FunctionName"],
-									["input",'FunctionArgs ({"toaddress":"80ba149c1e71ca4576198998418bc47d4e297ab2","amount":1})',"FunctionArgs"],
-									["input","[OPTION] Add Address Index","AddAddressIndex"],
+									["input",await GetLangText("関数名","FunctionName"),"FunctionName"],
+									["input",await GetLangText('引数 ({"toaddress":"80ba149c1e71ca4576198998418bc47d4e297ab2","amount":1})','FunctionArgs ({"toaddress":"80ba149c1e71ca4576198998418bc47d4e297ab2","amount":1})'),"FunctionArgs"],
+									["input",await GetLangText("[オプション] indexを追加するアドレス","[OPTION] Add Address Index"),"AddAddressIndex"],
 									[
 										"button",
 										"send",
-										function()
+										async function()
 										{
 											let address = account["address"];
 											let tag = document.getElementById("tag").value;
@@ -1084,33 +1124,33 @@ h2 {
 											//送信ロード画面
 											let TopLoadForm = new form(
 												[
-													["title","Sending....."]
+													["title",await GetLangText("送金中.....","Sending.....")]
 												],
 												"TopLoadForm"
 											);
 
-											result.then(function(TxResult){
+											result.then(async function(TxResult){
 												TopLoadForm.DeleteForm();
 
 												let TopResultForm = new form(
 													[
-														["title","Result"],
-														["head","Result"],
-														["input","result","result"],
+														["title",await GetLangText("結果","Result")],
+														["head",await GetLangText("結果","Result")],
+														["input",await GetLangText("結果","Result"),"result"],
 														[
 															"button",
-															"State",
-															function()
+															await GetLangText("状況確認","State"),
+															async function()
 															{
 																window.open(location.protocol+'//'+location.hostname+'/explorer?page=tx&txid='+TxResult["txid"], '_blank');
 															}
 														],
-														["head","RawTx"],
-														["input","rawtx","rawtx"],
+														["head",await GetLangText("生トランザクションデータ","RawTx")],
+														["input",await GetLangText("生トランザクションデータ","RawTx"),"rawtx"],
 														[
 															"button",
 															"Done",
-															function()
+															async function()
 															{
 																TopResultForm.DeleteForm();
 																SendRunContractTransactionForm.DeleteForm();
@@ -1123,7 +1163,7 @@ h2 {
 												document.getElementById("result").value = TxResult["txid"];
 												document.getElementById("rawtx").value = TxResult["rawtx"];
 												
-											}).catch(function(e){
+											}).catch(async function(e){
 												console.log(e);
 											});
 
@@ -1137,21 +1177,21 @@ h2 {
 					],
 					[
 						"button",
-						"Call Run Contract Transaction",
-						function()
+						await GetLangText("コントラクト関数呼び出し","Call Run Contract Transaction"),
+						async function()
 						{
 							let CallRunContractTransactionForm = new form(
 								[
-									["title","Call Run Contract Transaction"],
+									["title",await GetLangText("コントラクト関数呼び出し","Call Run Contract Transaction")],
 									["input","tag","tag"],
-									["input","FunctionName","FunctionName"],
-									["input",'FunctionArgs ({})',"FunctionArgs"],
-									["input","[OPTION] Address Indexs ([])","AddressIndexs"],
-									["select","lastonly",[["[OPTION] Last Only",0],["Do not use only the last tx of the tx or tag specified by indexs.",0],["Use only the last tx of the tx or tag specified by indexs.",1]]],
+									["input",await GetLangText("関数名","FunctionName"),"FunctionName"],
+									["input",await GetLangText('引数 ({})','FunctionArgs ({})'),"FunctionArgs"],
+									["input",await GetLangText("[オプション] 参照するindexのアドレスリスト ([])","[OPTION] Address Indexs ([])"),"AddressIndexs"],
+									["select","lastonly",[[await GetLangText("すべてのトランザクション参照","Do not use only the last tx of the tx or tag specified by indexs."),0],[await GetLangText("最近のトランザクションのみ参照","Use only the last tx of the tx or tag specified by indexs."),1]]],
 									[
 										"button",
 										"send",
-										function()
+										async function()
 										{
 											let address = account["address"];
 											let tag = document.getElementById("tag").value;
@@ -1177,15 +1217,15 @@ h2 {
 
 											let TopResultForm = new form(
 												[
-													["title","Result"],
-													["head","Result"],
-													["input","result","result"],
-													["head","RawTx"],
-													["input","rawtx","rawtx"],
+													["title",await GetLangText("結果","Result")],
+													["head",await GetLangText("結果","Result")],
+													["input",await GetLangText("結果","Result"),"result"],
+													["head",await GetLangText("生トランザクションデータ","RawTx")],
+													["input",await GetLangText("生トランザクションデータ","RawTx"),"rawtx"],
 													[
 														"button",
 														"Done",
-														function()
+														async function()
 														{
 															TopResultForm.DeleteForm();
 															CallRunContractTransactionForm.DeleteForm();
@@ -1228,10 +1268,22 @@ h2 {
 
 
 <script>
-	window.onload = function(){
+	window.onload = async function(){
 		document.body.style.color = "rgba(0,0,0,1)";
 		document.body.style.backgroundColor = "rgba(255,127,0,1)";
 
+
+
+		if (!("lang" in GetGetVars())){
+			let LangSelect = new form(
+				[
+					["title","What language is used?"],
+					["button_img","lib/United-Kingdom",function(){window.location.href = location.protocol+'//'+location.hostname+'/wallet?lang=EN';},"100px"],
+					["button_img","lib/Japan",function(){window.location.href = location.protocol+'//'+location.hostname+'/wallet?lang=JP';},"100px"],
+				],
+				"LangSelect",
+			);
+		};
 
 
 
@@ -1263,7 +1315,7 @@ h2 {
 			}
 		);
 		var IntervalID_EleLoginInner = setInterval(
-			function()
+			async function()
 			{
 				if (document.getElementById("EleLoginInner") == null){clearInterval(IntervalID_EleLoginInner);return 0;};
 
@@ -1296,7 +1348,7 @@ h2 {
 				"class":"btn-border-bottom",
 				"height":"50px",
 				"width":"100%",
-				"innerHTML":"Login",
+				"innerHTML":await GetLangText("ログイン","Login"),
 				"textAlign":"center",
 				"clickfunction":async function(){
 					let privkey = document.getElementById("privkey").value;
@@ -1317,12 +1369,12 @@ h2 {
 				"class":"btn-border-bottom",
 				"height":"50px",
 				"width":"100%",
-				"innerHTML":"KeyFile Load",
+				"innerHTML":await GetLangText("KeyFileを開く","Load KeyFile"),
 				"textAlign":"center",
 				"clickfunction":async function(){
 					let FORMACTION = new form(
 						[
-							["title","Load KeyFile"],
+							["title",await GetLangText("KeyFileを開く","Load KeyFile")],
 							["file","FileData"],
 							[
 								"button",
@@ -1353,30 +1405,28 @@ h2 {
 				"class":"btn-border-bottom",
 				"height":"50px",
 				"width":"100%",
-				"innerHTML":"NewAccount",
+				"innerHTML":await GetLangText("新アカウント","NewAccount"),
 				"textAlign":"center",
 				"clickfunction":async function(){
 					let keys = await (new TAKA.ACCOUNT.account()).GetKeys();
 
 					let LoginNewAccountForm = new form(
 						[
-							["title","New Account"],
+							["title",await GetLangText("新アカウント","NewAccount")],
 							[
 								"download",
-								"Save KeyFile",
+								await GetLangText("KeyFile保存","Save KeyFile"),
 								"TAKA_KeyFile_"+keys["address"]+".json",
 								"text/plain",
 								JSON.stringify(keys)
 							],
 							["head","MinPrivkey"],
-							["text","SAVE THIS! AND NOT BE SHOWN TO PEOPLE!"],
 							["input","MinPrivkey","MinPrivkey"],
 							["head","Privkey"],
 							["input","privkey","mprivkey"],
 							["head","Pubkey"],
 							["input","pubkey","pubkey"],
 							["head","Address"],
-							["text","THIS IS USING RECEIVE COINS! YOU CAN SHOW THIS!"],
 							["input","address","address"],
 						],
 						"LoginNewAccountForm"
