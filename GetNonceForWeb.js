@@ -43,8 +43,6 @@ onmessage = async function(e) {
 					break;
 				}
 			};
-
-			await MAIN.sleep(0.01);
 		};
 	}catch(e){
 		console.log(e.message)

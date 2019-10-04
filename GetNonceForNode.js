@@ -45,8 +45,6 @@ process.on('message', async function(args) {
 					break;
 				}
 			};
-
-			await MAIN.sleep(0.01);
 		};
 	}catch(e){
 		console.log(e.message);
