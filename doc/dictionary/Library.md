@@ -80,35 +80,12 @@ Get keys of class argument key.
 
 
 
-# TAKA.TRANSACTIONTOOLS_CONTRACT
-
-### TAKA.TRANSACTIONTOOLS_CONTRACT.SetFunctionData(rawdata="",objdata={});
-
-	let objdata = {
-		"FunctionName":FunctionName,
-		"CodeType":CodeType,
-		"CodeData":CodeData,
-	};
-	const SETFUNCTIONDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.SetFunctionData("",objdata);
-
-
-#### SETFUNCTIONDATA.GetRawData()
-
-	console.log(SETFUNCTIONDATA.GetRawData());
-
-#### SETFUNCTIONDATA.GetObjData()
-
-	console.log(SETFUNCTIONDATA.GetObjData());
-
-
-
-
-
-
-
 
 ### TAKA.TRANSACTIONTOOLS_CONTRACT.RunFunctionData(rawdata="",objdata={});
 
+	
+	const TAKAAPI = new TAKA.API("https://neko.taka.site");
+	let ResultPlan = TAKAAPI.RunCode(address,tag,FunctionName,FunctionArgs,AddressIndexs=[],lastonly=false);
 	let objdata = {
 		"FunctionName":FunctionName,
 		"FunctionArgs":FunctionArgs,
@@ -116,6 +93,7 @@ Get keys of class argument key.
 		"SetData":ResultPlan["SetData"],
 	};
 	const RUNFUNCTIONDATA = new TAKA.TRANSACTIONTOOLS_CONTRACT.RunFunctionData("",objdata);
+
 
 #### RUNFUNCTIONDATA.GetRawData()
 
@@ -136,7 +114,7 @@ Get keys of class argument key.
 
 ### TAKA.TRANSACTION.transaction(rawtx="",privkey="",objtx="")
 
-	const TRANSACTION = new TAKA.TRANSACTION.transaction(rawtx="",privkey="",objtx="");
+	const TX = new TAKA.TRANSACTION.transaction(rawtx="",privkey="",objtx="");
 
 #### TRANSACTION.GetRawTx()
 
