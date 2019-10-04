@@ -421,7 +421,7 @@ h2 {
 				await GetLangText("ETH出金","Withdraw ETH"),
 				async function()
 				{
-					let WithdrawETAKAForm = new form(
+					let WithdrawETHForm = new form(
 						[
 							["title",await GetLangText("ETAKA出金","Withdraw ETH")],
 							["input",await GetLangText("送金先アドレス","toaddress"),"toaddress"],
@@ -459,7 +459,7 @@ h2 {
 												async function()
 												{
 													ResultForm.DeleteForm();
-													WithdrawETAKAForm.DeleteForm();
+													WithdrawETHForm.DeleteForm();
 												}
 											]
 										],
@@ -468,7 +468,7 @@ h2 {
 								}
 							],
 						],
-						"WithdrawETAKAForm"
+						"WithdrawETHForm"
 					);
 				}
 			],
