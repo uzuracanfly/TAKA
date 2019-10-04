@@ -32,19 +32,23 @@ Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA
 
 
 
+# TAKA.API(apiurl)
 
+	const TAKAAPI = new TAKA.API("https://neko.taka.site");
 
-# TAKA.TRANSACTION
+### TAKAAPI.getaccount(key,LessIndex=0,callback="",CallbackArgs="")
 
-### TAKA.TRANSACTION.transaction(rawtx="",privkey="",objtx="")
+### TAKAAPI.gettag(tag)
 
-	const TRANSACTION = new TAKA.TRANSACTION.transaction(rawtx="",privkey="",objtx="");
+### TAKAAPI.sendtx(rawtx,callback="",CallbackArgs="")
 
-#### TRANSACTION.GetRawTx()
+### TAKAAPI.gettx(txid)
 
-#### TRANSACTION.GetObjTx()
+### TAKAAPI.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs,AddressIndexs=[],lastonly=false)
 
-#### TRANSACTION.GetTxid()
+### TAKAAPI.RunCode(address,tag,FunctionName,FunctionArgs,AddressIndexs=[],lastonly=false)
+
+### TAKAAPI.exchange(type,PayTxid,ReceiverAddress,amount)
 
 
 
@@ -75,6 +79,7 @@ Get keys of class argument key.
 
 
 
+
 # TAKA.TRANSACTIONTOOLS_CONTRACT
 
 ### TAKA.TRANSACTIONTOOLS_CONTRACT.SetFunctionData(rawdata="",objdata={});
@@ -94,6 +99,10 @@ Get keys of class argument key.
 #### SETFUNCTIONDATA.GetObjData()
 
 	console.log(SETFUNCTIONDATA.GetObjData());
+
+
+
+
 
 
 
@@ -121,20 +130,16 @@ Get keys of class argument key.
 
 
 
-# TAKA.API(apiurl)
 
-	const TAKAAPI = new TAKA.API("https://neko.taka.site");
 
-### TAKAAPI.getaccount(key,LessIndex=0,callback="",CallbackArgs="")
+# TAKA.TRANSACTION
 
-### TAKAAPI.gettag(tag)
+### TAKA.TRANSACTION.transaction(rawtx="",privkey="",objtx="")
 
-### TAKAAPI.sendtx(rawtx,callback="",CallbackArgs="")
+	const TRANSACTION = new TAKA.TRANSACTION.transaction(rawtx="",privkey="",objtx="");
 
-### TAKAAPI.gettx(txid)
+#### TRANSACTION.GetRawTx()
 
-### TAKAAPI.CallRunContractTransaction(address,tag,FunctionName,FunctionArgs,AddressIndexs=[],lastonly=false)
+#### TRANSACTION.GetObjTx()
 
-### TAKAAPI.RunCode(address,tag,FunctionName,FunctionArgs,AddressIndexs=[],lastonly=false)
-
-### TAKAAPI.exchange(type,PayTxid,ReceiverAddress,amount)
+#### TRANSACTION.GetTxid()
