@@ -977,7 +977,7 @@ exports.Transaction = class{
 		}
 		let StartTime = Math.floor(Date.now()/1000);
 
-		let ProcessCount = 4;
+		let ProcessCount = 2;
 		if (TimeoutToNonceScan == -1){
 			ProcessCount = 1;
 		};

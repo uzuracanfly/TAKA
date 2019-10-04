@@ -1484,7 +1484,7 @@ global.TAKA = {
 			this.TAKAAPI = new TAKA.API(apiurl);
 		};
 
-		async SendTransaction(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000)){
+		async SendTransaction(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000),TimeoutToNonceScan=undefined){
 			function GetFillZero(hex, hexlength){
 				let needzeroffill = hexlength-hex.length;
 				if (needzeroffill > 0){
@@ -1563,7 +1563,7 @@ global.TAKA = {
 
 
 
-				let nonce = await TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target,60);
+				let nonce = await TargetTransaction.GetNonce(await TargetTransaction.GetRawTx(),target,TimeoutToNonceScan);
 				if (nonce == -1){
 					return resolve({"txid":false,"rawtx":await TargetTransaction.GetRawTx()});
 				}
@@ -1584,7 +1584,7 @@ global.TAKA = {
 			});
 		};
 
-		async SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000)){
+		async SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000),TimeoutToNonceScan=undefined){
 			let AccountData = this.TAKAAPI.getaccount(privkey,0);
 
 
@@ -1603,7 +1603,7 @@ global.TAKA = {
 				}
 				//console.log(sendamounttoaddress,NeedAmount);
 				if (sendamounttoaddress <= NeedAmount){
-					await this.SendTransaction(privkey,1,"pay","ffffffffffffffffffffffffffffffffffffffff",1,"");
+					await this.SendTransaction(privkey,1,"pay","ffffffffffffffffffffffffffffffffffffffff",1,"",undefined,TimeoutToNonceScan);
 				}
 			};
 
@@ -1620,12 +1620,12 @@ global.TAKA = {
 					}
 					//console.log(sendamounttoaddress,NeedAmount);
 					if (sendamounttoaddress <= NeedAmount){
-						await this.SendTransaction(privkey,1,"pay",TagData["FeeToAddress"],TagData["FeeAmount"],"");
+						await this.SendTransaction(privkey,1,"pay",TagData["FeeToAddress"],TagData["FeeAmount"],"",undefined,TimeoutToNonceScan);
 					};
 				};
 			};
 
-			let result = await this.SendTransaction(privkey,type,tag,toaddress,amount,data,time);
+			let result = await this.SendTransaction(privkey,type,tag,toaddress,amount,data,time,TimeoutToNonceScan);
 			return result;
 		};
 	}
@@ -24369,7 +24369,7 @@ exports.Transaction = class{
 		}
 		let StartTime = Math.floor(Date.now()/1000);
 
-		let ProcessCount = 4;
+		let ProcessCount = 2;
 		if (TimeoutToNonceScan == -1){
 			ProcessCount = 1;
 		};

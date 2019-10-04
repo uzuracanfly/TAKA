@@ -148,18 +148,18 @@ h2 {
 		let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
 
 		/* ノードに指定分の通貨が用意されているか */
-		let PayETAKABalance = COIND.GetBalanceToken("PAYETAKAADDRESS");
+		let PayETAKABalance = await COIND.GetBalanceToken("PAYETAKAADDRESS");
 		if (PayETAKABalance < amount){
 			return 2;
 		}
-		let PayETHBalance = COIND.GetBalanceCoin("PAYETAKAADDRESS");
+		let PayETHBalance = await COIND.GetBalanceCoin("PAYETAKAADDRESS");
 		if (PayETHBalance < 0.001*(10**18)){
 			return 2;
 		}
 
-		let result = await TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay","PAYTAKAADDRESS",amount,"");
+		let result = await TAKAFUNCTIONS.SendTransactionWithSendFee(account["privkey"],1,"pay","PAYTAKAADDRESS",amount,"",undefined,120);
 
-		if (!result){
+		if (!result["txid"]){
 			return 3;
 		}
 
@@ -209,6 +209,9 @@ h2 {
 								"Done",
 								async function()
 								{
+									let amount = document.getElementById("amount").value;
+									amount = parseInt(amount);
+
 									let TopLoadForm = new form(
 										[
 											["title",await GetLangText("送金中.....","Sending.....")]
@@ -216,7 +219,7 @@ h2 {
 										"TopLoadForm"
 									);
 
-									let result = await ExchangeETAKAToTAKA(ETHAccountData["ETAKABalance"]);
+									let result = await ExchangeETAKAToTAKA(amount);
 									TopLoadForm.DeleteForm();
 									if (result == 1){
 										let TopLoadForm = new form(
@@ -289,6 +292,9 @@ h2 {
 								"Done",
 								async function()
 								{
+									let amount = document.getElementById("amount").value;
+									amount = parseInt(amount);
+
 									let TopLoadForm = new form(
 										[
 											["title",await GetLangText("送金中.....","Sending.....")]
@@ -296,7 +302,7 @@ h2 {
 										"TopLoadForm"
 									);
 
-									let result = await ExchangeTAKAToETAKA(TAKABalance);
+									let result = await ExchangeTAKAToETAKA(amount);
 									TopLoadForm.DeleteForm();
 									if (result == 1){
 										let TopLoadForm = new form(
@@ -317,7 +323,7 @@ h2 {
 										let TopLoadForm = new form(
 											[
 												["title",await GetLangText("失敗","Error.")],
-												["text","The currency to be exchanged is not prepared."],
+												["text",await GetLangText("交換する通貨は準備されていません。","The currency to be exchanged is not prepared.")],
 												[
 													"button",
 													"Done",
@@ -333,7 +339,7 @@ h2 {
 										let TopLoadForm = new form(
 											[
 												["title",await GetLangText("失敗","Error.")],
-												["text",await GetLangText("ETHまたはETAKAが不足しています。","Low ETH or ETAKA.")],
+												["text",await GetLangText("TAKAが不足しています。","Low TAKA.")],
 												[
 													"button",
 													"Done",
@@ -384,6 +390,62 @@ h2 {
 									let COIND = new ETHCOINd.ETHCoind(ETHPrivkey,"0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97");
 
 									let txid = await COIND.SendToken(toaddress,amount);
+
+									TopLoadForm.DeleteForm();
+
+									let ResultForm = new form(
+										[
+											["title",await GetLangText("結果","Result")],
+											["input",txid],
+											[
+												"button",
+												"Done",
+												async function()
+												{
+													ResultForm.DeleteForm();
+													WithdrawETAKAForm.DeleteForm();
+												}
+											]
+										],
+										"ResultForm"
+									);
+								}
+							],
+						],
+						"WithdrawETAKAForm"
+					);
+				}
+			],
+			[
+				"button",
+				await GetLangText("ETH出金","Withdraw ETH"),
+				async function()
+				{
+					let WithdrawETAKAForm = new form(
+						[
+							["title",await GetLangText("ETAKA出金","Withdraw ETH")],
+							["input",await GetLangText("送金先アドレス","toaddress"),"toaddress"],
+							["input",await GetLangText("数量","amount"),"amount"],
+							[
+								"button",
+								"Done",
+								async function()
+								{
+									let toaddress = document.getElementById("toaddress").value;
+									let amount = document.getElementById("amount").value;
+									amount = parseInt(amount*(10**18));
+
+
+									let TopLoadForm = new form(
+										[
+											["title",await GetLangText("送金中.....","Sending.....")]
+										],
+										"TopLoadForm"
+									);
+									let ETHPrivkey = new TAKA.HASHS.hashs().sha256(account["privkey"]);
+									let COIND = new ETHCOINd.ETHCoind(ETHPrivkey);
+
+									let txid = await COIND.SendCoin(toaddress,amount);
 
 									TopLoadForm.DeleteForm();
 
