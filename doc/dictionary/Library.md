@@ -15,6 +15,25 @@ Downlaod and Using [TAKALibRapper_bundle.js](https://github.com/uzuracanfly/TAKA
 
 
 
+
+
+# TAKA.RappingFunctions(apiurl)
+
+	const TAKALIB = new TAKA.RappingFunctions("https://neko.taka.site");
+
+
+### TAKALIB.SendTransaction(privkey,type,tag,toaddress,amount,data)
+
+### TAKALIB.SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data)
+
+
+
+
+
+
+
+
+
 # TAKA.TRANSACTION
 
 ### TAKA.TRANSACTION.transaction(rawtx="",privkey="",objtx="")
@@ -119,19 +138,3 @@ Get keys of class argument key.
 ### TAKAAPI.RunCode(address,tag,FunctionName,FunctionArgs,AddressIndexs=[],lastonly=false)
 
 ### TAKAAPI.exchange(type,PayTxid,ReceiverAddress,amount)
-
-
-
-
-
-
-
-
-# TAKA.RappingFunctions(apiurl)
-
-	const TAKALIB = new TAKA.RappingFunctions("https://neko.taka.site");
-
-
-### TAKALIB.SendTransaction(privkey,type,tag,toaddress,amount,data)
-
-### TAKALIB.SendTransactionWithSendFee(privkey,type,tag,toaddress,amount,data)

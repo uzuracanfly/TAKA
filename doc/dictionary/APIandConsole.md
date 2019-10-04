@@ -15,11 +15,11 @@ Parameters Information
 ### example
 New account data.
 
-	sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{}}'
+	sudo curl http://127.0.0.1/api -d '{"function":"getaccount","args":{}}'
 
 Show account data.
 
-	sudo curl http://127.0.0.1 -d '{"function":"getaccount","args":{"key":"ee54d6211a9e1b3756fe6866bfc4411e98c41e1e"}}'
+	sudo curl http://127.0.0.1/api -d '{"function":"getaccount","args":{"key":"ee54d6211a9e1b3756fe6866bfc4411e98c41e1e"}}'
 
 
 
@@ -31,7 +31,7 @@ Show account data.
 	getsendamounttoaddress [key] [toaddress] [LessIndex]
 
 ### example
-	sudo curl http://127.0.0.1 -d '{"function":"getsendamounttoaddress","args":{"key":"ee54d6211a9e1b3756fe6866bfc4411e98c41e1e","toaddress":"80ba149c1e71ca4576198998418bc47d4e297ab2"}}'
+	sudo curl http://127.0.0.1/api -d '{"function":"getsendamounttoaddress","args":{"key":"ee54d6211a9e1b3756fe6866bfc4411e98c41e1e","toaddress":"80ba149c1e71ca4576198998418bc47d4e297ab2"}}'
 
 
 
@@ -43,7 +43,7 @@ Show account data.
 	gettag <tag>
 
 ### example
-	sudo curl http://127.0.0.1 -d '{"function":"gettag","args":{"tag":"pay"}}'
+	sudo curl http://127.0.0.1/api -d '{"function":"gettag","args":{"tag":"pay"}}'
 
 
 
