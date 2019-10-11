@@ -32,23 +32,35 @@ exports.SetServer = function(){
 					request.on('data', function(chunk) {
 						ArgsData += chunk;
 					}).on('end', async function() {
-						ArgsData = JSON.parse(ArgsData);
+						try{
+							ArgsData = JSON.parse(ArgsData);
 
-						RunAPIMethods(ArgsData,request,response);
+							RunAPIMethods(ArgsData,request,response);
+						}catch(e){
+							MAIN.note(2,"SetServer",e);
+							response.write(JSON.stringify(false));
+							response.end();
+						}
 					});
 				}else{
-					let ArgsData = URL.parse(request.url,true).query;
-					let ParseArgsData = {};
-					// 連想配列から取り出す
-					for (let key in ArgsData) {
-						try{
-							ParseArgsData[key] = JSON.parse(ArgsData[key]);
-						}catch(e){
-							ParseArgsData[key] = ArgsData[key];
+					try{
+						let ArgsData = URL.parse(request.url,true).query;
+						let ParseArgsData = {};
+						// 連想配列から取り出す
+						for (let key in ArgsData) {
+							try{
+								ParseArgsData[key] = JSON.parse(ArgsData[key]);
+							}catch(e){
+								ParseArgsData[key] = ArgsData[key];
+							}
 						}
-					}
 
-					RunAPIMethods(ParseArgsData,request,response);
+						RunAPIMethods(ParseArgsData,request,response);
+					}catch(e){
+						MAIN.note(2,"SetServer",e);
+						response.write(JSON.stringify(false));
+						response.end();
+					}
 				}
 			})();
 		}catch(e){
