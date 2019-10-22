@@ -220,6 +220,7 @@ window.onload = async function(){
 				let EleOuter_FourElements_One_details = new form(
 					[
 						["title",await GetLangText("TAKAとは?","What is TAKA?")],
+						["img","lib/TAKAICON_NoBackground","100px"],
 						["text",await GetLangText("・分散型データベース","・Distributed database")],
 						["text",await GetLangText("・独自通貨","・Original Currency")],
 						["text",await GetLangText("・スマートコントラクト","・Smart contract")],
@@ -252,6 +253,7 @@ window.onload = async function(){
 	let EleOuter_FourElements_One_Context_Inner = new form(
 		[
 			["title",await GetLangText("TAKAとは?","What is TAKA?")],
+			["img","lib/TAKAICON_NoBackground","100px"],
 			["text",await GetLangText("・分散型データベース","・Distributed database")],
 			["text",await GetLangText("・独自通貨","・Original Currency")],
 			["text",await GetLangText("・スマートコントラクト","・Smart contract")],
@@ -363,7 +365,12 @@ window.onload = async function(){
 			"clickfunction":async function(){
 				let EleOuter_FourElements_Three_details = new form(
 					[
-						["img","lib/TAKAICON_NoBackground","100px"],
+						["title",await GetLangText("通貨","Currency")],
+						["text",await GetLangText("・TAKA : TAKAネットワークの独自通貨です。","・TAKA: TAKA network's original currency.")],
+						["head","TAKA"],
+						["text",await GetLangText("シンボル名 : TAKA","Symbol Name : TAKA")],
+						["text",await GetLangText("小数点以下桁数 : 0","Number of decimal places : 0")],
+						["text",await GetLangText("総合サプライ : 10000000000TAKA","General Supply : 10000000000TAKA")],
 					],
 					"EleOuter_FourElements_Three_details"
 				);
@@ -384,7 +391,8 @@ window.onload = async function(){
 	SetEleCenter("EleOuter_FourElements_Three_Context","EleOuter_FourElements_Three");
 	let EleOuter_FourElements_Three_Context_Inner = new form(
 		[
-			["img","lib/TAKAICON_NoBackground","100px"],
+			["title",await GetLangText("通貨","Currency")],
+			["text",await GetLangText("・TAKA : TAKAネットワークの独自通貨です。","・TAKA: TAKA network's original currency.")],
 		],
 		"EleOuter_FourElements_Three_Context_Inner",
 		null,
