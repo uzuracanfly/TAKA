@@ -5,8 +5,8 @@ Goal
 
 <!--
 	・Buy ETAKA
--->
 	・Exchange ETAKA to TAKA.
+-->
 	・Order tag.
 	・Set contract function
 	・Send contract

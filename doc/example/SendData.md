@@ -4,8 +4,8 @@ SendData
 Goal
 <!--
 	・Buy ETAKA
--->
 	・Exchange ETAKA to TAKA.
+-->
 	・Order tag.
 	・Send Data To Datebase of TAKA.
 
