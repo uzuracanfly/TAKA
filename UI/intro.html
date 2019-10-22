@@ -220,7 +220,6 @@ window.onload = async function(){
 				let EleOuter_FourElements_One_details = new form(
 					[
 						["title",await GetLangText("TAKAとは?","What is TAKA?")],
-						["img","lib/TAKAICON_NoBackground","100px"],
 						["text",await GetLangText("・分散型データベース","・Distributed database")],
 						["text",await GetLangText("・独自通貨","・Original Currency")],
 						["text",await GetLangText("・スマートコントラクト","・Smart contract")],
@@ -253,7 +252,6 @@ window.onload = async function(){
 	let EleOuter_FourElements_One_Context_Inner = new form(
 		[
 			["title",await GetLangText("TAKAとは?","What is TAKA?")],
-			["img","lib/TAKAICON_NoBackground","100px"],
 			["text",await GetLangText("・分散型データベース","・Distributed database")],
 			["text",await GetLangText("・独自通貨","・Original Currency")],
 			["text",await GetLangText("・スマートコントラクト","・Smart contract")],
@@ -365,27 +363,7 @@ window.onload = async function(){
 			"clickfunction":async function(){
 				let EleOuter_FourElements_Three_details = new form(
 					[
-						["title",await GetLangText("投資","Investment")],
-						["text",await GetLangText("TAKA関連には二つの通貨が存在します。","There are two currencies to TAKA.")],
-						["text",await GetLangText("・TAKA : TAKAネットワークの独自通貨です。","・TAKA: TAKA network's original currency.")],
-						["text",await GetLangText("・ETAKA : TAKAと等価値のETHトークンです。","・ETAKA: ETH token equivalent to TAKA.")],
-						["text",await GetLangText("ご購入は自己責任となります。ETAKAの状態で保管されることをおすすめいたします。","Purchase is at your own risk. We recommend that you keep it in ETAKA state.")],
-						["head","TAKA"],
-						["text",await GetLangText("シンボル名 : TAKA","Symbol Name : TAKA")],
-						["text",await GetLangText("小数点以下桁数 : 0","Number of decimal places : 0")],
-						["text",await GetLangText("総合サプライ : 10000000000TAKA","General Supply : 10000000000TAKA")],
-						["head","ETAKA"],
-						["text",await GetLangText("シンボル名 : ETAKA","Symbol Name : ETAKA")],
-						["text",await GetLangText("コントラクトアドレス : 0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97","Contract Address : 0x62B447cC1DD78Ed980Cf2B5068bAE8ABd7E9bD97")],
-						["text",await GetLangText("小数点以下桁数 : 0","Number of decimal places : 0")],
-						["text",await GetLangText("総合サプライ : 10000000000ETAKA","General Supply : 10000000000ETAKA")],
-						[
-							"button",
-							await GetLangText("購入方法","How to buy"),
-							function(){
-								window.open('https://github.com/uzuracanfly/TAKA/blob/master/doc/example/BuyTAKA.md', '_blank');
-							}
-						]
+						["img","lib/TAKAICON_NoBackground","100px"],
 					],
 					"EleOuter_FourElements_Three_details"
 				);
@@ -406,11 +384,7 @@ window.onload = async function(){
 	SetEleCenter("EleOuter_FourElements_Three_Context","EleOuter_FourElements_Three");
 	let EleOuter_FourElements_Three_Context_Inner = new form(
 		[
-			["title",await GetLangText("投資","Investment")],
-			["text",await GetLangText("TAKA関連には二つの通貨が存在します。","There are two currencies to TAKA.")],
-			["text",await GetLangText("・TAKA : TAKAネットワークの独自通貨です。","・TAKA: TAKA network's original currency.")],
-			["text",await GetLangText("・ETAKA : TAKAと等価値のETHトークンです。","・ETAKA: ETH token equivalent to TAKA.")],
-			["text",await GetLangText("ご購入は自己責任となります。ETAKAの状態で保管されることをおすすめいたします。","Purchase is at your own risk. We recommend that you keep it in ETAKA state.")],
+			["img","lib/TAKAICON_NoBackground","100px"],
 		],
 		"EleOuter_FourElements_Three_Context_Inner",
 		null,

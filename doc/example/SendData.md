@@ -2,18 +2,20 @@ SendData
 ====
 
 Goal
-
+<!--
 	・Buy ETAKA
+-->
 	・Exchange ETAKA to TAKA.
 	・Order tag.
 	・Send Data To Datebase of TAKA.
 
 
 # Using console
-
+<!--
 ### Buy TAKA
 To network usage fee.<br>
 [Buy TAKA](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/BuyTAKA.md).
+-->
 
 ### Node Start.
 
@@ -32,8 +34,10 @@ type to console.
 
 
 # Using library
-
+<!--
 ### Buy TAKA and Tag Order
+-->
+### Tag Order
 [Using console](https://github.com/uzuracanfly/TAKA/blob/master/doc/example/SendData.md#using-console)
 
 ### load library.
