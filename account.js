@@ -108,20 +108,24 @@ exports.account = class{
 		let TransactionIdsPerAccountAndTag = DATABASE.get("TransactionIdsPerAccountAndTag",address+"_"+tag);
 
 		let result = [];
-		for (let index in TransactionIdsPerAccountAndTag){
-			let txid = TransactionIdsPerAccountAndTag[index];
+		if (LessIndex || LessTime){
+			for (let index in TransactionIdsPerAccountAndTag){
+				let txid = TransactionIdsPerAccountAndTag[index];
 
-			let TX = TRANSACTION.GetTx(txid);
-			let objtx = TX.GetObjTx();
+				let TX = TRANSACTION.GetTx(txid);
+				let objtx = TX.GetObjTx();
 
-			if (LessIndex && result.length+1 >= LessIndex){
-				break;
+				if (LessIndex && result.length+1 >= LessIndex){
+					break;
+				}
+				if (LessTime && objtx["time"] >= LessTime){
+					continue;
+				}
+
+				result.push(txid);
 			}
-			if (LessTime && objtx["time"] >= LessTime){
-				continue;
-			}
-
-			result.push(txid);
+		}else{
+			result = TransactionIdsPerAccountAndTag;
 		}
 
 		if (BoolNeedApproved && result.length > 0){
@@ -141,6 +145,7 @@ exports.account = class{
 		};
 
 		return result;
+
 	};
 
 
