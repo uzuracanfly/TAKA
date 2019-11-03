@@ -108,7 +108,7 @@ exports.account = class{
 		let TransactionIdsPerAccountAndTag = DATABASE.get("TransactionIdsPerAccountAndTag",address+"_"+tag);
 
 		let result = [];
-		if (LessIndex || LessTime){
+		if ((LessIndex && TransactionIdsPerAccountAndTag.length+1 != LessIndex) || LessTime){
 			for (let index in TransactionIdsPerAccountAndTag){
 				let txid = TransactionIdsPerAccountAndTag[index];
 
@@ -180,8 +180,55 @@ exports.account = class{
 
 		let txlist = await this.GetFormTxList(address,"pay",LessIndex,LessTime,BoolNeedApproved);
 
-		let balance = 0;
+
+		/* 同indexの残高のキャッシュがとられている */
+		if (!LessIndex && !LessTime){
+			let datas = DATABASE.get("BalancePerAddress",`${address}_${txlist.length}`);
+			if (datas.length > 0){
+				let balance = datas[0];
+				balance = parseInt(balance,16);
+				return balance;
+			};
+		};
+
+
+		/* 過去のindexの残高のキャッシュがとられている */
+		let MaxCacheIndex = 0;
+		let BalanceWithMaxCacheIndex = 0;
+		if (!LessTime){
+			let datas = DATABASE.get("BalancePerAddress");
+			if (datas.length > 0){
+				for (let index in datas){
+					let data = datas[index];
+
+					if (data.indexOf(address) < 0){
+						continue;
+					}
+
+					let CacheIndex = parseInt(data.replace(`${address}_`,""));
+					if (LessIndex && LessIndex <= CacheIndex){
+						continue;
+					}
+					if (MaxCacheIndex < CacheIndex){
+						MaxCacheIndex = CacheIndex;
+					}
+				}
+			};
+			if (MaxCacheIndex){
+				let BalanceWithMaxCacheIndexs = DATABASE.get("BalancePerAddress",`${address}_${MaxCacheIndex}`);
+				BalanceWithMaxCacheIndex = BalanceWithMaxCacheIndexs[0];
+				BalanceWithMaxCacheIndex = parseInt(BalanceWithMaxCacheIndex,16);
+			};
+		};
+
+
+
+		let balance = BalanceWithMaxCacheIndex;
 		for (let index in txlist){
+			if (MaxCacheIndex && MaxCacheIndex >= parseInt(index)+1){
+				continue;
+			}
+
 			let txid = txlist[index];
 
 			let TX = TRANSACTION.GetTx(txid);
@@ -197,6 +244,14 @@ exports.account = class{
 			};
 			
 		}
+
+		if (txlist.length > 0){
+			let data = (balance).toString(16);
+			if (data.length%2 != 0){
+				data = "0" + data;
+			}
+			DATABASE.set("BalancePerAddress",`${address}_${txlist.length}`,data);
+		};
 
 		return balance;
 	}
