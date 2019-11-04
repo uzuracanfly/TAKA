@@ -117,8 +117,29 @@ function SetActionEvents(socket,address){
 	*/
 	socket.on('GetTransactions', async function (data) {
 		try{
-			let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
 			let rawtxs = [];
+			
+			let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
+			for (let index in TransactionIdsPerAll){
+				let txid = TransactionIdsPerAll[index];
+
+				if (rawtxs.length >= data["count"]){
+					break;
+				}
+				if ((data["ConfirmedTxids"]).indexOf(txid) > 0){
+					continue;
+				}
+
+				let TX = TRANSACTION.GetTx(txid);
+				let rawtx = await TX.GetRawTx();
+				let objtx = await TX.GetObjTx();
+
+				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(objtx["tag"]) == -1){
+					continue;
+				}
+
+				rawtxs.push(rawtx);
+			}
 			let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
 			for (let index in UnconfirmedTransactions){
 				let rawtx = UnconfirmedTransactions[index];
@@ -143,26 +164,6 @@ function SetActionEvents(socket,address){
 					continue;
 				}
 
-
-				rawtxs.push(rawtx);
-			}
-			for (let index in TransactionIdsPerAll){
-				let txid = TransactionIdsPerAll[index];
-
-				if (rawtxs.length >= data["count"]){
-					break;
-				}
-				if ((data["ConfirmedTxids"]).indexOf(txid) > 0){
-					continue;
-				}
-
-				let TX = TRANSACTION.GetTx(txid);
-				let rawtx = await TX.GetRawTx();
-				let objtx = await TX.GetObjTx();
-
-				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(objtx["tag"]) == -1){
-					continue;
-				}
 
 				rawtxs.push(rawtx);
 			}
@@ -234,8 +235,9 @@ async function RuningGetTransactions(socket,address){
 
 
 		if (address in BroadcastTransactions){
-			for (let index in BroadcastTransactions[address]){
-				let rawtx = BroadcastTransactions[address][index];
+			let BroadcastTransactionsPerAddress = BroadcastTransactions[address];
+			for (let index in BroadcastTransactionsPerAddress){
+				let rawtx = BroadcastTransactionsPerAddress[index];
 
 				if (!rawtx){
 					continue;
