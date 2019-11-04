@@ -3,6 +3,7 @@
 const MAIN = require('./main.js');
 const CRYPTO = require('./crypto.js');
 const HASHS = require('./hashs.js');
+const HEX = require('./hex.js');
 const TRANSACTION = require('./transaction.js');
 const CONFIG = require('./config.js');
 const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.database["address"],CONFIG.database["port"],CONFIG.database["database"]);
@@ -184,43 +185,26 @@ exports.account = class{
 		};
 
 
-		/* 同indexの残高のキャッシュがとられている */
-		if (!LessIndex){
-			let datas = DATABASE.get("BalancePerAddress",`${address}_${txlist.length}`);
-			if (datas.length > 0){
-				let balance = datas[0];
-				balance = parseInt(balance,16);
-				return balance;
-			};
-		};
 
-
-		/* 過去のindexの残高のキャッシュがとられている */
+		/* indexの残高のキャッシュがとられている */
 		let MaxCacheIndex = 0;
 		let BalanceWithMaxCacheIndex = 0;
-		let datas = DATABASE.get("BalancePerAddress");
-		if (datas.length > 0){
-			for (let index in datas){
-				let data = datas[index];
+		let datas = DATABASE.get("BalancePerAddress",address);
+		for (let index in datas){
+			let data = datas[index];
+			data = new HEX.HexText().utf8_hex_string_to_string(data);
+			data = JSON.parse(data);
 
-				if (data.indexOf(address) < 0){
-					continue;
-				}
-
-				let CacheIndex = parseInt(data.replace(`${address}_`,""));
-				if (LessIndex && LessIndex <= CacheIndex){
-					continue;
-				}
-				if (MaxCacheIndex < CacheIndex){
-					MaxCacheIndex = CacheIndex;
-				}
+			let CacheIndex = parseInt(data["index"]);
+			if (LessIndex && LessIndex <= CacheIndex){
+				continue;
 			}
-		};
-		if (MaxCacheIndex){
-			let BalanceWithMaxCacheIndexs = DATABASE.get("BalancePerAddress",`${address}_${MaxCacheIndex}`);
-			BalanceWithMaxCacheIndex = BalanceWithMaxCacheIndexs[0];
-			BalanceWithMaxCacheIndex = parseInt(BalanceWithMaxCacheIndex,16);
-		};
+			if (MaxCacheIndex < CacheIndex){
+				MaxCacheIndex = CacheIndex;
+				BalanceWithMaxCacheIndex = parseInt(data["balance"]);
+			}
+		}
+
 
 
 
@@ -247,11 +231,10 @@ exports.account = class{
 		}
 
 		if (txlist.length > 0){
-			let data = (balance).toString(16);
-			if (data.length%2 != 0){
-				data = "0" + data;
-			}
-			DATABASE.set("BalancePerAddress",`${address}_${txlist.length}`,data);
+			let data = {"index":txlist.length,"balance":balance};
+			data = JSON.stringify(data);
+			data = new HEX.HexText().string_to_utf8_hex_string(data);
+			DATABASE.add("BalancePerAddress",address,data);
 		};
 
 		return balance;

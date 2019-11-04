@@ -315,8 +315,8 @@ let BroadcastTransactions = {};
 let BroadcastNodeList = {};
 
 exports.SetServer = function(){
-	const APP = require('express')();
-	const HTTP = require('http').Server(APP);
+
+	const HTTP = require('http').createServer();
 	const IO = require('socket.io')(HTTP);
 
 
