@@ -112,14 +112,15 @@ exports.account = class{
 			for (let index in TransactionIdsPerAccountAndTag){
 				let txid = TransactionIdsPerAccountAndTag[index];
 
-				let TX = TRANSACTION.GetTx(txid);
-				let objtx = TX.GetObjTx();
-
 				if (LessIndex && result.length+1 >= LessIndex){
 					break;
 				}
-				if (LessTime && objtx["time"] >= LessTime){
-					continue;
+				if (LessTime){
+					let TX = TRANSACTION.GetTx(txid);
+					let objtx = TX.GetObjTx();
+					if (objtx["time"] >= LessTime){
+						break;
+					}
 				}
 
 				result.push(txid);
