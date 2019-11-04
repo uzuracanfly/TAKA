@@ -118,7 +118,7 @@ function SetActionEvents(socket,address){
 	socket.on('GetTransactions', async function (data) {
 		try{
 			let rawtxs = [];
-			
+
 			let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
 			for (let index in TransactionIdsPerAll){
 				let txid = TransactionIdsPerAll[index];
@@ -325,13 +325,6 @@ exports.SetServer = function(){
 		/* ノードリストにクライアントのアドレスを追加 */
 		let address = socket.request.connection.remoteAddress;
 		address = address.replace(/^.*:/, '');
-
-
-		/* 接続ノード数上限 */
-		if (socket.client.conn.server.clientsCount >= 3){
-			socket.disconnect();
-			return false;
-		}
 
 
 		
