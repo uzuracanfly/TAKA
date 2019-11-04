@@ -189,6 +189,7 @@ exports.account = class{
 		/* indexの残高のキャッシュがとられている */
 		let MaxCacheIndex = 0;
 		let BalanceWithMaxCacheIndex = 0;
+		let ExistMaxCacheIndex = 0;
 		let datas = DATABASE.get("BalancePerAddress",address);
 		for (let index in datas){
 			let data = datas[index];
@@ -196,6 +197,9 @@ exports.account = class{
 			data = JSON.parse(data);
 
 			let CacheIndex = parseInt(data["index"]);
+			if (ExistMaxCacheIndex < CacheIndex){
+				ExistMaxCacheIndex = CacheIndex;
+			}
 			if (LessIndex && LessIndex <= CacheIndex){
 				continue;
 			}
@@ -230,7 +234,7 @@ exports.account = class{
 			
 		}
 
-		if (txlist.length > 0){
+		if (ExistMaxCacheIndex < txlist.length){
 			let data = {"index":txlist.length,"balance":balance};
 			data = JSON.stringify(data);
 			data = new HEX.HexText().string_to_utf8_hex_string(data);
