@@ -1159,6 +1159,33 @@ exports.GetTagTxids = async function(tag,LessTime=0){
 	return result;
 }
 
+exports.GetLessIndexFromLessTime = async function(address,tag,LessTime){
+	try{
+		let TimeRaIndexs = DATABASE.get("TransactionTimeRaIndexPerAccountAndTag",address+"_"+tag);
+		if (TimeRaIndexs.length <= 0){
+			return 0;
+		}
+
+		let MaxIndex = 0;
+		for (let index in TimeRaIndexs){
+			let TimeRaIndex = TimeRaIndexs[index];
+			TimeRaIndex = new HEX.HexText().utf8_hex_string_to_string(TimeRaIndex);
+			TimeRaIndex = JSON.parse(TimeRaIndex);
+
+			if (LessTime <= parseInt(TimeRaIndex["time"])){
+				continue;
+			}
+			if (MaxIndex < parseInt(TimeRaIndex["index"])){
+				MaxIndex = parseInt(TimeRaIndex["index"]);
+			}
+		}
+
+		return MaxIndex+1;
+	}catch(e){
+		MAIN.note(2,"GetLessIndexFromLessTime",e);
+		return false;
+	}
+};
 
 
 exports.SendTransaction = async function(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000),BoolUntilConfirmation=undefined,BoolStartConfirmation=undefined,TimeoutToNonceScan=undefined){
@@ -1356,6 +1383,16 @@ exports.RunCommit = async function(){
 		DATABASE.add("TransactionIdsPerAccount",objtx["toaddress"],txid);
 		DATABASE.add("TransactionIdsPerAll","live",txid);
 
+		//indexと時間の関連付け
+		let data = {"time":objtx["time"],"index":objtx["index"],"txid":txid};
+		data = JSON.stringify(data);
+		data = new HEX.HexText().string_to_utf8_hex_string(data);
+		DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],data);
+		data = {"time":objtx["time"],"index":objtx["ToIndex"],"txid":txid};
+		data = JSON.stringify(data);
+		data = new HEX.HexText().string_to_utf8_hex_string(data);
+		DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],data);
+
 		if (objtx["type"] == 12){
 			let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
 			let TagorderObjData = Tagorder.GetObjData();
@@ -1384,6 +1421,16 @@ exports.RunCommit = async function(){
 		DATABASE.remove("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],-1,txid);
 		DATABASE.remove("TransactionIdsPerAccount",objtx["toaddress"],-1,txid);
 		DATABASE.remove("TransactionIdsPerAll","live",-1,txid);
+
+		//indexと時間の関連付け
+		let data = {"time":objtx["time"],"index":objtx["index"],"txid":txid};
+		data = JSON.stringify(data);
+		data = new HEX.HexText().string_to_utf8_hex_string(data);
+		DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,data);
+		data = {"time":objtx["time"],"index":objtx["ToIndex"],"txid":txid};
+		data = JSON.stringify(data);
+		data = new HEX.HexText().string_to_utf8_hex_string(data);
+		DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,data);
 
 		if (objtx["type"] == 12){
 			let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);

@@ -327,6 +327,13 @@ exports.SetServer = function(){
 		address = address.replace(/^.*:/, '');
 
 
+		/* 接続ノード数上限 */
+		if (socket.client.conn.server.clientsCount >= 3){
+			socket.disconnect();
+			return false;
+		}
+
+
 		
 		let nodedata = exports.GetNode(address);
 		if (nodedata){
@@ -382,8 +389,7 @@ exports.SetServer = function(){
 	};
 
 
-	IO.set('heartbeat interval', 5000);
-	IO.set('heartbeat timeout', 15000);
+
 
 	IO.on('connection', async function(socket){
 		SetActionNode(socket);
