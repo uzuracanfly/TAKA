@@ -1406,6 +1406,21 @@ exports.RunCommit = async function(){
 
 		DATABASE.add("ConfirmedTransactions",txid,rawtx);
 
+		//payの場合残高をキャッシュ
+		if (objtx["type"] == 1){
+			let data = {"index":objtx["index"],"balance":(await TargetTransaction.TargetAccount.GetBalance())};
+			data = JSON.stringify(data);
+			data = new HEX.HexText().string_to_utf8_hex_string(data);
+			DATABASE.add("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],data);
+
+			let ToTargetAccount = new ACCOUNT.account(objtx["toaddress"]);
+			data = {"index":objtx["ToIndex"],"balance":(await ToTargetAccount.GetBalance())};
+			data = JSON.stringify(data);
+			data = new HEX.HexText().string_to_utf8_hex_string(data);
+			DATABASE.add("BalancePerAddress",objtx["toaddress"],data);
+		};
+
+
 		MAIN.note(1,"transaction_RunCommit_commit","[commit transaction] txid : "+txid);
 		return 1;
 	}
