@@ -234,13 +234,13 @@ exports.account = class{
 	}
 
 
-	async GetSendAmountToAddress(address="",toaddress="",LessIndex=0){
+	async GetSendAmountToAddress(address="",toaddress=""){
 		await this.SetUpClass();
 		if (!address){
 			address = (await this.GetKeys())["address"];
 		}
 
-		let txlist = await this.GetFormTxList(address,"pay",LessIndex);
+		let txlist = DATABASE.get("TransactionIdsPerAccountAndToAccountAndTag",address+"_"+toaddress+"_pay");
 
 		let amount = 0;
 		for (let index in txlist){
@@ -249,11 +249,7 @@ exports.account = class{
 			let TX = TRANSACTION.GetTx(txid);
 			let objtx = await TX.GetObjTx();
 
-			let SenderKeys = await this.GetKeys(objtx["pubkey"]);
-
-			if (SenderKeys["address"] == address && objtx["toaddress"] == toaddress){
-				amount = amount + objtx["amount"];
-			};
+			amount = amount + objtx["amount"];
 		}
 
 		return amount;

@@ -1381,6 +1381,7 @@ exports.RunCommit = async function(){
 		DATABASE.add("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],txid);
 		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],txid);
 		DATABASE.add("TransactionIdsPerAccount",objtx["toaddress"],txid);
+		DATABASE.add("TransactionIdsPerAccountAndToAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["toaddress"]+"_"+objtx["tag"],txid);
 		DATABASE.add("TransactionIdsPerAll","live",txid);
 
 		//indexと時間の関連付け
@@ -1435,6 +1436,7 @@ exports.RunCommit = async function(){
 		DATABASE.remove("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,txid);
 		DATABASE.remove("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],-1,txid);
 		DATABASE.remove("TransactionIdsPerAccount",objtx["toaddress"],-1,txid);
+		DATABASE.remove("TransactionIdsPerAccountAndToAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["toaddress"]+"_"+objtx["tag"],-1,txid);
 		DATABASE.remove("TransactionIdsPerAll","live",-1,txid);
 
 		//indexと時間の関連付け
@@ -1459,6 +1461,13 @@ exports.RunCommit = async function(){
 		}
 
 		DATABASE.delete("ConfirmedTransactions",txid);
+
+		//payの場合残高をキャッシュ
+		if (objtx["type"] == 1){
+			DATABASE.remove("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],objtx["index"]-1);
+			DATABASE.remove("BalancePerAddress",objtx["toaddress"],objtx["ToIndex"]-1);
+		};
+
 
 		MAIN.note(1,"transaction_RunCommit_reset","[reset transaction] txid : "+txid);
 		return 1;
