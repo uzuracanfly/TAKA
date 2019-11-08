@@ -1013,20 +1013,25 @@ exports.Transaction = class{
 					}
 				};
 			}).then(async function(nonce){
-				if(typeof CP.spawn == 'function') {
-					for (let index in ChildList){
-						let child = ChildList[index];
+				try{
+					if(typeof CP.spawn == 'function') {
+						for (let index in ChildList){
+							let child = ChildList[index];
 
-						child.send("KILL");
-					}
-				}else{
-					for (let index in ChildList){
-						let child = ChildList[index];
+							child.send("KILL");
+						}
+					}else{
+						for (let index in ChildList){
+							let child = ChildList[index];
 
-						child.terminate();
+							child.terminate();
+						}
 					}
-				}
-				return resolve(nonce);
+					return resolve(nonce);
+				}catch(e){
+					MAIN.note(2,"GetNonce",e);
+					return resolve(-1);
+				};
 			});
 		});
 	}
