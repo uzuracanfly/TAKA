@@ -1638,6 +1638,7 @@ const ZLIB = require('zlib');
 const MAIN = require('./main.js');
 const CRYPTO = require('./crypto.js');
 const HASHS = require('./hashs.js');
+const HEX = require('./hex.js');
 const TRANSACTION = require('./transaction.js');
 const CONFIG = require('./config.js');
 const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.database["address"],CONFIG.database["port"],CONFIG.database["database"]);
@@ -1741,22 +1742,25 @@ exports.account = class{
 		}
 
 		let TransactionIdsPerAccountAndTag = DATABASE.get("TransactionIdsPerAccountAndTag",address+"_"+tag);
+		if (LessTime){
+			LessIndex = await TRANSACTION.GetLessIndexFromLessTime(address,tag,LessTime);
+			LessTime = 0;
+		};
+
 
 		let result = [];
-		for (let index in TransactionIdsPerAccountAndTag){
-			let txid = TransactionIdsPerAccountAndTag[index];
+		if (LessIndex && TransactionIdsPerAccountAndTag.length+1 != LessIndex){
+			for (let index in TransactionIdsPerAccountAndTag){
+				let txid = TransactionIdsPerAccountAndTag[index];
 
-			let TX = TRANSACTION.GetTx(txid);
-			let objtx = TX.GetObjTx();
+				if (LessIndex && result.length+1 >= LessIndex){
+					break;
+				}
 
-			if (LessIndex && result.length+1 >= LessIndex){
-				break;
+				result.push(txid);
 			}
-			if (LessTime && objtx["time"] >= LessTime){
-				continue;
-			}
-
-			result.push(txid);
+		}else{
+			result = TransactionIdsPerAccountAndTag;
 		}
 
 		if (BoolNeedApproved && result.length > 0){
@@ -1776,6 +1780,7 @@ exports.account = class{
 		};
 
 		return result;
+
 	};
 
 
@@ -1809,9 +1814,41 @@ exports.account = class{
 		}
 
 		let txlist = await this.GetFormTxList(address,"pay",LessIndex,LessTime,BoolNeedApproved);
+		if (LessTime){
+			LessIndex = await TRANSACTION.GetLessIndexFromLessTime(address,"pay",LessTime);
+			LessTime = 0;
+		};
 
-		let balance = 0;
+
+
+		/* indexの残高のキャッシュがとられている */
+		let MaxCacheIndex = 0;
+		let BalanceWithMaxCacheIndex = 0;
+		let datas = DATABASE.get("BalancePerAddress",address);
+		for (let index in datas){
+			let data = datas[index];
+			data = new HEX.HexText().utf8_hex_string_to_string(data);
+			data = JSON.parse(data);
+
+			let CacheIndex = parseInt(data["index"]);
+			if (LessIndex && LessIndex <= CacheIndex){
+				continue;
+			}
+			if (MaxCacheIndex < CacheIndex){
+				MaxCacheIndex = CacheIndex;
+				BalanceWithMaxCacheIndex = parseInt(data["balance"]);
+			}
+		}
+
+
+
+
+		let balance = BalanceWithMaxCacheIndex;
 		for (let index in txlist){
+			if (MaxCacheIndex && MaxCacheIndex >= parseInt(index)+1){
+				continue;
+			}
+
 			let txid = txlist[index];
 
 			let TX = TRANSACTION.GetTx(txid);
@@ -1832,13 +1869,13 @@ exports.account = class{
 	}
 
 
-	async GetSendAmountToAddress(address="",toaddress="",LessIndex=0){
+	async GetSendAmountToAddress(address="",toaddress=""){
 		await this.SetUpClass();
 		if (!address){
 			address = (await this.GetKeys())["address"];
 		}
 
-		let txlist = await this.GetFormTxList(address,"pay",LessIndex);
+		let txlist = DATABASE.get("TransactionIdsPerAccountAndToAccountAndTag",address+"_"+toaddress+"_pay");
 
 		let amount = 0;
 		for (let index in txlist){
@@ -1847,11 +1884,7 @@ exports.account = class{
 			let TX = TRANSACTION.GetTx(txid);
 			let objtx = await TX.GetObjTx();
 
-			let SenderKeys = await this.GetKeys(objtx["pubkey"]);
-
-			if (SenderKeys["address"] == address && objtx["toaddress"] == toaddress){
-				amount = amount + objtx["amount"];
-			};
+			amount = amount + objtx["amount"];
 		}
 
 		return amount;
@@ -1859,7 +1892,7 @@ exports.account = class{
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./config.js":8,"./crypto.js":9,"./database.js":10,"./hashs.js":11,"./main.js":13,"./transaction.js":76,"buffer":130,"zlib":128}],8:[function(require,module,exports){
+},{"./config.js":8,"./crypto.js":9,"./database.js":10,"./hashs.js":11,"./hex.js":12,"./main.js":13,"./transaction.js":76,"buffer":130,"zlib":128}],8:[function(require,module,exports){
 exports.database = {
 	"address":"127.0.0.1",
 	"port":20195,
@@ -24564,7 +24597,9 @@ exports.Transaction = class{
 					for (let index in ChildList){
 						let child = ChildList[index];
 
-						child.send("KILL");
+						if (child.connected){
+							child.send("KILL");
+						}
 					}
 				}else{
 					for (let index in ChildList){
@@ -24706,6 +24741,33 @@ exports.GetTagTxids = async function(tag,LessTime=0){
 	return result;
 }
 
+exports.GetLessIndexFromLessTime = async function(address,tag,LessTime){
+	try{
+		let TimeRaIndexs = DATABASE.get("TransactionTimeRaIndexPerAccountAndTag",address+"_"+tag);
+		if (TimeRaIndexs.length <= 0){
+			return 0;
+		}
+
+		let MaxIndex = 0;
+		for (let index in TimeRaIndexs){
+			let TimeRaIndex = TimeRaIndexs[index];
+			TimeRaIndex = new HEX.HexText().utf8_hex_string_to_string(TimeRaIndex);
+			TimeRaIndex = JSON.parse(TimeRaIndex);
+
+			if (LessTime <= parseInt(TimeRaIndex["time"])){
+				continue;
+			}
+			if (MaxIndex < parseInt(TimeRaIndex["index"])){
+				MaxIndex = parseInt(TimeRaIndex["index"]);
+			}
+		}
+
+		return MaxIndex+1;
+	}catch(e){
+		MAIN.note(2,"GetLessIndexFromLessTime",e);
+		return false;
+	}
+};
 
 
 exports.SendTransaction = async function(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000),BoolUntilConfirmation=undefined,BoolStartConfirmation=undefined,TimeoutToNonceScan=undefined){
@@ -24901,7 +24963,18 @@ exports.RunCommit = async function(){
 		DATABASE.add("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],txid);
 		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],txid);
 		DATABASE.add("TransactionIdsPerAccount",objtx["toaddress"],txid);
+		DATABASE.add("TransactionIdsPerAccountAndToAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["toaddress"]+"_"+objtx["tag"],txid);
 		DATABASE.add("TransactionIdsPerAll","live",txid);
+
+		//indexと時間の関連付け
+		let data = {"time":objtx["time"],"index":objtx["index"],"txid":txid};
+		data = JSON.stringify(data);
+		data = new HEX.HexText().string_to_utf8_hex_string(data);
+		DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],data);
+		data = {"time":objtx["time"],"index":objtx["ToIndex"],"txid":txid};
+		data = JSON.stringify(data);
+		data = new HEX.HexText().string_to_utf8_hex_string(data);
+		DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],data);
 
 		if (objtx["type"] == 12){
 			let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
@@ -24915,6 +24988,21 @@ exports.RunCommit = async function(){
 		}
 
 		DATABASE.add("ConfirmedTransactions",txid,rawtx);
+
+		//payの場合残高をキャッシュ
+		if (objtx["type"] == 1){
+			let data = {"index":objtx["index"],"balance":(await TargetTransaction.TargetAccount.GetBalance())};
+			data = JSON.stringify(data);
+			data = new HEX.HexText().string_to_utf8_hex_string(data);
+			DATABASE.add("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],data);
+
+			let ToTargetAccount = new ACCOUNT.account(objtx["toaddress"]);
+			data = {"index":objtx["ToIndex"],"balance":(await ToTargetAccount.GetBalance())};
+			data = JSON.stringify(data);
+			data = new HEX.HexText().string_to_utf8_hex_string(data);
+			DATABASE.add("BalancePerAddress",objtx["toaddress"],data);
+		};
+
 
 		MAIN.note(1,"transaction_RunCommit_commit","[commit transaction] txid : "+txid);
 		return 1;
@@ -24930,7 +25018,18 @@ exports.RunCommit = async function(){
 		DATABASE.remove("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,txid);
 		DATABASE.remove("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],-1,txid);
 		DATABASE.remove("TransactionIdsPerAccount",objtx["toaddress"],-1,txid);
+		DATABASE.remove("TransactionIdsPerAccountAndToAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["toaddress"]+"_"+objtx["tag"],-1,txid);
 		DATABASE.remove("TransactionIdsPerAll","live",-1,txid);
+
+		//indexと時間の関連付け
+		let data = {"time":objtx["time"],"index":objtx["index"],"txid":txid};
+		data = JSON.stringify(data);
+		data = new HEX.HexText().string_to_utf8_hex_string(data);
+		DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,data);
+		data = {"time":objtx["time"],"index":objtx["ToIndex"],"txid":txid};
+		data = JSON.stringify(data);
+		data = new HEX.HexText().string_to_utf8_hex_string(data);
+		DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,data);
 
 		if (objtx["type"] == 12){
 			let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
@@ -24944,6 +25043,13 @@ exports.RunCommit = async function(){
 		}
 
 		DATABASE.delete("ConfirmedTransactions",txid);
+
+		//payの場合残高をキャッシュ
+		if (objtx["type"] == 1){
+			DATABASE.remove("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],objtx["index"]-1);
+			DATABASE.remove("BalancePerAddress",objtx["toaddress"],objtx["ToIndex"]-1);
+		};
+
 
 		MAIN.note(1,"transaction_RunCommit_reset","[reset transaction] txid : "+txid);
 		return 1;
