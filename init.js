@@ -100,49 +100,41 @@ const BOOTSTRAP = require('./bootstrap.js');
 
 
 	let FunctionList = [
-		{"name":"DatabaseRunCommit","function":function(){let Database = require('./database.js');Database.RunCommit()},"time":0},
-		{"name":"TransactionRunCommit","function":function(){let Transaction = require('./transaction.js');Transaction.RunCommit()},"time":1000},
-		{"name":"BroadcastSetServer","function":function(){let Broadcast = require('./broadcast.js');Broadcast.SetP2P()},"time":1000},
-		{"name":"APISetServer","function":function(){let API = require('./api.js');API.SetServer()},"time":1000},
-		{"name":"TagrewardRunMining","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()},"time":1000},
-		{"name":"exchange","function":function(){let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()},"time":1000},
-		{"name":"ControlTag","function":function(){let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunControlTag()},"time":1000},
-		{"name":"bootstrap","function":function(){let BOOTSTRAP = require('./bootstrap.js');BOOTSTRAP.RunSaveDataBase()},"time":1000},
+		{"name":"DatabaseRunCommit","function":"let Database = require('./database.js');Database.RunCommit()","time":0},
+		{"name":"TransactionRunCommit","function":"let Transaction = require('./transaction.js');Transaction.RunCommit()","time":1000},
+		{"name":"BroadcastSetServer","function":"let Broadcast = require('./broadcast.js');Broadcast.SetP2P()","time":1000},
+		{"name":"APISetServer","function":"let API = require('./api.js');API.SetServer()","time":1000},
+		{"name":"TagrewardRunMining","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()","time":1000},
+		{"name":"exchange","function":"let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()","time":1000},
+		{"name":"ControlTag","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunControlTag()","time":1000},
+		{"name":"bootstrap","function":"let BOOTSTRAP = require('./bootstrap.js');BOOTSTRAP.RunSaveDataBase()","time":1000},
 		{
 			"name":"TEST",
-			"function":function(){
-				FS.stat('./test.js', (error, stats) => {
-					if (!error) {
-						let TEST = require('./test.js');
-						TEST.main();
-					}
-				})
-			},
+			"function":"\
+				const FS = require('fs');\
+				FS.stat('./test.js', (error, stats) => {\
+					if (!error) {\
+						let TEST = require('./test.js');\
+						TEST.main();\
+					}\
+				})\
+			",
 			"time":2000
 		},
 	];
 
 
 
-	if (CLUSTER.isMaster) {
-		for (let index in FunctionList) {
-			let worker = CLUSTER.fork();
-			FunctionList[index]["pid"] = worker.process.pid;
-		}
+	
+	for (let index in FunctionList) {
+		let FunctionData = FunctionList[index];
 
-		CLUSTER.on('exit', (worker, code, signal) => {
-			MAIN.note(1,"init",`worker ${worker.process.pid} died`);
+		new Promise(function (resolve, reject) {
+			MAIN.sleep(parseInt(FunctionData["time"]/1000));
+
+			FS.writeFile(`INITCODES_${FunctionData["name"]}.js`, FunctionData["function"], "utf8", (error) => {
+				CP.fork(`INITCODES_${FunctionData["name"]}.js`);
+			});
 		});
-	}else{
-		let worker_id = CLUSTER.worker.id;
-		
-		setTimeout(function()
-			{
-				FunctionList[worker_id-1]["function"]();
-
-				MAIN.note(1,"init",`Worker ${process.pid} to ${FunctionList[worker_id-1]["name"]} started`);
-			},
-			FunctionList[worker_id-1]["time"]
-		);
 	}
 })();
