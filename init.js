@@ -1,8 +1,8 @@
-const CLUSTER = require('cluster');
 const FS = require('fs');
 const SR = require('secure-random');
 const IP = require('ip');
 const CP = require('child_process');
+const PATH = require('path');
 
 
 const MAIN = require('./main.js');
@@ -129,12 +129,11 @@ const BOOTSTRAP = require('./bootstrap.js');
 	for (let index in FunctionList) {
 		let FunctionData = FunctionList[index];
 
-		new Promise(function (resolve, reject) {
-			MAIN.sleep(parseInt(FunctionData["time"]/1000));
+		new Promise(async function (resolve, reject) {
+			await MAIN.sleep(parseInt(FunctionData["time"]/1000));
 
-			FS.writeFile(`INITCODES_${FunctionData["name"]}.js`, FunctionData["function"], "utf8", (error) => {
-				CP.fork(`INITCODES_${FunctionData["name"]}.js`);
-			});
+			let child = CP.fork(`initcode.js`);
+			child.send(FunctionData["function"]);
 		});
 	}
 })();

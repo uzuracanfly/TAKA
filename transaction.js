@@ -1002,6 +1002,12 @@ exports.Transaction = class{
 						child.on('message', (data) => {
 							return mresolve(parseInt(data));
 						});
+						child.on('error', (code) => {
+							return mresolve(-1);
+						});
+						child.on('exit', (code) => {
+							return mresolve(-1);
+						});
 						child.send(args);
 					}else{
 						let child = new Worker(CONFIG.API["AccessPoint"]+"/lib/"+'GetNonceForWeb');
