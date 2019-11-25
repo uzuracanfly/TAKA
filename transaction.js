@@ -1005,6 +1005,9 @@ exports.Transaction = class{
 						child.on('error', (code) => {
 							return mresolve(-1);
 						});
+						child.on('close', (code) => {
+							return mresolve(-1);
+						});
 						child.on('exit', (code) => {
 							return mresolve(-1);
 						});
