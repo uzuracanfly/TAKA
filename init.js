@@ -102,7 +102,8 @@ const BOOTSTRAP = require('./bootstrap.js');
 	let FunctionList = [
 		{"name":"DatabaseRunCommit","function":"let Database = require('./database.js');Database.RunCommit()","time":0},
 		{"name":"TransactionRunCommit","function":"let Transaction = require('./transaction.js');Transaction.RunCommit()","time":1000},
-		{"name":"BroadcastSetServer","function":"let Broadcast = require('./broadcast.js');Broadcast.SetP2P()","time":1000},
+		{"name":"BroadcastSetServer","function":"let Broadcast = require('./broadcast.js');Broadcast.SetServer()","time":1000},
+		{"name":"BroadcastSetClient","function":"let Broadcast = require('./broadcast.js');Broadcast.SetClient()","time":1100},
 		{"name":"APISetServer","function":"let API = require('./api.js');API.SetServer()","time":1000},
 		{"name":"TagrewardRunMining","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()","time":1000},
 		{"name":"exchange","function":"let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()","time":1000},
@@ -134,6 +135,14 @@ const BOOTSTRAP = require('./bootstrap.js');
 
 			let child = CP.fork(`initcode.js`);
 			child.send(FunctionData["function"]);
+			child.on('error', (code) => {
+				console.log(`[ERROR]`);
+				console.log(code);
+			});
+			child.on('exit', (code) => {
+				console.log(`[END]`);
+				console.log(code);
+			});
 		});
 	}
 })();

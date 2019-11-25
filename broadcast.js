@@ -315,6 +315,14 @@ let BroadcastTransactions = {};
 let BroadcastNodeList = {};
 
 exports.SetServer = function(){
+	/* ノードリストのリセット */
+	for (let index in exports.GetNodeList()){
+		let address = exports.GetNodeList()[index];
+
+		exports.SetNode(address,"",0);
+	};
+
+
 
 	const HTTP = require('http').createServer();
 	const IO = require('socket.io')(HTTP);
@@ -512,18 +520,3 @@ exports.SetClient = async function(){
 		await MAIN.sleep(10);
 	};
 }
-
-
-
-
-exports.SetP2P = async function(){
-	/* ノードリストのリセット */
-	for (let index in exports.GetNodeList()){
-		let address = exports.GetNodeList()[index];
-
-		exports.SetNode(address,"",0);
-	};
-
-	exports.SetServer();
-	exports.SetClient();
-};
