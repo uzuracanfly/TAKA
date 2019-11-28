@@ -367,12 +367,6 @@ exports.SetServer = function(){
 
 
 		socket.on('disconnect', async function(){
-			let nodedata = exports.GetNode(address);
-			//すでにこちらがクライアント側として接続済み
-			if (nodedata["type"] == "client"){
-				return false;
-			};
-
 			MAIN.note(1,"SetServer_disconnect","Disconnect Node : "+address);
 
 			exports.SetNode(address,"server",0);
@@ -469,12 +463,6 @@ exports.SetClient = async function(){
 		});
 
 		socket.on('disconnect', async function(){
-			let nodedata = exports.GetNode(address);
-			//すでにこちらがサーバー側として接続済み
-			if (nodedata["type"] == "server"){
-				return false;
-			};
-
 			MAIN.note(1,"SetClient_disconnect","Disconnect Node : "+address);
 
 			exports.SetNode(address,"client",0);
