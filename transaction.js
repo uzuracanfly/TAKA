@@ -1002,7 +1002,7 @@ exports.Transaction = class{
 						child.on('message', (data) => {
 							return mresolve(parseInt(data));
 						});
-						child.on('error', (code) => {
+						child.on('error', (e) => {
 							return mresolve(-1);
 						});
 						child.on('close', (code) => {

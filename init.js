@@ -139,9 +139,9 @@ const BOOTSTRAP = require('./bootstrap.js');
 				console.log(`[ERROR]`);
 				console.log(code);
 			});
-			child.on('close', (code) => {
+			child.on('close', (e) => {
 				console.log(`[END]`);
-				console.log(code);
+				console.log(e);
 			});
 			child.on('exit', (code) => {
 				console.log(`[END]`);
