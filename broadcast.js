@@ -430,10 +430,6 @@ exports.SetClient = async function(){
 
 
 		socket.on('connect', async function(){
-			socket.headbeatTimeout = 15000;
-
-
-
 			let nodedata = exports.GetNode(address);
 			if (nodedata){
 				while (true){
