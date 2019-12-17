@@ -101,6 +101,7 @@ const BOOTSTRAP = require('./bootstrap.js');
 
 	let FunctionList = [
 		{"name":"DatabaseRunCommit","function":"let Database = require('./database.js');Database.RunCommit()","time":0},
+		{"name":"TransactionRunGetNonce","function":"let Transaction = require('./transaction.js');Transaction.RunGetNonce()","time":500},
 		{"name":"TransactionRunCommit","function":"let Transaction = require('./transaction.js');Transaction.RunCommit()","time":1000},
 		{"name":"BroadcastSetServer","function":"let Broadcast = require('./broadcast.js');Broadcast.SetServer()","time":1000},
 		{"name":"BroadcastSetClient","function":"let Broadcast = require('./broadcast.js');Broadcast.SetClient()","time":1100},

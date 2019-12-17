@@ -9,6 +9,7 @@ process.on('message', async function(args) {
 			process.exit();
 		}
 
+		let key = args["key"];
 		let nonce = args["nonce"];
 		let rawtx = args["rawtx"];
 		let StartTime = args["StartTime"];
@@ -29,7 +30,7 @@ process.on('message', async function(args) {
 
 
 			if (numtxid <= target){
-				process.send(nonce);
+				process.send({"key":key,"nonce":nonce});
 				break;
 			}else{
 				nonce = nonce + 1;
@@ -41,7 +42,7 @@ process.on('message', async function(args) {
 			};
 			if (TimeoutToNonceScan){
 				if (Math.floor(Date.now()/1000) >= StartTime + TimeoutToNonceScan){
-					process.send(-1);
+					process.send({"key":key,"nonce":-1});
 					break;
 				}
 			};

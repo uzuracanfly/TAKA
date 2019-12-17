@@ -7,6 +7,9 @@ const CONFIG = require('./config.js');
 const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.database["address"],CONFIG.database["port"],CONFIG.database["database"]);
 const FS = require('fs');
 const CP = require('child_process');
+const CPULEN = require('os').cpus().length;
+const HTTP = require('http');
+const SYNCREQUEST = require('sync-request');
 
 const TRANSACTIONTOOLS_TAGREWARD = require('./TransactionTools/tagreward');
 const TRANSACTIONTOOLS_DATABASE = require('./TransactionTools/database.js');
@@ -997,21 +1000,20 @@ exports.Transaction = class{
 					};
 
 					if(typeof CP.spawn == 'function') {
-						let child = CP.fork("GetNonceForNode.js");
-						ChildList.push(child);
-						child.on('message', (data) => {
-							return mresolve(parseInt(data));
-						});
-						child.on('error', (e) => {
-							return mresolve(-1);
-						});
-						child.on('close', (code) => {
-							return mresolve(-1);
-						});
-						child.on('exit', (code) => {
-							return mresolve(-1);
-						});
-						child.send(args);
+						let headers = {
+							'Content-Type':'application/json'
+						};
+
+						//リクエスト送信
+						let res = SYNCREQUEST(
+							'POST',
+							`http://${CONFIG.Transaction["address"]}:${CONFIG.Transaction["port"]}`, 
+							{
+								headers: headers,
+								json: {"function":"GetNonce","args":args},
+							}
+						);
+						return mresolve(parseInt( JSON.parse(res.getBody('utf8')) ));
 					}else{
 						let child = new Worker(CONFIG.API["AccessPoint"]+"/lib/"+'GetNonceForWeb');
 						ChildList.push(child);
@@ -1582,4 +1584,55 @@ exports.RunCommit = async function(){
 
 		await MAIN.sleep(1);
 	}
+}
+
+
+
+
+
+
+
+
+
+/*
+GetNonce スレッド
+*/
+exports.RunGetNonce = async function(){
+	let ChildList = [];
+	let WorkList = [];
+	for (let index=0;index<CPULEN;index++){
+		let child = CP.fork("GetNonceForNode.js");
+		child.on('message', (data) => {
+			//data -> {"key":"","nonce":0}
+
+			let workkey = data["key"];
+			let response = WorkList[workkey]["response"];
+
+			response.write(JSON.stringify(data["nonce"]));
+			response.end();
+		});
+		ChildList.push(child);
+	};
+
+	HTTP.createServer(async function(request, response) {
+		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+
+		if(request.method === 'POST') {
+			let postData = "";
+			request.on('data', async function(chunk) {
+				postData += chunk;
+			}).on('end', async function() {
+				postData = JSON.parse(postData);
+
+				if(postData["function"] == "GetNonce"){
+					let child = ChildList[WorkList.length - (parseInt(WorkList.length/ChildList.length)*ChildList.length)];
+
+					let workkey = WorkList.length;
+
+					WorkList[workkey] = {"response":response};
+					child.send( (Object.assign(postData["args"], {"key":workkey})) );
+				};
+			});
+		};
+	}).listen(CONFIG.Transaction["port"], CONFIG.Transaction["address"]);
 }
