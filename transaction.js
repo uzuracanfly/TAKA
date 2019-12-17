@@ -1024,15 +1024,7 @@ exports.Transaction = class{
 					}
 				};
 			}).then(async function(nonce){
-				if(typeof CP.spawn == 'function') {
-					for (let index in ChildList){
-						let child = ChildList[index];
-
-						if (child.connected){
-							child.send("KILL");
-						}
-					}
-				}else{
+				if(typeof CP.spawn != 'function') {
 					for (let index in ChildList){
 						let child = ChildList[index];
 
