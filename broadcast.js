@@ -323,9 +323,16 @@ exports.SetServer = function(){
 	};
 
 
+	const options = {
+		serveClient: false,
+		pingTimeout: 60000,
+		pingInterval: 25000
+		// transports: ['polling']
+	}
+
 
 	const HTTP = require('http').createServer();
-	const IO = require('socket.io')(HTTP);
+	const IO = require('socket.io')(HTTP,options);
 
 
 
