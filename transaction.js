@@ -985,7 +985,7 @@ exports.Transaction = class{
 			let ChildList = [];
 			new Promise(async function (mresolve, mreject) {
 
-				let args = {"nonce":Math.floor( Math.random() * parseInt("ffffffffffffffff",16) ),"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
+				let args = {"nonce":objtx["nonce"],"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
 
 
 				if(typeof CP.spawn == 'function') {
@@ -1012,7 +1012,7 @@ exports.Transaction = class{
 					for (let index=0;index<ProcessCount;index++){
 						//index0移行はランダムで最初のnonce決める
 						if (index != 0){
-							args = {"nonce":objtx["nonce"],"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
+							args = {"nonce":Math.floor( Math.random() * parseInt("ffffffffffffffff",16) ),"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
 						};
 
 						let child = new Worker(CONFIG.API["AccessPoint"]+"/lib/"+'GetNonceForWeb');
@@ -1617,12 +1617,26 @@ exports.RunGetNonce = async function(){
 				postData = JSON.parse(postData);
 
 				if(postData["function"] == "GetNonce"){
-					let child = ChildList[WorkList.length - (parseInt(WorkList.length/ChildList.length)*ChildList.length)];
+					for (let index in ChildList){
 
-					let workkey = WorkList.length;
+						//2コア目からnonceを変更する
+						let args = postData["args"];
+						if (index != 0){
+							//すでにnonceが決まっている
+							if (args["nonce"] != 0){
+								break;
+							}
 
-					WorkList[workkey] = {"response":response};
-					child.send( (Object.assign(postData["args"], {"key":workkey})) );
+							args["nonce"] = Math.floor( Math.random() * parseInt("ffffffffffffffff",16) );
+						};
+
+						let child = ChildList[index];
+
+						let workkey = WorkList.length;
+
+						WorkList[workkey] = {"response":response};
+						child.send( (Object.assign(args, {"key":workkey})) );
+					};
 				};
 			});
 		};
