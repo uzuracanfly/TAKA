@@ -980,48 +980,48 @@ exports.Transaction = class{
 		}
 		let StartTime = Math.floor(Date.now()/1000);
 
-		let ProcessCount = 2;
-		if (TimeoutToNonceScan == -1){
-			ProcessCount = 1;
-		};
-
 
 		return new Promise(async function (resolve, reject) {
 			let ChildList = [];
 			new Promise(async function (mresolve, mreject) {
 
-				let args = {};
-				for (let index=0;index<ProcessCount;index++){
-					//index0移行はランダムで最初のnonce決める
-					if (index > 0){
-						args = {"nonce":Math.floor( Math.random() * parseInt("ffffffffffffffff",16) ),"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
-					}else{
-						args = {"nonce":objtx["nonce"],"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
+				let args = {"nonce":Math.floor( Math.random() * parseInt("ffffffffffffffff",16) ),"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
+
+
+				if(typeof CP.spawn == 'function') {
+					let headers = {
+						'Content-Type':'application/json'
 					};
 
-					if(typeof CP.spawn == 'function') {
-						let headers = {
-							'Content-Type':'application/json'
+					//リクエスト送信
+					let res = SYNCREQUEST(
+						'POST',
+						`http://${CONFIG.Transaction["address"]}:${CONFIG.Transaction["port"]}`, 
+						{
+							headers: headers,
+							json: {"function":"GetNonce","args":args},
+						}
+					);
+					return mresolve(parseInt( JSON.parse(res.getBody('utf8')) ));
+				}else{
+					let ProcessCount = navigator.hardwareConcurrency;
+					if (TimeoutToNonceScan == -1){
+						ProcessCount = 1;
+					};
+					
+					for (let index=0;index<ProcessCount;index++){
+						//index0移行はランダムで最初のnonce決める
+						if (index != 0){
+							args = {"nonce":objtx["nonce"],"rawtx":rawtx,"StartTime":StartTime,"TimeoutToNonceScan":TimeoutToNonceScan,"target":target.toString()};
 						};
 
-						//リクエスト送信
-						let res = SYNCREQUEST(
-							'POST',
-							`http://${CONFIG.Transaction["address"]}:${CONFIG.Transaction["port"]}`, 
-							{
-								headers: headers,
-								json: {"function":"GetNonce","args":args},
-							}
-						);
-						return mresolve(parseInt( JSON.parse(res.getBody('utf8')) ));
-					}else{
 						let child = new Worker(CONFIG.API["AccessPoint"]+"/lib/"+'GetNonceForWeb');
 						ChildList.push(child);
 						child.onmessage = function(e) {
 							return mresolve(parseInt(e.data));
 						}
 						child.postMessage(args);
-					}
+					};
 				};
 			}).then(async function(nonce){
 				if(typeof CP.spawn != 'function') {

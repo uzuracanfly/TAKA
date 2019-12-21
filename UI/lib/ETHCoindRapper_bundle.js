@@ -463,6 +463,12 @@ exports.Note = {
 	"loglevel":1
 }
 
+
+exports.Transaction = {
+	"address":"127.0.0.1",
+	"port":20197,
+}
+
 },{}],4:[function(require,module,exports){
 /*
 ////////////////////////////////////////////
