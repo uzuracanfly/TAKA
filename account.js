@@ -161,14 +161,7 @@ exports.account = class{
 
 		let TransactionIdsPerAccountAndTag = DATABASE.get("TransactionIdsPerSenderAndTag",address+"_"+tag);
 
-		let result = [];
-		for (let index in TransactionIdsPerAccountAndTag){
-			let txid = TransactionIdsPerAccountAndTag[index];
-
-			result.push(txid);
-		}
-
-		return result;
+		return TransactionIdsPerAccountAndTag;
 	};
 
 
@@ -234,22 +227,62 @@ exports.account = class{
 	}
 
 
-	async GetSendAmountToAddress(address="",toaddress=""){
+	async GetSendAmountToAddress(address="",toaddress="",LessIndex=0,LessTime=0,BoolNeedApproved=0){
 		await this.SetUpClass();
 		if (!address){
 			address = (await this.GetKeys())["address"];
 		}
 
-		let txlist = DATABASE.get("TransactionIdsPerAccountAndToAccountAndTag",address+"_"+toaddress+"_pay");
+		let txlist = await this.GetFormTxList(address,"pay",LessIndex,LessTime,BoolNeedApproved);
+		if (LessTime){
+			LessIndex = await TRANSACTION.GetLessIndexFromLessTime(address,"pay",LessTime);
+			LessTime = 0;
+		};
 
-		let amount = 0;
+
+
+		/* indexの残高のキャッシュがとられている */
+		let MaxCacheIndex = 0;
+		let AmountWithMaxCacheIndex = 0;
+		let datas = DATABASE.get("SendAmountToAddressPerAddress",`${address}_${toaddress}`);
+		for (let index in datas){
+			let data = datas[index];
+			data = new HEX.HexText().utf8_hex_string_to_string(data);
+			data = JSON.parse(data);
+
+			let CacheIndex = parseInt(data["index"]);
+			if (LessIndex && LessIndex <= CacheIndex){
+				continue;
+			}
+			if (MaxCacheIndex < CacheIndex){
+				MaxCacheIndex = CacheIndex;
+				AmountWithMaxCacheIndex = parseInt(data["amount"]);
+			}
+		}
+
+
+
+		let TxlistPerAccAndToAndTag = DATABASE.get("TransactionIdsPerAccountAndToAccountAndTag",address+"_"+toaddress+"_pay");
+		let amount = AmountWithMaxCacheIndex;
 		for (let index in txlist){
+			if (MaxCacheIndex && MaxCacheIndex >= parseInt(index)+1){
+				continue;
+			}
+
 			let txid = txlist[index];
+
+			if (TxlistPerAccAndToAndTag.indexOf(txid) == -1){
+				continue;
+			}
 
 			let TX = TRANSACTION.GetTx(txid);
 			let objtx = await TX.GetObjTx();
 
-			amount = amount + objtx["amount"];
+			let SenderKeys = await this.GetKeys(objtx["pubkey"]);
+
+			if (SenderKeys["address"] == address && objtx["toaddress"] == toaddress){
+				amount = amount + objtx["amount"];
+			};
 		}
 
 		return amount;

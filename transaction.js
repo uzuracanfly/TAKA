@@ -1414,7 +1414,12 @@ exports.RunCommit = async function(){
 
 		//payの場合残高をキャッシュ
 		if (objtx["type"] == 1){
-			let data = {"index":objtx["index"],"balance":(await TargetTransaction.TargetAccount.GetBalance())};
+			let data = {"index":objtx["index"],"amount":(await TargetTransaction.TargetAccount.GetSendAmountToAddress(undefined,objtx["toaddress"]))};
+			data = JSON.stringify(data);
+			data = new HEX.HexText().string_to_utf8_hex_string(data);
+			DATABASE.add("SendAmountToAddressPerAddress",`${(await TargetTransaction.TargetAccount.GetKeys())["address"]}_${objtx["toaddress"]}`,data);
+
+			data = {"index":objtx["index"],"balance":(await TargetTransaction.TargetAccount.GetBalance())};
 			data = JSON.stringify(data);
 			data = new HEX.HexText().string_to_utf8_hex_string(data);
 			DATABASE.add("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],data);
@@ -1469,6 +1474,11 @@ exports.RunCommit = async function(){
 
 		//payの場合残高をキャッシュ
 		if (objtx["type"] == 1){
+			data = {"index":objtx["index"],"amount":(await TargetTransaction.TargetAccount.GetSendAmountToAddress(undefined,objtx["toaddress"],objtx["index"]))};
+			data = JSON.stringify(data);
+			data = new HEX.HexText().string_to_utf8_hex_string(data);
+			DATABASE.remove("SendAmountToAddressPerAddress",`${(await TargetTransaction.TargetAccount.GetKeys())["address"]}_${objtx["toaddress"]}`,-1,data);
+
 			DATABASE.remove("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],objtx["index"]-1);
 			DATABASE.remove("BalancePerAddress",objtx["toaddress"],objtx["ToIndex"]-1);
 		};
@@ -1527,7 +1537,6 @@ exports.RunCommit = async function(){
 			};
 
 			let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
-			DATABASE.set("UnconfirmedTransactions",tag,[]);
 
 			//timeが古い順並び替え
 			UnconfirmedTransactions = UnconfirmedTransactions.sort(await RawTxOldCompare);
@@ -1536,6 +1545,8 @@ exports.RunCommit = async function(){
 			for (let mindex in UnconfirmedTransactions){
 				try{
 					let rawtx = UnconfirmedTransactions[mindex];
+
+					DATABASE.remove("UnconfirmedTransactions",tag,undefined,rawtx);
 
 					MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 
