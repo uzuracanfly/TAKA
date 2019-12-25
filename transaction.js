@@ -1618,38 +1618,52 @@ exports.RunGetNonce = async function(){
 	};
 
 	HTTP.createServer(async function(request, response) {
-		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+		try{
+			(async () => {
+				response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
 
-		if(request.method === 'POST') {
-			let postData = "";
-			request.on('data', async function(chunk) {
-				postData += chunk;
-			}).on('end', async function() {
-				postData = JSON.parse(postData);
+				if(request.method === 'POST') {
+					let postData = "";
+					request.on('data', async function(chunk) {
+						postData += chunk;
+					}).on('end', async function() {
+						try{
+							postData = JSON.parse(postData);
 
-				if(postData["function"] == "GetNonce"){
-					for (let index in ChildList){
+							if(postData["function"] == "GetNonce"){
+								for (let index in ChildList){
 
-						//2コア目からnonceを変更する
-						let args = postData["args"];
-						if (index != 0){
-							//すでにnonceが決まっている
-							if (args["nonce"] != 0){
-								break;
-							}
+									//2コア目からnonceを変更する
+									let args = postData["args"];
+									if (index != 0){
+										//すでにnonceが決まっている
+										if (args["nonce"] != 0){
+											break;
+										}
 
-							args["nonce"] = Math.floor( Math.random() * parseInt("ffffffffffffffff",16) );
-						};
+										args["nonce"] = Math.floor( Math.random() * parseInt("ffffffffffffffff",16) );
+									};
 
-						let child = ChildList[index];
+									let child = ChildList[index];
 
-						let workkey = WorkList.length;
+									let workkey = WorkList.length;
 
-						WorkList[workkey] = {"response":response};
-						child.send( (Object.assign(args, {"key":workkey})) );
-					};
+									WorkList[workkey] = {"response":response};
+									child.send( (Object.assign(args, {"key":workkey})) );
+								};
+							};
+						}catch(e){
+							MAIN.note(2,"RunGetNonce",e);
+							response.write(JSON.stringify(false));
+							response.end();
+						}
+					});
 				};
-			});
-		};
+			})();
+		}catch(e){
+			MAIN.note(2,"RunGetNonce",e);
+			response.write(JSON.stringify(false));
+			response.end();
+		}
 	}).listen(CONFIG.Transaction["port"], CONFIG.Transaction["address"]);
 }
