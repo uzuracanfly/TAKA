@@ -1130,12 +1130,12 @@ exports.GetTx = function(txid){
 
 exports.GetRawTxToDirect = async function(txid){
 	try{
-		let rawtx = DATABASE.get("ConfirmedTransactions",txid);
-		if (rawtx.length <= 0){
+		let rawtxs = DATABASE.get("ConfirmedTransactions",txid);
+		if (rawtxs.length <= 0){
 			return false;
 		}
 
-		return rawtx;
+		return rawtxs[0];
 	}catch(e){
 		MAIN.note(2,"GetRawTxToDirect",e);
 		return false;
