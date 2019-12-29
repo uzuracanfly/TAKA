@@ -1127,6 +1127,23 @@ exports.GetTx = function(txid){
 	}
 }
 
+
+exports.GetRawTxToDirect = async function(txid){
+	try{
+		let rawtx = DATABASE.get("ConfirmedTransactions",txid);
+		if (rawtx.length <= 0){
+			return false;
+		}
+
+		return rawtx;
+	}catch(e){
+		MAIN.note(2,"GetRawTxToDirect",e);
+		return false;
+	}
+}
+
+
+
 exports.GetTags = function(){
 	let tags = DATABASE.get("TransactionIdsPerTag");
 

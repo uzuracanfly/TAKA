@@ -119,26 +119,32 @@ function SetActionEvents(socket,address){
 		try{
 			let rawtxs = [];
 
-			let TransactionIdsPerAll = TRANSACTION.GetAllTxids();
-			for (let index in TransactionIdsPerAll){
-				let txid = TransactionIdsPerAll[index];
+			let tags = TRANSACTION.GetTags();
+			for (let index in tags){
+				let tag = tags[index];
 
 				if (rawtxs.length >= data["count"]){
 					break;
 				}
-				if ((data["ConfirmedTxids"]).indexOf(txid) > 0){
+				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(tag) == -1){
 					continue;
 				}
 
-				let TX = TRANSACTION.GetTx(txid);
-				let rawtx = await TX.GetRawTx();
-				let objtx = await TX.GetObjTx();
+				let txids = await TRANSACTION.GetTagTxids(tag);
+				for (let index in txids){
+					let txid = txids[index];
 
-				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(objtx["tag"]) == -1){
-					continue;
+					if (rawtxs.length >= data["count"]){
+						break;
+					}
+					if ((data["ConfirmedTxids"]).indexOf(txid) > 0){
+						continue;
+					}
+
+					let rawtx = await TRANSACTION.GetRawTxToDirect(txid);
+
+					rawtxs.push(rawtx);
 				}
-
-				rawtxs.push(rawtx);
 			}
 			let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
 			for (let index in UnconfirmedTransactions){
