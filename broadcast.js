@@ -120,6 +120,7 @@ function SetActionEvents(socket,address){
 			let rawtxs = [];
 
 			let tags = TRANSACTION.GetTags();
+			tags = tags.sort(TRANSACTION.TagCompare);
 			for (let index in tags){
 				let tag = tags[index];
 
