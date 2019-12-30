@@ -136,6 +136,7 @@ function SetActionEvents(socket,address){
 					if (tag in data["ConfirmedIndexPerTags"] && data["ConfirmedIndexPerTags"][tag] > index+1){
 						continue;
 					}
+					console.log(index);
 
 					let txid = txids[index];
 
@@ -174,7 +175,7 @@ function SetActionEvents(socket,address){
 
 				rawtxs.push(rawtx);
 			}
-			console.log(rawtxs);
+
 			socket.emit('transactions', rawtxs);
 		}catch(e){
 			MAIN.note(2,"GetTransactions",e);
