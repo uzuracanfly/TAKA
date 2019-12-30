@@ -231,7 +231,7 @@ async function RuningGetTransactions(socket,address){
 		if (address in BroadcastTransactions){
 			delete BroadcastTransactions[address];
 		};
-		socket.emit('GetTransactions',{"ConfirmedTxidsPerTag":ConfirmedTxidsPerTag,"count":100,"NeedTags":(await TRANSACTION.GetImportTags())});
+		socket.emit('GetTransactions',{"ConfirmedTxidsPerTag":ConfirmedTxidsPerTag,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
 
 
 
