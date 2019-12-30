@@ -138,7 +138,7 @@ function SetActionEvents(socket,address){
 					if (rawtxs.length >= data["count"]){
 						break;
 					}
-					if (tag in data["ConfirmedTxidsPerTag"] && (data["ConfirmedTxidsPerTag"][tag]).indexOf(txid) > 0){
+					if (tag in data["ConfirmedTxidsPerTag"] && (data["ConfirmedTxidsPerTag"][tag]).indexOf(txid) != -1){
 						continue;
 					}
 
@@ -159,7 +159,7 @@ function SetActionEvents(socket,address){
 				let txid = await TargetTransaction.GetTxid();
 				let objtx = await TargetTransaction.GetObjTx();
 
-				if (objtx["tag"] in data["ConfirmedTxidsPerTag"] && (data["ConfirmedTxidsPerTag"][objtx["tag"]]).indexOf(txid) > 0){
+				if (objtx["tag"] in data["ConfirmedTxidsPerTag"] && (data["ConfirmedTxidsPerTag"][objtx["tag"]]).indexOf(txid) != -1){
 					continue;
 				}
 				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(objtx["tag"]) == -1){
