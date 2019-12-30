@@ -112,7 +112,7 @@ function SetActionEvents(socket,address){
 	/*
 		選出して生のトランザクションをお届け
 
-		parameter : {"ConfirmedTxids":[ConfirmedTxids],"count":count,"NeedTags":[]}
+		parameter : {"ConfirmedIndexPerTags":{"pay":5},"count":count,"NeedTags":[]}
 		response : [rawtxs]
 	*/
 	socket.on('GetTransactions', async function (data) {
@@ -133,13 +133,14 @@ function SetActionEvents(socket,address){
 
 				let txids = await TRANSACTION.GetTagTxids(tag);
 				for (let index in txids){
+					if (data["ConfirmedIndexPerTags"][tag] > index+1){
+						continue;
+					}
+
 					let txid = txids[index];
 
 					if (rawtxs.length >= data["count"]){
 						break;
-					}
-					if ((data["ConfirmedTxids"]).indexOf(txid) > 0){
-						continue;
 					}
 
 					let rawtx = await TRANSACTION.GetRawTxToDirect(txid);
@@ -156,10 +157,9 @@ function SetActionEvents(socket,address){
 				}
 
 				let TargetTransaction = new TRANSACTION.Transaction(rawtx);
-				let txid = await TargetTransaction.GetTxid();
 				let objtx = await TargetTransaction.GetObjTx();
 
-				if ((data["ConfirmedTxids"]).indexOf(txid) > 0){
+				if (data["ConfirmedIndexPerTags"][objtx["tag"]] > objtx["index"]){
 					continue;
 				}
 				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(objtx["tag"]) == -1){
@@ -202,26 +202,22 @@ function SetActionEvents(socket,address){
 
 async function RuningGetTransactions(socket,address){
 	try{
-		/* 承認済みトランザクションリストまとめ */
-		let ConfirmedTxids = TRANSACTION.GetAllTxids();
-		let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
-		for (let index in UnconfirmedTransactions){
-			let rawtx = UnconfirmedTransactions[index];
+		/* 承認済みトランザクションのIndexまとめ */
+		let ConfirmedIndexPerTags = {};
+		let tags = TRANSACTION.GetTags();
+		tags = tags.sort(TRANSACTION.TagCompare);
+		for (let index in tags){
+			let tag = tags[index];
 
-			let TargetTransaction = new TRANSACTION.Transaction(rawtx);
-			let txid = await TargetTransaction.GetTxid();
+			let txids = await TRANSACTION.GetTagTxids(tag);
 
-			if (ConfirmedTxids.indexOf(txid) > 0){
-				continue;
-			}
-
-			ConfirmedTxids.push(txid);
+			ConfirmedIndexPerTags[tag] = txids.length;
 		};
 
 		if (address in BroadcastTransactions){
 			delete BroadcastTransactions[address];
 		};
-		socket.emit('GetTransactions',{"ConfirmedTxids":ConfirmedTxids,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
+		socket.emit('GetTransactions',{"ConfirmedIndexPerTags":ConfirmedIndexPerTags,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
 
 
 
