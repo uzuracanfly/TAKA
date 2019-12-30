@@ -117,7 +117,6 @@ function SetActionEvents(socket,address){
 	*/
 	socket.on('GetTransactions', async function (data) {
 		try{
-			console.log(data);
 			let rawtxs = [];
 
 			let tags = TRANSACTION.GetTags();
@@ -134,7 +133,7 @@ function SetActionEvents(socket,address){
 
 				let txids = await TRANSACTION.GetTagTxids(tag);
 				for (let index in txids){
-					if (data["ConfirmedIndexPerTags"][tag] > index+1){
+					if (tag in data["ConfirmedIndexPerTags"] && data["ConfirmedIndexPerTags"][tag] > index+1){
 						continue;
 					}
 
@@ -175,7 +174,7 @@ function SetActionEvents(socket,address){
 
 				rawtxs.push(rawtx);
 			}
-
+			console.log(rawtxs);
 			socket.emit('transactions', rawtxs);
 		}catch(e){
 			MAIN.note(2,"GetTransactions",e);
