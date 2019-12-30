@@ -221,7 +221,7 @@ async function RuningGetTransactions(socket,address){
 			let txid = await TargetTransaction.GetTxid();
 			let objtx = await TargetTransaction.GetObjTx();
 
-			if (objtx["tag"] in ConfirmedTxidsPerTag){
+			if (!objtx["tag"] in ConfirmedTxidsPerTag){
 				ConfirmedTxidsPerTag[objtx["tag"]] = [];
 			}
 
