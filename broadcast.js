@@ -117,6 +117,7 @@ function SetActionEvents(socket,address){
 	*/
 	socket.on('GetTransactions', async function (data) {
 		try{
+			console.log(data);
 			let rawtxs = [];
 
 			let tags = TRANSACTION.GetTags();
