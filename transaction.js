@@ -1606,6 +1606,8 @@ exports.RunCommit = async function(){
 			}
 		};
 
+		await global.RunStop();
+
 		await MAIN.sleep(1);
 	}
 }

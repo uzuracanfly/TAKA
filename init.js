@@ -100,16 +100,16 @@ const BOOTSTRAP = require('./bootstrap.js');
 
 
 	let FunctionList = [
-		{"name":"DatabaseRunCommit","function":"let Database = require('./database.js');Database.RunCommit()","time":0},
-		{"name":"TransactionRunGetNonce","function":"let Transaction = require('./transaction.js');Transaction.RunGetNonce()","time":500},
-		{"name":"TransactionRunCommit","function":"let Transaction = require('./transaction.js');Transaction.RunCommit()","time":1000},
-		{"name":"BroadcastSetServer","function":"let Broadcast = require('./broadcast.js');Broadcast.SetServer()","time":1000},
-		{"name":"BroadcastSetClient","function":"let Broadcast = require('./broadcast.js');Broadcast.SetClient()","time":1100},
-		{"name":"APISetServer","function":"let API = require('./api.js');API.SetServer()","time":1000},
-		{"name":"TagrewardRunMining","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()","time":1000},
-		{"name":"exchange","function":"let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()","time":1000},
-		{"name":"ControlTag","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunControlTag()","time":1000},
-		{"name":"bootstrap","function":"let BOOTSTRAP = require('./bootstrap.js');BOOTSTRAP.RunSaveDataBase()","time":1000},
+		{"name":"DatabaseRunCommit","function":"let Database = require('./database.js');Database.RunCommit()","time":0,"child":null,"BoolKill":false,"WaitTime":5000},
+		{"name":"TransactionRunGetNonce","function":"let Transaction = require('./transaction.js');Transaction.RunGetNonce()","time":500,"child":null,"BoolKill":true},
+		{"name":"TransactionRunCommit","function":"let Transaction = require('./transaction.js');Transaction.RunCommit()","time":1000,"child":null,"BoolKill":false,"WaitTime":0},
+		{"name":"BroadcastSetServer","function":"let Broadcast = require('./broadcast.js');Broadcast.SetServer()","time":1000,"child":null,"BoolKill":true},
+		{"name":"BroadcastSetClient","function":"let Broadcast = require('./broadcast.js');Broadcast.SetClient()","time":1100,"child":null,"BoolKill":true},
+		{"name":"APISetServer","function":"let API = require('./api.js');API.SetServer()","time":1000,"child":null,"BoolKill":true},
+		{"name":"TagrewardRunMining","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()","time":1000,"child":null,"BoolKill":true},
+		{"name":"exchange","function":"let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()","time":1000,"child":null,"BoolKill":true},
+		{"name":"ControlTag","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunControlTag()","time":1000,"child":null,"BoolKill":true},
+		{"name":"bootstrap","function":"let BOOTSTRAP = require('./bootstrap.js');BOOTSTRAP.RunSaveDataBase()","time":1000,"child":null,"BoolKill":true},
 		{
 			"name":"TEST",
 			"function":"\
@@ -121,13 +121,14 @@ const BOOTSTRAP = require('./bootstrap.js');
 					}\
 				})\
 			",
-			"time":2000
+			"time":2000,
+			"BoolKill":true,
 		},
 	];
 
 
 
-	
+
 	for (let index in FunctionList) {
 		let FunctionData = FunctionList[index];
 
@@ -135,7 +136,8 @@ const BOOTSTRAP = require('./bootstrap.js');
 			await MAIN.sleep(parseInt(FunctionData["time"]/1000));
 
 			let child = CP.fork(`initcode.js`);
-			child.send(FunctionData["function"]);
+			child.send({"action":"run","args":{"code":FunctionData["function"]}});
+			FunctionList[index]["child"] = child;
 			child.on('error', (code) => {
 				console.log(`[ERROR]`);
 				console.log(code);
@@ -149,5 +151,21 @@ const BOOTSTRAP = require('./bootstrap.js');
 				console.log(code);
 			});
 		});
+	}
+
+
+	while (true){
+		let InputText = await MAIN.GetConsole();
+		if (InputText == "exit"){
+			for (let index in FunctionList){
+				let FunctionData = FunctionList[index];
+				if (FunctionData["BoolKill"]){
+					(FunctionData["child"]).send({"action":"kill","args":{}});
+				}else{
+					(FunctionData["child"]).send({"action":"exit","args":{"WaitTime":FunctionData["WaitTime"]}});
+				}
+			}
+			process.exit();
+		}
 	}
 })();

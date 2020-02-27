@@ -374,6 +374,8 @@ exports.RunCommit = async function(){
 			}
 		};
 
+		await global.RunStop();
+
 		await sleep(0.001);
 	};
 
