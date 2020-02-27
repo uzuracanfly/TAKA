@@ -26,7 +26,7 @@ process.on('message', async function(data) {
 		}else if(action == "kill"){
 			process.exit();
 		}else if(action == "exit"){
-			await sleep(args["WaitTime"]/1000);
+			await sleep(args["WaitTime"]);
 			console.log("########### EXIT ORDER ###########");
 			global.BoolRun = false;
 		}

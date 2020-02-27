@@ -100,16 +100,16 @@ const BOOTSTRAP = require('./bootstrap.js');
 
 
 	let FunctionList = [
-		{"name":"DatabaseRunCommit","function":"let Database = require('./database.js');Database.RunCommit()","time":0,"child":null,"BoolKill":false,"WaitTime":5000},
-		{"name":"TransactionRunGetNonce","function":"let Transaction = require('./transaction.js');Transaction.RunGetNonce()","time":500,"child":null,"BoolKill":true},
-		{"name":"TransactionRunCommit","function":"let Transaction = require('./transaction.js');Transaction.RunCommit()","time":1000,"child":null,"BoolKill":false,"WaitTime":0},
-		{"name":"BroadcastSetServer","function":"let Broadcast = require('./broadcast.js');Broadcast.SetServer()","time":1000,"child":null,"BoolKill":true},
-		{"name":"BroadcastSetClient","function":"let Broadcast = require('./broadcast.js');Broadcast.SetClient()","time":1100,"child":null,"BoolKill":true},
-		{"name":"APISetServer","function":"let API = require('./api.js');API.SetServer()","time":1000,"child":null,"BoolKill":true},
-		{"name":"TagrewardRunMining","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()","time":1000,"child":null,"BoolKill":true},
-		{"name":"exchange","function":"let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()","time":1000,"child":null,"BoolKill":true},
-		{"name":"ControlTag","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunControlTag()","time":1000,"child":null,"BoolKill":true},
-		{"name":"bootstrap","function":"let BOOTSTRAP = require('./bootstrap.js');BOOTSTRAP.RunSaveDataBase()","time":1000,"child":null,"BoolKill":true},
+		{"name":"DatabaseRunCommit","function":"let Database = require('./database.js');Database.RunCommit()","time":0,"child":null,"BoolKill":false,"WaitTime":10},
+		{"name":"TransactionRunGetNonce","function":"let Transaction = require('./transaction.js');Transaction.RunGetNonce()","time":0,"child":null,"BoolKill":true},
+		{"name":"TransactionRunCommit","function":"let Transaction = require('./transaction.js');Transaction.RunCommit()","time":1,"child":null,"BoolKill":false,"WaitTime":0},
+		{"name":"BroadcastSetServer","function":"let Broadcast = require('./broadcast.js');Broadcast.SetServer()","time":1,"child":null,"BoolKill":true},
+		{"name":"BroadcastSetClient","function":"let Broadcast = require('./broadcast.js');Broadcast.SetClient()","time":1,"child":null,"BoolKill":true},
+		{"name":"APISetServer","function":"let API = require('./api.js');API.SetServer()","time":1,"child":null,"BoolKill":true},
+		{"name":"TagrewardRunMining","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunMining()","time":1,"child":null,"BoolKill":true},
+		{"name":"exchange","function":"let EXCHANGE = require('./exchange.js');EXCHANGE.RunExchangeScan()","time":1,"child":null,"BoolKill":true},
+		{"name":"ControlTag","function":"let Tagreward = require('./TransactionTools/tagreward.js');Tagreward.RunControlTag()","time":1,"child":null,"BoolKill":true},
+		{"name":"bootstrap","function":"let BOOTSTRAP = require('./bootstrap.js');BOOTSTRAP.RunSaveDataBase()","time":1,"child":null,"BoolKill":true},
 		{
 			"name":"TEST",
 			"function":"\
@@ -133,7 +133,7 @@ const BOOTSTRAP = require('./bootstrap.js');
 		let FunctionData = FunctionList[index];
 
 		new Promise(async function (resolve, reject) {
-			await MAIN.sleep(parseInt(FunctionData["time"]/1000));
+			await MAIN.sleep(parseInt(FunctionData["time"]));
 
 			let child = CP.fork(`initcode.js`);
 			child.send({"action":"run","args":{"code":FunctionData["function"]}});
@@ -155,7 +155,7 @@ const BOOTSTRAP = require('./bootstrap.js');
 
 
 	while (true){
-		let InputText = await MAIN.GetConsole();
+		let InputText = await MAIN.GetConsole(`[${await MAIN.GetTime()}] `);
 		if (InputText == "exit"){
 			for (let index in FunctionList){
 				let FunctionData = FunctionList[index];

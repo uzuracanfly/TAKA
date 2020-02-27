@@ -76,3 +76,8 @@ exports.GetConsole = async function(pretext){
 		});
 	});
 }
+
+
+exports.GetTime = async function(){
+	return Math.floor( new Date().getTime() / 1000 );
+};
