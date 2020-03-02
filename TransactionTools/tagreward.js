@@ -132,7 +132,7 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 
 		return result;
 	}catch(e){
-		console.log(e);
+		MAIN.note(2,"tagreward_SendTagrewardTransaction",e);
 		return "";
 	}
 };
@@ -263,7 +263,7 @@ exports.RunMining = async function(){
 				//console.log(RewardPrivkey);
 				Rewards.push({"tag":TagRewardObjData["tag"],"RewardPrivkey":RewardPrivkey});
 			}catch(e){
-				console.log(e);
+				MAIN.note(2,"tagreward_RunMining",e);
 				continue;
 			};
 		}

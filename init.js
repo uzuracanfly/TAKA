@@ -130,9 +130,9 @@ const BOOTSTRAP = require('./bootstrap.js');
 
 
 	for (let index in FunctionList) {
-		let FunctionData = FunctionList[index];
+		(async (index) => {
+			let FunctionData = FunctionList[index];
 
-		new Promise(async function (resolve, reject) {
 			await MAIN.sleep(parseInt(FunctionData["time"]));
 
 			let child = CP.fork(`initcode.js`);
@@ -150,7 +150,7 @@ const BOOTSTRAP = require('./bootstrap.js');
 				console.log(`[END]`);
 				console.log(code);
 			});
-		});
+		})(index);
 	}
 
 
@@ -158,14 +158,18 @@ const BOOTSTRAP = require('./bootstrap.js');
 		let InputText = await MAIN.GetConsole(`[${await MAIN.GetTime()}] `);
 		if (InputText == "exit"){
 			for (let index in FunctionList){
-				let FunctionData = FunctionList[index];
-				if (FunctionData["BoolKill"]){
-					(FunctionData["child"]).send({"action":"kill","args":{}});
-				}else{
-					(FunctionData["child"]).send({"action":"exit","args":{"WaitTime":FunctionData["WaitTime"]}});
+				try{
+					let FunctionData = FunctionList[index];
+					if (FunctionData["BoolKill"]){
+						(FunctionData["child"]).send({"action":"kill","args":{}});
+					}else{
+						(FunctionData["child"]).send({"action":"exit","args":{"WaitTime":FunctionData["WaitTime"]}});
+					}
+				}catch(e){
+					continue;
 				}
 			}
-			process.exit();
+			process.exit(1);
 		}
 	}
 })();

@@ -1509,6 +1509,24 @@ exports.RunCommit = async function(){
 		return 1;
 	}
 
+	async function RawTxOldCompare(RawTxA, RawTxB){
+		let comparison = 0;
+
+		let TargetTransactionA = new exports.Transaction(RawTxA);
+		let ObjTxA = await TargetTransactionA.GetObjTx();
+		let TargetTransactionB = new exports.Transaction(RawTxB);
+		let ObjTxB = await TargetTransactionB.GetObjTx();
+
+		if (ObjTxA["time"] < ObjTxB["time"]){
+			comparison = -1;
+		}
+		if (ObjTxA["time"] > ObjTxB["time"]){
+			comparison = 1;
+		}
+
+		return comparison;
+	}
+
 
 
 
@@ -1526,89 +1544,77 @@ exports.RunCommit = async function(){
 
 
 	while (true){
-		async function RawTxOldCompare(RawTxA, RawTxB){
-			let comparison = 0;
+		try{
 
-			let TargetTransactionA = new exports.Transaction(RawTxA);
-			let ObjTxA = await TargetTransactionA.GetObjTx();
-			let TargetTransactionB = new exports.Transaction(RawTxB);
-			let ObjTxB = await TargetTransactionB.GetObjTx();
+			let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
+			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(exports.TagCompare);
+			for (let index in UnconfirmedTransactionsTags){
+				let tag = UnconfirmedTransactionsTags[index];
 
-			if (ObjTxA["time"] < ObjTxB["time"]){
-				comparison = -1;
-			}
-			if (ObjTxA["time"] > ObjTxB["time"]){
-				comparison = 1;
-			}
+				if (!tag){
+					continue;
+				}
+				if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(tag) == -1){
+					continue;
+				};
 
-			return comparison;
-		}
+				let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
+
+				//timeが古い順並び替え
+				UnconfirmedTransactions = UnconfirmedTransactions.sort(await RawTxOldCompare);
 
 
-		let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
-		UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(exports.TagCompare);
-		for (let index in UnconfirmedTransactionsTags){
-			let tag = UnconfirmedTransactionsTags[index];
+				for (let mindex in UnconfirmedTransactions){
+					try{
+						let rawtx = UnconfirmedTransactions[mindex];
 
-			if (!tag){
-				continue;
-			}
-			if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(tag) == -1){
-				continue;
+						DATABASE.remove("UnconfirmedTransactions",tag,undefined,rawtx);
+
+						MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
+
+						while (true){
+							let TargetTransaction = new exports.Transaction(rawtx);
+							let objtx = await TargetTransaction.GetObjTx();
+							let ToTargetAccount = new ACCOUNT.account(objtx["toaddress"]);
+
+
+							let txbool = await TargetTransaction.Confirmation();
+							if (txbool == 1){
+								await commit(TargetTransaction);
+								break;
+							}
+							if (txbool == 2){
+								let SenderAccountTxids = await TargetTransaction.TargetAccount.GetFormTxList(undefined,objtx["tag"]);
+								let ResetTxid = SenderAccountTxids.slice(-1)[0];
+								let RESETTX = exports.GetTx(ResetTxid);
+								await reset(RESETTX);
+							}
+							if (txbool == 3){
+								let ToAccountTxids = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
+								let ResetTxid = ToAccountTxids.slice(-1)[0];
+								let RESETTX = exports.GetTx(ResetTxid);
+								await reset(RESETTX);
+							}
+							if (txbool == 0){
+								MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
+								break;
+							}
+						};
+					}catch(e){
+						MAIN.note(2,"transaction_RunCommit",e);
+					}finally{
+						await MAIN.sleep(0.1);
+					}
+				}
 			};
 
-			let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
+		}catch(e){
+			MAIN.note(2,"transaction_RunCommit",e);
 
-			//timeが古い順並び替え
-			UnconfirmedTransactions = UnconfirmedTransactions.sort(await RawTxOldCompare);
-
-
-			for (let mindex in UnconfirmedTransactions){
-				try{
-					let rawtx = UnconfirmedTransactions[mindex];
-
-					DATABASE.remove("UnconfirmedTransactions",tag,undefined,rawtx);
-
-					MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
-
-					while (true){
-						let TargetTransaction = new exports.Transaction(rawtx);
-						let objtx = await TargetTransaction.GetObjTx();
-						let ToTargetAccount = new ACCOUNT.account(objtx["toaddress"]);
-
-
-						let txbool = await TargetTransaction.Confirmation();
-						if (txbool == 1){
-							await commit(TargetTransaction);
-							break;
-						}
-						if (txbool == 2){
-							let SenderAccountTxids = await TargetTransaction.TargetAccount.GetFormTxList(undefined,objtx["tag"]);
-							let ResetTxid = SenderAccountTxids.slice(-1)[0];
-							let RESETTX = exports.GetTx(ResetTxid);
-							await reset(RESETTX);
-						}
-						if (txbool == 3){
-							let ToAccountTxids = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
-							let ResetTxid = ToAccountTxids.slice(-1)[0];
-							let RESETTX = exports.GetTx(ResetTxid);
-							await reset(RESETTX);
-						}
-						if (txbool == 0){
-							MAIN.note(0,"transaction_RunCommit_commit","[pass transaction] "+rawtx);
-							break;
-						}
-					};
-				}catch(e){
-					MAIN.note(2,"RunCommit",e);
-				}
-				await MAIN.sleep(0.1);
-			}
-		};
-
-		await global.RunStop();
-
-		await MAIN.sleep(1);
+		}finally{
+			await global.RunStop();
+			await MAIN.sleep(1);
+		}
 	}
 }
 

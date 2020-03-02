@@ -3,8 +3,8 @@ global.BoolRun = true;
 
 global.RunStop = async function(){
 	if (!global.BoolRun){
-		console.log("########### EXIT ###########");
-		process.exit();
+		console.log(`########### EXIT [${process.pid}] ###########`);
+		process.exit(1);
 	}
 };
 
@@ -24,10 +24,11 @@ process.on('message', async function(data) {
 		if (action == "run"){
 			eval(args["code"]);
 		}else if(action == "kill"){
-			process.exit();
+			console.log(`########### EXIT [${process.pid}] ###########`);
+			process.exit(1);
 		}else if(action == "exit"){
 			await sleep(args["WaitTime"]);
-			console.log("########### EXIT ORDER ###########");
+			console.log(`########### EXIT ORDER [${process.pid}] ###########`);
 			global.BoolRun = false;
 		}
 	}catch(e){
