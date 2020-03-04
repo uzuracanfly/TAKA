@@ -370,16 +370,20 @@ exports.SetServer = function(){
 		let nodedata = exports.GetNode(address);
 		if (nodedata){
 			while (true){
-				nodedata = exports.GetNode(address);
-				//すでにこちらがクライアント側として接続済み
-				if (nodedata["type"] == "client" && nodedata["state"] == 1){
-					return false;
-				};
-				if (nodedata["time"]+10 < Math.floor(Date.now()/1000)){
-					break;
+				try{
+					nodedata = exports.GetNode(address);
+					//すでにこちらがクライアント側として接続済み
+					if (nodedata["type"] == "client" && nodedata["state"] == 1){
+						return false;
+					};
+					if (nodedata["time"]+10 < Math.floor(Date.now()/1000)){
+						break;
+					}
+				}catch(e){
+					MAIN.note(2,"broadcast_SetActionNode",e);
+				}finally{
+					await MAIN.sleep(1);
 				}
-
-				await MAIN.sleep(1);
 			}
 		}
 		exports.SetNode(address,"server",1);
@@ -399,18 +403,23 @@ exports.SetServer = function(){
 
 		/* 接続ノードに対してデータの要求 */
 		while (true){
-			let nodedata = exports.GetNode(address);
-			if (!nodedata){
-				break;
+			try{
+				let nodedata = exports.GetNode(address);
+				if (!nodedata){
+					break;
+				}
+				if (nodedata["state"] == 0){
+					break;
+				};
+
+				await RuningGetTransactions(socket,address);
+				await RuningGetNodeList(socket,address);
+
+			}catch(e){
+				MAIN.note(2,"broadcast_SetServer",e);
+			}finally{
+				await MAIN.sleep(1);
 			}
-			if (nodedata["state"] == 0){
-				break;
-			};
-
-			await RuningGetTransactions(socket,address);
-			await RuningGetNodeList(socket,address);
-
-			await MAIN.sleep(1);
 		};
 	};
 
@@ -451,16 +460,21 @@ exports.SetClient = async function(){
 			let nodedata = exports.GetNode(address);
 			if (nodedata){
 				while (true){
-					nodedata = exports.GetNode(address);
-					//すでにこちらがサーバー側として接続済み
-					if (nodedata["type"] == "server" && nodedata["state"] == 1){
-						return false;
-					};
-					if (nodedata["time"]+10 < Math.floor(Date.now()/1000)){
-						break;
-					}
+					try{
+						nodedata = exports.GetNode(address);
+						//すでにこちらがサーバー側として接続済み
+						if (nodedata["type"] == "server" && nodedata["state"] == 1){
+							return false;
+						};
+						if (nodedata["time"]+10 < Math.floor(Date.now()/1000)){
+							break;
+						}
 
-					await MAIN.sleep(1);
+					}catch(e){
+						MAIN.note(2,"broadcast_SetClient",e);
+					}finally{
+						await MAIN.sleep(1);
+					}
 				}
 			}
 			exports.SetNode(address,"client",1);
@@ -471,18 +485,23 @@ exports.SetClient = async function(){
 
 			/* 接続ノードに対してデータの要求 */
 			while (true){
-				let nodedata = exports.GetNode(address);
-				if (!nodedata){
-					break;
+				try{
+					let nodedata = exports.GetNode(address);
+					if (!nodedata){
+						break;
+					}
+					if (nodedata["state"] == 0){
+						break;
+					};
+
+					await RuningGetTransactions(socket,address);
+					await RuningGetNodeList(socket,address);
+
+				}catch(e){
+					MAIN.note(2,"broadcast_SetClient",e);
+				}finally{
+					await MAIN.sleep(1);
 				}
-				if (nodedata["state"] == 0){
-					break;
-				};
-
-				await RuningGetTransactions(socket,address);
-				await RuningGetNodeList(socket,address);
-
-				await MAIN.sleep(1);
 			};
 		});
 

@@ -37,7 +37,7 @@ exports.SetServer = function(){
 
 							RunAPIMethods(ArgsData,request,response);
 						}catch(e){
-							MAIN.note(2,"SetServer",e);
+							MAIN.note(2,"api_SetServer",e);
 							response.write(JSON.stringify(false));
 							response.end();
 						}
@@ -57,14 +57,14 @@ exports.SetServer = function(){
 
 						RunAPIMethods(ParseArgsData,request,response);
 					}catch(e){
-						MAIN.note(2,"SetServer",e);
+						MAIN.note(2,"api_SetServer",e);
 						response.write(JSON.stringify(false));
 						response.end();
 					}
 				}
 			})();
 		}catch(e){
-			MAIN.note(2,"SetServer",e);
+			MAIN.note(2,"api_SetServer",e);
 			response.write(JSON.stringify(false));
 			response.end();
 		}
