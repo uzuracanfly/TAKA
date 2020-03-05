@@ -121,7 +121,7 @@ const BOOTSTRAP = require('./bootstrap.js');
 					}\
 				})\
 			",
-			"time":2000,
+			"time":2,
 			"BoolKill":true,
 		},
 	];
@@ -154,22 +154,22 @@ const BOOTSTRAP = require('./bootstrap.js');
 	}
 
 
+	await MAIN.sleep(3);
+
+
+	const EXIT = require('./exit.js');
+	EXIT.RunConfirmExit(FunctionList);
+
 	while (true){
-		let InputText = await MAIN.GetConsole(`[${await MAIN.GetTime()}] `);
-		if (InputText == "exit"){
-			for (let index in FunctionList){
-				try{
-					let FunctionData = FunctionList[index];
-					if (FunctionData["BoolKill"]){
-						(FunctionData["child"]).send({"action":"kill","args":{}});
-					}else{
-						(FunctionData["child"]).send({"action":"exit","args":{"WaitTime":FunctionData["WaitTime"]}});
-					}
-				}catch(e){
-					continue;
-				}
+		try{
+			let InputText = await MAIN.GetConsole(`[${await MAIN.GetTime()}] `);
+			if (InputText == "exit"){
+				await EXIT.exit(FunctionList);
 			}
-			process.exit(1);
+		}catch(e){
+			MAIN.note(2,"init",e);
+		}finally{
+			await MAIN.sleep(1);
 		}
 	}
 })();
