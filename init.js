@@ -136,7 +136,7 @@ const BOOTSTRAP = require('./bootstrap.js');
 			await MAIN.sleep(parseInt(FunctionData["time"]));
 
 			let child = CP.fork(`initcode.js`);
-			child.send({"action":"run","args":{"code":FunctionData["function"]}});
+			child.send({"action":"run","args":{"code":FunctionData["function"],"name":FunctionData["name"]}});
 			FunctionList[index]["child"] = child;
 			child.on('error', (code) => {
 				console.log(`[ERROR]`);

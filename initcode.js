@@ -22,6 +22,7 @@ process.on('message', async function(data) {
 		let args = data["args"];
 
 		if (action == "run"){
+			process.title = args["name"];
 			eval(args["code"]);
 		}else if(action == "kill"){
 			console.log(`########### EXIT [${process.pid}] ###########`);
