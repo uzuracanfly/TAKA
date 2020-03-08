@@ -81,3 +81,17 @@ exports.GetConsole = async function(pretext){
 exports.GetTime = async function(){
 	return Math.floor( new Date().getTime() / 1000 );
 };
+
+
+exports.GetRandom = async function(l){
+	// 生成する文字列に含める文字セット
+	let c = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+	let cl = c.length;
+	let r = "";
+	for(let i=0; i<l; i++){
+		r += c[Math.floor(Math.random()*cl)];
+	}
+
+	return r;
+}

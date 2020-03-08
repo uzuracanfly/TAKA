@@ -1642,6 +1642,8 @@ exports.RunGetNonce = async function(){
 
 			response.write(JSON.stringify(data["nonce"]));
 			response.end();
+
+			delete WorkList[workkey];
 		});
 		ChildList.push(child);
 	};
@@ -1675,7 +1677,7 @@ exports.RunGetNonce = async function(){
 
 									let child = ChildList[index];
 
-									let workkey = WorkList.length;
+									let workkey = await MAIN.GetRandom(16);
 
 									WorkList[workkey] = {"response":response};
 									child.send( (Object.assign(args, {"key":workkey})) );
