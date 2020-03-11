@@ -115,7 +115,7 @@ exports.SetNode = function(address,type,state){
 let BroadcastTransactions = {};
 let BroadcastNodeList = {};
 
-async function SetActionEvents(socket,address){
+function SetActionEvents(socket,address){
 
 
 	/* ノードリスト取得 */
