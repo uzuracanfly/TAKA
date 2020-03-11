@@ -444,8 +444,12 @@ exports.SetServer = function(){
 					break;
 				};
 
-				RuningGetTransactions(socket,address);
-				RuningGetNodeList(socket,address);
+				let PromiseRuningGetTransactions = RuningGetTransactions(socket,address);
+				let PromiseRuningGetNodeList = RuningGetNodeList(socket,address);
+
+				while (PromiseRuningGetTransactions.state == "pending" || PromiseRuningGetNodeList.state == "pending"){
+					await MAIN.sleep(1);
+				}
 
 			}catch(e){
 				MAIN.note(2,"broadcast_SetServer",e);
@@ -526,8 +530,12 @@ exports.SetClient = async function(){
 						break;
 					};
 
-					RuningGetTransactions(socket,address);
-					RuningGetNodeList(socket,address);
+					let PromiseRuningGetTransactions = RuningGetTransactions(socket,address);
+					let PromiseRuningGetNodeList = RuningGetNodeList(socket,address);
+
+					while (PromiseRuningGetTransactions.state == "pending" || PromiseRuningGetNodeList.state == "pending"){
+						await MAIN.sleep(1);
+					}
 
 				}catch(e){
 					MAIN.note(2,"broadcast_SetClient",e);
