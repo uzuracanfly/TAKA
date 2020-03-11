@@ -423,7 +423,7 @@ exports.SetServer = async function(){
 
 
 		MAIN.note(1,"SetServer_connect","Connect Node : "+address);
-		await SetActionEvents(socket,address);
+		SetActionEvents(socket,address);
 
 
 		socket.on('disconnect', async function(){
@@ -487,7 +487,7 @@ exports.SetClient = async function(){
 		let socket = IO('http://'+address+':'+CONFIG.broadcast["port"]);
 
 
-		await SetActionEvents(socket,address);
+		SetActionEvents(socket,address);
 
 
 		socket.on('connect', async function(){
