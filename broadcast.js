@@ -363,7 +363,7 @@ async function RuningGetNodeList(socket,address){
 
 
 
-exports.SetServer = function(){
+exports.SetServer = async function(){
 	/* ノードリストのリセット */
 	for (let index in exports.GetNodeList()){
 		let address = exports.GetNodeList()[index];
