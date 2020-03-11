@@ -402,7 +402,6 @@ exports.SetServer = async function(){
 		let nodedata = exports.GetNode(address);
 		if (nodedata){
 			while (true){
-				await MAIN.sleep(Math.random()*5);
 				try{
 					nodedata = exports.GetNode(address);
 					//すでにこちらがクライアント側として接続済み
@@ -414,6 +413,8 @@ exports.SetServer = async function(){
 					}
 				}catch(e){
 					MAIN.note(2,"broadcast_SetActionNode",e);
+				}finally{
+					await MAIN.sleep(1);
 				}
 			}
 		}
@@ -493,7 +494,6 @@ exports.SetClient = async function(){
 			let nodedata = exports.GetNode(address);
 			if (nodedata){
 				while (true){
-					await MAIN.sleep(Math.random()*5);
 					try{
 						nodedata = exports.GetNode(address);
 						//すでにこちらがサーバー側として接続済み
@@ -506,6 +506,8 @@ exports.SetClient = async function(){
 
 					}catch(e){
 						MAIN.note(2,"broadcast_SetClient",e);
+					}finally{
+						await MAIN.sleep(1);
 					}
 				}
 			}
