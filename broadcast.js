@@ -131,7 +131,7 @@ function SetActionEvents(socket,address){
 		try{
 			let nodelist = exports.GetNodeList();
 
-			socket.emit('NodeList', nodelist);
+			socket.emit('GetNodeList_return', nodelist);
 		}catch(e){
 			MAIN.note(2,"SetActionEvents",e);
 		}
@@ -208,7 +208,7 @@ function SetActionEvents(socket,address){
 				rawtxs.push(rawtx);
 			}
 
-			socket.emit('transactions', rawtxs);
+			socket.emit('GetTransactions_return', rawtxs);
 		}catch(e){
 			MAIN.note(2,"GetTransactions",e);
 		};
