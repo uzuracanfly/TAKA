@@ -253,7 +253,7 @@ async function RuningGetTransactions(socket,address){
 			(ConfirmedTxidsPerTag[objtx["tag"]]).push(txid);
 		};
 
-		let RawTxs = send(socket,'GetTransactions',{"ConfirmedTxidsPerTag":ConfirmedTxidsPerTag,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
+		let RawTxs = await send(socket,'GetTransactions',{"ConfirmedTxidsPerTag":ConfirmedTxidsPerTag,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
 
 
 
