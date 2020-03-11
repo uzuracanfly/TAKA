@@ -15,17 +15,6 @@ const HEX = require('./hex.js');
 
 
 
-async function send(socket,name,args){
-	return new Promise(function (resolve, reject) {
-		socket.on(`${name}_return`, async function (data) {
-			return resolve(data);
-		});
-		socket.emit(`${name}`,args);
-	});
-}
-
-
-
 
 
 
@@ -123,7 +112,10 @@ exports.SetNode = function(address,type,state){
 
 
 
-function SetActionEvents(socket,address){
+let BroadcastTransactions = {};
+let BroadcastNodeList = {};
+
+async function SetActionEvents(socket,address){
 
 
 	/* ノードリスト取得 */
@@ -133,7 +125,15 @@ function SetActionEvents(socket,address){
 
 			socket.emit('GetNodeList_return', nodelist);
 		}catch(e){
-			MAIN.note(2,"SetActionEvents",e);
+			MAIN.note(2,"SetActionEvents_GetNodeList",e);
+		}
+	});
+
+	socket.on('GetNodeList_return', function(data){
+		try{
+			BroadcastNodeList[address] = data;
+		}catch(e){
+			MAIN.note(2,"SetActionEvents_GetNodeList_return",e);
 		}
 	});
 
@@ -210,7 +210,15 @@ function SetActionEvents(socket,address){
 
 			socket.emit('GetTransactions_return', rawtxs);
 		}catch(e){
-			MAIN.note(2,"GetTransactions",e);
+			MAIN.note(2,"SetActionEvents_GetTransactions",e);
+		};
+	});
+
+	socket.on('GetTransactions_return', async function (rawtxs) {
+		try{
+			BroadcastTransactions[address] = rawtxs;
+		}catch(e){
+			MAIN.note(2,"SetActionEvents_GetTransactions_return",e);
 		};
 	});
 };
@@ -253,23 +261,42 @@ async function RuningGetTransactions(socket,address){
 			(ConfirmedTxidsPerTag[objtx["tag"]]).push(txid);
 		};
 
-		let RawTxs = await send(socket,'GetTransactions',{"ConfirmedTxidsPerTag":ConfirmedTxidsPerTag,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
+		if (address in BroadcastTransactions){
+			delete BroadcastTransactions[address];
+		};
+		socket.emit('GetTransactions',{"ConfirmedTxidsPerTag":ConfirmedTxidsPerTag,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
 
 
 
 
 
+		/* BroadcastTransactions取得まで待機 */
+		let timecount = 0;
+		while (timecount < 10){
+			if (address in BroadcastTransactions){
+				break;
+			};
 
-		for (let index in RawTxs){
-			let rawtx = RawTxs[index];
+			timecount = timecount + 1;
+			await MAIN.sleep(1);
+		}
 
-			if (!rawtx){
-				continue;
-			}
 
-			let TargetTransaction = new TRANSACTION.Transaction(rawtx);
 
-			await TargetTransaction.commit(undefined,false,false,-1);
+
+		if (address in BroadcastTransactions){
+			let BroadcastTransactionsPerAddress = BroadcastTransactions[address];
+			for (let index in BroadcastTransactionsPerAddress){
+				let rawtx = BroadcastTransactionsPerAddress[index];
+
+				if (!rawtx){
+					continue;
+				}
+
+				let TargetTransaction = new TRANSACTION.Transaction(rawtx);
+
+				await TargetTransaction.commit(undefined,false,false,-1);
+			};
 		};
 	}catch(e){
 		MAIN.note(2,"RuningGetTransactions",e);
@@ -278,20 +305,38 @@ async function RuningGetTransactions(socket,address){
 
 async function RuningGetNodeList(socket,address){
 	try{
-		let NodeList = await send(socket,'GetNodeList',{})
+		if (address in BroadcastNodeList){
+			delete BroadcastNodeList[address];
+		};
+		socket.emit('GetNodeList');
 
 
 
-		for (let index in NodeList){
-			let NodeAddress = NodeList[index];
 
-			/* すでに追加済み */
-			let NodeData = exports.GetNode(NodeAddress);
-			if (NodeData){
-				return false;
-			}
+		/* BroadcastNodeList取得まで待機 */
+		let timecount = 0;
+		while (timecount < 10){
+			if (address in BroadcastNodeList){
+				break;
+			};
 
-			exports.SetNode(NodeAddress,"",0);
+			timecount = timecount + 1;
+			await MAIN.sleep(1);
+		}
+
+
+		if (address in BroadcastNodeList){
+			for (let index in BroadcastNodeList[address]){
+				let NodeAddress = BroadcastNodeList[address][index];
+
+				/* すでに追加済み */
+				let NodeData = exports.GetNode(NodeAddress);
+				if (NodeData){
+					return false;
+				}
+
+				exports.SetNode(NodeAddress,"",0);
+			};
 		};
 	}catch(e){
 		MAIN.note(2,"RuningGetNodeList",e);
@@ -399,8 +444,8 @@ exports.SetServer = function(){
 					break;
 				};
 
-				await RuningGetTransactions(socket,address);
-				await RuningGetNodeList(socket,address);
+				RuningGetTransactions(socket,address);
+				RuningGetNodeList(socket,address);
 
 			}catch(e){
 				MAIN.note(2,"broadcast_SetServer",e);
@@ -481,8 +526,8 @@ exports.SetClient = async function(){
 						break;
 					};
 
-					await RuningGetTransactions(socket,address);
-					await RuningGetNodeList(socket,address);
+					RuningGetTransactions(socket,address);
+					RuningGetNodeList(socket,address);
 
 				}catch(e){
 					MAIN.note(2,"broadcast_SetClient",e);
