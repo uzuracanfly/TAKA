@@ -461,7 +461,7 @@ exports.SetServer = function(){
 
 
 	IO.on('connection', async function(socket){
-		SetActionNode(socket);
+		await SetActionNode(socket);
 	});
 
 
@@ -573,7 +573,7 @@ exports.SetClient = async function(){
 					continue;
 				};
 				SetActionAddressList.push(address);
-				SetActionNode(address);
+				await SetActionNode(address);
 			};
 
 
