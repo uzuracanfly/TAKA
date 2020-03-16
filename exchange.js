@@ -12,7 +12,7 @@ exports.SetExchangeOrder = async function(type,PayTxid,ReceiverAddress,amount){
 	try{
 		amount = parseInt(amount);
 
-		DATABASE.add("ExchangeOrders","live",new HEX.HexText().string_to_utf8_hex_string(JSON.stringify({"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount})));
+		DATABASE.add("ExchangeOrders","live",{"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount});
 		return true;
 	}catch(e){
 		MAIN.note(2,"SetExchangeOrder",e);
@@ -33,7 +33,6 @@ exports.RunExchangeScan = async function(){
 			for (let index in ExchangeOrders){
 				let ExchangeOrder = ExchangeOrders[index];
 
-				ExchangeOrder = JSON.parse(new HEX.HexText().utf8_hex_string_to_string(ExchangeOrder));
 
 				if (!("type" in ExchangeOrder) || !("PayTxid" in ExchangeOrder) || !("ReceiverAddress" in ExchangeOrder) || !("amount" in ExchangeOrder)){
 					break;
@@ -56,8 +55,6 @@ exports.RunExchangeScan = async function(){
 					let ExchangeUsings = DATABASE.get("ExchangeUsings","live");
 					for (let mindex in ExchangeUsings){
 						let ExchangeUsing = ExchangeUsings[mindex];
-
-						ExchangeUsing = JSON.parse(new HEX.HexText().utf8_hex_string_to_string(ExchangeUsing));
 
 						//すでに使用済み
 						if (ExchangeUsing["PayTxid"] == ExchangeOrder["PayTxid"]){
@@ -117,7 +114,7 @@ exports.RunExchangeScan = async function(){
 						continue;
 					}
 
-					DATABASE.add("ExchangeUsings","live",new HEX.HexText().string_to_utf8_hex_string(JSON.stringify({"type":"buy","PayTxid":ExchangeOrder["PayTxid"],"ResultTxid":ProductTxid})));
+					DATABASE.add("ExchangeUsings","live",{"type":"buy","PayTxid":ExchangeOrder["PayTxid"],"ResultTxid":ProductTxid});
 					MAIN.note(1,"RunExchangeScan","EXCHANGE "+ExchangeOrder["amount"]+"ETAKA => "+ExchangeOrder["amount"]+"TAKA");
 
 					DATABASE.remove("ExchangeOrders","live",index);
@@ -136,8 +133,6 @@ exports.RunExchangeScan = async function(){
 					let ExchangeUsings = DATABASE.get("ExchangeUsings","live");
 					for (let mindex in ExchangeUsings){
 						let ExchangeUsing = ExchangeUsings[mindex];
-
-						ExchangeUsing = JSON.parse(new HEX.HexText().utf8_hex_string_to_string(ExchangeUsing));
 
 						//すでに使用済み
 						if (ExchangeUsing["PayTxid"] == ExchangeOrder["PayTxid"]){
@@ -184,7 +179,7 @@ exports.RunExchangeScan = async function(){
 						continue;
 					}
 
-					DATABASE.add("ExchangeUsings","live",new HEX.HexText().string_to_utf8_hex_string(JSON.stringify({"type":"sell","PayTxid":ExchangeOrder["PayTxid"],"ResultTxid":ProductTxid})));
+					DATABASE.add("ExchangeUsings","live",{"type":"sell","PayTxid":ExchangeOrder["PayTxid"],"ResultTxid":ProductTxid});
 					MAIN.note(1,"RunExchangeScan","EXCHANGE "+ExchangeOrder["amount"]+"TAKA => "+ExchangeOrder["amount"]+"ETAKA");
 
 					DATABASE.remove("ExchangeOrders","live",index);

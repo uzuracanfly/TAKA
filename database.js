@@ -1,9 +1,9 @@
 const SYNCREQUEST = require('sync-request');
 const HTTP = require('http');
 const FS = require('fs');
-const bPROMISE = require('bluebird');
 const CRYPTO = require('crypto');
 
+const HEX = new (require('./hex.js')).HexText();
 const CONFIG = require('./config.js');
 
 
@@ -34,7 +34,8 @@ exports.ChangeMemDatabase = class{
 		return JSON.parse(res.getBody('utf8'));
 	};
 
-	add(table,index,data){
+
+	add(table,index,data){	
 		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"add","args":{"database":this.database,"table":table,"index":index,"data":data}});
 		return result;
 	}
@@ -205,11 +206,30 @@ exports.RunCommit = async function(){
 			for (let index in array){
 				let per = array[index];
 
+				/*
+					00 : str
+					01 : hex
+					02 : obj
+				*/
+				//perはすべてhexに変換
+				let type;
+				if (/^[0-9a-f]{64,}$/.test(per)){
+					type = "01";
+				}else if (per instanceof Array || per instanceof Object){
+					type = "02";
+					per = JSON.stringify(per);
+					per = HEX.string_to_utf8_hex_string(per);
+				}else{
+					type = "00";
+					per = HEX.string_to_utf8_hex_string(per);
+				}
+
 				let perlen = per.length;
 				perlen = perlen.toString(16);
 				perlen = GetFillZero(perlen,16);
 
-				hex = hex + perlen + per;
+
+				hex = hex + type + perlen + per;
 			}
 
 			return hex;
@@ -233,7 +253,23 @@ exports.RunCommit = async function(){
 			array = [];
 			let lencount = parseInt(cut(16),16);
 			for (let index=0;index<lencount;index++){
-				array.push(VariableCut(16));
+				let type = cut(2);
+				let per = VariableCut(16);
+
+				/*
+					00 : str
+					01 : hex
+					02 : obj
+				*/
+				//perはすべてhexから各種データに変換
+				if (type == "00"){
+					per = HEX.utf8_hex_string_to_string(per);
+				}
+				if (type == "02"){
+					per = HEX.utf8_hex_string_to_string(per);
+					per = JSON.parse(per);
+				}
+				array.push(per);
 			}
 
 			return array;
@@ -264,7 +300,6 @@ exports.RunCommit = async function(){
 				let data = FS.readFileSync(path, 'hex');
 				//暗号化必要性
 				if ("key" in CONFIG.database && CONFIG.database["key"]){
-					const CRYPTO = require('./crypto.js');
 					data = new CRYPTO.common().GetDecryptedData(CONFIG.database["key"],data);
 				};
 
@@ -299,7 +334,6 @@ exports.RunCommit = async function(){
 			data = ConversionData(data,"");
 
 			if ("key" in CONFIG.database && CONFIG.database["key"]){
-				const CRYPTO = require('./crypto.js');
 				data = new CRYPTO.common().GetEncryptedData(CONFIG.database["key"],data);
 			};
 

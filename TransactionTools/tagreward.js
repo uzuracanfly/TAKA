@@ -141,14 +141,8 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 exports.GetMiningTags = async function(){
 	let MiningTags = [];
 	let DatabaseMiningTags = DATABASE.get("MiningTags","live");
-	for (let index in DatabaseMiningTags){
-		let tag = DatabaseMiningTags[index];
 
-		let HEXTEXT = new HEX.HexText();
-		tag = HEXTEXT.utf8_hex_string_to_string(tag);
-		MiningTags.push(tag);
-	}
-
+	Array.prototype.push.apply(MiningTags, DatabaseMiningTags);
 	Array.prototype.push.apply(MiningTags, CONFIG.Tagreward["MiningTags"]);
 
 	return MiningTags;
@@ -161,8 +155,6 @@ exports.SetMiningTags = async function(type,tag){
 		if (index > -1){
 			return 0;
 		}
-		let HEXTEXT = new HEX.HexText();
-		tag = HEXTEXT.string_to_utf8_hex_string(tag);
 		DATABASE.add("MiningTags","live",tag);
 	}else if (type == "remove"){
 		let MiningTags = await exports.GetMiningTags();
@@ -245,7 +237,6 @@ exports.RunMining = async function(){
 				//表記されていたアドレスと違う = 不正 されたことをログに保存
 				if (TagRewardObjData["RewardAddress"] != RewardKeys["address"]){
 					let TagRewardCheetah = {"tag":TagRewardObjData["tag"],"amount":await PlanRewardAccount.GetBalance(),"time":TagRewardObjTx["time"],"TagRewardTxid":txid};
-					TagRewardCheetah = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(TagRewardCheetah));
 
 
 					let TagRewardCheetahs = DATABASE.get("TagRewardCheetah",TagRewardObjData["tag"]);
@@ -292,7 +283,6 @@ exports.RunMining = async function(){
 
 			//秘密鍵取得をログに保存
 			let TagMiningResult = {"tag":tag,"amount":sendamount,"time":Math.floor(Date.now()/1000),"RewardSentTxid":""};
-			TagMiningResult = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(TagMiningResult));
 			DATABASE.add("TagMiningResult_FoundPrivkey",tag,TagMiningResult);
 
 			if (sendamount > 0){
@@ -303,7 +293,6 @@ exports.RunMining = async function(){
 
 					//秘密鍵から残高を取得をログに保存
 					let TagMiningResult = {"tag":tag,"amount":sendamount,"time":Math.floor(Date.now()/1000),"RewardSentTxid":result};
-					TagMiningResult = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(TagMiningResult));
 					DATABASE.add("TagMiningResult_hooray",tag,TagMiningResult);
 				}
 			}
@@ -382,8 +371,6 @@ exports.RunControlTag = async function(){
 				let CheetahAmountPerYear = 0;
 				for (let index in TagRewardCheetahs){
 					let TagRewardCheetah = TagRewardCheetahs[index];
-					TagRewardCheetah = new HEX.HexText().utf8_hex_string_to_string(TagRewardCheetah);
-					TagRewardCheetah = JSON.parse(TagRewardCheetah);
 
 					if (TagRewardCheetah["time"] < Math.floor(Date.now()/1000)-60*60*24*30*12){
 						continue;
@@ -409,7 +396,6 @@ exports.RunControlTag = async function(){
 
 
 				let RunControlTagAddTagLog = {"tag":tag,"time":Math.floor(Date.now()/1000)};
-				RunControlTagAddTagLog = new HEX.HexText().string_to_utf8_hex_string(JSON.stringify(RunControlTagAddTagLog));
 				DATABASE.set("RunControlTagAddTagLog",tag,RunControlTagAddTagLog);
 
 
@@ -471,8 +457,6 @@ exports.RunControlTag = async function(){
 				let CheetahAmountPerYear = 0;
 				for (let index in TagRewardCheetahs){
 					let TagRewardCheetah = TagRewardCheetahs[index];
-
-					TagRewardCheetah = JSON.parse(new HEX.HexText().utf8_hex_string_to_string(TagRewardCheetah));
 
 					if (TagRewardCheetah["time"] < Math.floor(Date.now()/1000)-60*60*24*30*12){
 						continue;

@@ -185,8 +185,6 @@ exports.account = class{
 		let datas = DATABASE.get("BalancePerAddress",address);
 		for (let index in datas){
 			let data = datas[index];
-			data = new HEX.HexText().utf8_hex_string_to_string(data);
-			data = JSON.parse(data);
 
 			let CacheIndex = parseInt(data["index"]);
 			if (LessIndex && LessIndex <= CacheIndex){
@@ -247,8 +245,6 @@ exports.account = class{
 		let datas = DATABASE.get("SendAmountToAddressPerAddress",`${address}_${toaddress}`);
 		for (let index in datas){
 			let data = datas[index];
-			data = new HEX.HexText().utf8_hex_string_to_string(data);
-			data = JSON.parse(data);
 
 			let CacheIndex = parseInt(data["index"]);
 			if (LessIndex && LessIndex <= CacheIndex){

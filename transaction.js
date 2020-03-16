@@ -873,7 +873,7 @@ exports.Transaction = class{
 			return 1;
 
 		}catch(e){
-			//console.log(e);
+			console.log(e);
 			MAIN.note(2,"Confirmation",e);
 			return 0;
 		};
@@ -1195,8 +1195,6 @@ exports.GetLessIndexFromLessTime = async function(address,tag,LessTime){
 		let MaxIndex = 0;
 		for (let index in TimeRaIndexs){
 			let TimeRaIndex = TimeRaIndexs[index];
-			TimeRaIndex = new HEX.HexText().utf8_hex_string_to_string(TimeRaIndex);
-			TimeRaIndex = JSON.parse(TimeRaIndex);
 
 			if (LessTime <= parseInt(TimeRaIndex["time"])){
 				continue;
@@ -1313,16 +1311,10 @@ exports.GetUnconfirmedTransactions = async function(){
 
 
 exports.GetImportTags = async function(){
-	let ImportTags =  [];
+	let ImportTags = [];
 	let DatabaseImportTags = DATABASE.get("ImportTags","live");
-	for (let index in DatabaseImportTags){
-		let tag = DatabaseImportTags[index];
 
-		let HEXTEXT = new HEX.HexText();
-		tag = HEXTEXT.utf8_hex_string_to_string(tag);
-		ImportTags.push(tag);
-	}
-
+	Array.prototype.push.apply(ImportTags, DatabaseImportTags);
 	Array.prototype.push.apply(ImportTags, CONFIG.ImportTags);
 
 	/* 標準装備 */
@@ -1352,8 +1344,6 @@ exports.SetImportTags = async function(type,tag){
 		if (index > -1){
 			return 0;
 		}
-		let HEXTEXT = new HEX.HexText();
-		tag = HEXTEXT.string_to_utf8_hex_string(tag);
 		DATABASE.add("ImportTags","live",tag);
 	}else if (type == "remove"){
 		let ImportTags = await exports.GetImportTags();
@@ -1412,12 +1402,8 @@ exports.RunCommit = async function(){
 
 		//indexと時間の関連付け
 		let data = {"time":objtx["time"],"index":objtx["index"],"txid":txid};
-		data = JSON.stringify(data);
-		data = new HEX.HexText().string_to_utf8_hex_string(data);
 		DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],data);
 		data = {"time":objtx["time"],"index":objtx["ToIndex"],"txid":txid};
-		data = JSON.stringify(data);
-		data = new HEX.HexText().string_to_utf8_hex_string(data);
 		DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],data);
 
 		if (objtx["type"] == 12){
@@ -1436,19 +1422,13 @@ exports.RunCommit = async function(){
 		//payの場合残高をキャッシュ
 		if (objtx["type"] == 1){
 			let data = {"index":objtx["index"],"amount":(await TargetTransaction.TargetAccount.GetSendAmountToAddress(undefined,objtx["toaddress"]))};
-			data = JSON.stringify(data);
-			data = new HEX.HexText().string_to_utf8_hex_string(data);
 			DATABASE.add("SendAmountToAddressPerAddress",`${(await TargetTransaction.TargetAccount.GetKeys())["address"]}_${objtx["toaddress"]}`,data);
 
 			data = {"index":objtx["index"],"balance":(await TargetTransaction.TargetAccount.GetBalance())};
-			data = JSON.stringify(data);
-			data = new HEX.HexText().string_to_utf8_hex_string(data);
 			DATABASE.add("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],data);
 
 			let ToTargetAccount = new ACCOUNT.account(objtx["toaddress"]);
 			data = {"index":objtx["ToIndex"],"balance":(await ToTargetAccount.GetBalance())};
-			data = JSON.stringify(data);
-			data = new HEX.HexText().string_to_utf8_hex_string(data);
 			DATABASE.add("BalancePerAddress",objtx["toaddress"],data);
 		};
 
@@ -1472,12 +1452,8 @@ exports.RunCommit = async function(){
 
 		//indexと時間の関連付け
 		let data = {"time":objtx["time"],"index":objtx["index"],"txid":txid};
-		data = JSON.stringify(data);
-		data = new HEX.HexText().string_to_utf8_hex_string(data);
 		DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,data);
 		data = {"time":objtx["time"],"index":objtx["ToIndex"],"txid":txid};
-		data = JSON.stringify(data);
-		data = new HEX.HexText().string_to_utf8_hex_string(data);
 		DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,data);
 
 		if (objtx["type"] == 12){
@@ -1496,8 +1472,6 @@ exports.RunCommit = async function(){
 		//payの場合残高をキャッシュ
 		if (objtx["type"] == 1){
 			data = {"index":objtx["index"],"amount":(await TargetTransaction.TargetAccount.GetSendAmountToAddress(undefined,objtx["toaddress"],objtx["index"]))};
-			data = JSON.stringify(data);
-			data = new HEX.HexText().string_to_utf8_hex_string(data);
 			DATABASE.remove("SendAmountToAddressPerAddress",`${(await TargetTransaction.TargetAccount.GetKeys())["address"]}_${objtx["toaddress"]}`,-1,data);
 
 			DATABASE.remove("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],objtx["index"]-1);
