@@ -114,7 +114,7 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 		let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(TagTxids);
 
 		let UsingRawTxIndex = Math.floor( Math.random() * TagTxids.length )+1;
-		let UsingRawTx = await TRANSACTION.GetTx(TagTxids[UsingRawTxIndex-1]).GetRawTx();
+		let UsingRawTx = await (await TRANSACTION.GetTx(TagTxids[UsingRawTxIndex-1])).GetRawTx();
 		let commonkey = new HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
 
 		let EncryptoPrivkey = new CRYPTO.common().GetEncryptedData(commonkey,RewardPrivkey);
@@ -196,7 +196,7 @@ exports.RunMining = async function(){
 		for (let index in tagrewardtxids){
 			try{
 				let txid = tagrewardtxids[index];
-				let tx = TRANSACTION.GetTx(txid);
+				let tx = await TRANSACTION.GetTx(txid);
 				let TagRewardObjTx = await tx.GetObjTx();
 				let TAGREWARDDATA = new exports.TagrewardData(TagRewardObjTx["data"]);
 				let TagRewardObjData = TAGREWARDDATA.GetObjData();
@@ -214,7 +214,7 @@ exports.RunMining = async function(){
 				let tagtxids = await TRANSACTION.GetTagTxids(TagRewardObjData["tag"],TagRewardObjTx["time"]);
 				tagtxids = tagtxids.sort(exports.TxidLengthCompare);
 				let TagtxidsMarkleroot = new HASHS.hashs().GetMarkleroot(tagtxids);
-				let UsingRawTx = await TRANSACTION.GetTx(tagtxids[TagRewardObjData["UsingRawTxIndex"]-1]).GetRawTx();
+				let UsingRawTx = await (await TRANSACTION.GetTx(tagtxids[TagRewardObjData["UsingRawTxIndex"]-1])).GetRawTx();
 				let commonkey = new HASHS.hashs().sha256(TagtxidsMarkleroot + UsingRawTx);
 
 				if (!commonkey){continue;};
@@ -325,7 +325,7 @@ exports.RunControlTag = async function(){
 			for (let index in TxidsTagreward){
 				let txid = TxidsTagreward[index];
 
-				let TX = TRANSACTION.GetTx(txid);
+				let TX = await TRANSACTION.GetTx(txid);
 				let objtx = await TX.GetObjTx();
 				let rewarddata = (new exports.TagrewardData(objtx["data"])).GetObjData();
 
@@ -433,7 +433,7 @@ exports.RunControlTag = async function(){
 				for (let index in TxidsPerTag){
 					let txid = TxidsPerTag[index];
 
-					let TX = TRANSACTION.GetTx(txid);
+					let TX = await TRANSACTION.GetTx(txid);
 					let rawtx = await TX.GetRawTx();
 
 					SumSize = SumSize + (rawtx.length/2);

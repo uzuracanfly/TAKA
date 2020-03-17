@@ -67,14 +67,13 @@ exports.DownloadDataBase = async function(database){
 			};
 
 			//リクエスト送信
-			let res = await THENREQUEST(
+			let ZipData = await (THENREQUEST(
 				'GET',
 				`https://neko.taka.site/bootstrap`, 
 				{
 					headers: headers,
 				}
-			);
-			let ZipData = res.getBody('hex');
+			).getBody('hex'));
 			FS.mkdir("bootstrap/", function (err) {
 				FS.mkdir("database/", function (err) {
 					FS.mkdir(`database/${database}/`, function (err) {

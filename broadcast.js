@@ -24,14 +24,14 @@ const HEX = require('./hex.js');
 
 
 
-exports.GetConnectionNodeList = function(){
-	let NodeList = exports.GetNodeList();
+exports.GetConnectionNodeList = async function(){
+	let NodeList = await exports.GetNodeList();
 
 	let result = [];
 	for (let index in NodeList){
 		let address = NodeList[index];
 
-		let NodeData = exports.GetNode(address);
+		let NodeData = await exports.GetNode(address);
 		if (NodeData["state"] == 1){
 			result.push(NodeData);
 		}
@@ -41,20 +41,20 @@ exports.GetConnectionNodeList = function(){
 }
 
 
-exports.GetNodeList = function(){
+exports.GetNodeList = async function(){
 	let nodelist = await DATABASE.get("nodelist");
 	if (nodelist.length == 0){
 		for (let index in CONFIG.broadcast["seed"]){
 			let address = CONFIG.broadcast["seed"][index];
 
-			exports.SetNode(address,"",0);
+			await exports.SetNode(address,"",0);
 		};
 	}
 
 	return nodelist;
 }
 
-exports.GetNode = function(address){
+exports.GetNode = async function(address){
 	let nodes = await DATABASE.get("nodelist",address);
 
 	if (nodes.length == 0){
@@ -66,7 +66,7 @@ exports.GetNode = function(address){
 	return node;
 }
 
-exports.SetNode = function(address,type,state){
+exports.SetNode = async function(address,type,state){
 	if (address === undefined) {
 		return 0;
 	};
@@ -116,9 +116,9 @@ async function SetActionEvents(socket,address){
 
 
 	/* ノードリスト取得 */
-	socket.on('GetNodeList', function (data) {
+	socket.on('GetNodeList', async function (data) {
 		try{
-			let nodelist = exports.GetNodeList();
+			let nodelist = await exports.GetNodeList();
 
 			socket.emit('GetNodeList_return', nodelist);
 		}catch(e){
@@ -126,7 +126,7 @@ async function SetActionEvents(socket,address){
 		}
 	});
 
-	socket.on('GetNodeList_return', function(data){
+	socket.on('GetNodeList_return', async function(data){
 		try{
 			BroadcastNodeList[address] = data;
 		}catch(e){
@@ -149,7 +149,7 @@ async function SetActionEvents(socket,address){
 		try{
 			let rawtxs = [];
 
-			let tags = TRANSACTION.GetTags();
+			let tags = await TRANSACTION.GetTags();
 			tags = tags.sort(TRANSACTION.TagCompare);
 			for (let index in tags){
 				let tag = tags[index];
@@ -235,7 +235,7 @@ async function RuningGetTransactions(socket,address){
 		/* 承認済みトランザクションリストまとめ */
 		let ConfirmedTxidsPerTag = {};
 
-		let tags = TRANSACTION.GetTags();
+		let tags = await TRANSACTION.GetTags();
 		for (let index in tags){
 			let tag = tags[index];
 
@@ -327,12 +327,12 @@ async function RuningGetNodeList(socket,address){
 				let NodeAddress = BroadcastNodeList[address][index];
 
 				/* すでに追加済み */
-				let NodeData = exports.GetNode(NodeAddress);
+				let NodeData = await exports.GetNode(NodeAddress);
 				if (NodeData){
 					return false;
 				}
 
-				exports.SetNode(NodeAddress,"",0);
+				await exports.SetNode(NodeAddress,"",0);
 			};
 		};
 	}catch(e){
@@ -362,10 +362,10 @@ async function RuningGetNodeList(socket,address){
 
 exports.SetServer = async function(){
 	/* ノードリストのリセット */
-	for (let index in exports.GetNodeList()){
-		let address = exports.GetNodeList()[index];
+	for (let index in await exports.GetNodeList()){
+		let address = await exports.GetNodeList()[index];
 
-		exports.SetNode(address,"",0);
+		await exports.SetNode(address,"",0);
 	};
 
 
@@ -396,12 +396,12 @@ exports.SetServer = async function(){
 
 
 		
-		let nodedata = exports.GetNode(address);
+		let nodedata = await exports.GetNode(address);
 		if (nodedata){
 			while (true){
 				await MAIN.sleep(Math.random()*5);
 				try{
-					nodedata = exports.GetNode(address);
+					nodedata = await exports.GetNode(address);
 					//すでにこちらがクライアント側として接続済み
 					if (nodedata["type"] == "client" && nodedata["state"] == 1){
 						return false;
@@ -414,7 +414,7 @@ exports.SetServer = async function(){
 				}
 			}
 		}
-		exports.SetNode(address,"server",1);
+		await exports.SetNode(address,"server",1);
 
 
 
@@ -425,14 +425,14 @@ exports.SetServer = async function(){
 		socket.on('disconnect', async function(){
 			MAIN.note(1,"SetServer_disconnect","Disconnect Node : "+address);
 
-			exports.SetNode(address,"server",0);
+			await exports.SetNode(address,"server",0);
 		});
 
 
 		/* 接続ノードに対してデータの要求 */
 		while (true){
 			try{
-				let nodedata = exports.GetNode(address);
+				let nodedata = await exports.GetNode(address);
 				if (!nodedata){
 					break;
 				}
@@ -487,12 +487,12 @@ exports.SetClient = async function(){
 
 
 		socket.on('connect', async function(){
-			let nodedata = exports.GetNode(address);
+			let nodedata = await exports.GetNode(address);
 			if (nodedata){
 				while (true){
 					await MAIN.sleep(Math.random()*5);
 					try{
-						nodedata = exports.GetNode(address);
+						nodedata = await exports.GetNode(address);
 						//すでにこちらがサーバー側として接続済み
 						if (nodedata["type"] == "server" && nodedata["state"] == 1){
 							return false;
@@ -506,7 +506,7 @@ exports.SetClient = async function(){
 					}
 				}
 			}
-			exports.SetNode(address,"client",1);
+			await exports.SetNode(address,"client",1);
 
 
 			MAIN.note(1,"SetClient_connect","Connect Node : "+address);
@@ -515,7 +515,7 @@ exports.SetClient = async function(){
 			/* 接続ノードに対してデータの要求 */
 			while (true){
 				try{
-					let nodedata = exports.GetNode(address);
+					let nodedata = await exports.GetNode(address);
 					if (!nodedata){
 						break;
 					}
@@ -539,7 +539,7 @@ exports.SetClient = async function(){
 		socket.on('disconnect', async function(){
 			MAIN.note(1,"SetClient_disconnect","Disconnect Node : "+address);
 
-			exports.SetNode(address,"client",0);
+			await exports.SetNode(address,"client",0);
 		});
 
 	}
@@ -557,7 +557,7 @@ exports.SetClient = async function(){
 
 	while (true){
 		try{
-			let nodelist = exports.GetNodeList();
+			let nodelist = await exports.GetNodeList();
 
 
 			/* 各ノードの設定 */

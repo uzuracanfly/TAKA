@@ -11,15 +11,15 @@ function SendPostbyjson(url,paras){
 	};
 
 	//リクエスト送信
-	let res = await THENREQUEST(
+	let res = await (THENREQUEST(
 		'POST',
 		url, 
 		{
 			headers: headers,
 			json: paras,
 		}
-	);
-	return JSON.parse(res.getBody('utf8'));
+	).getBody('utf8'));
+	return JSON.parse(res);
 };
 
 function CommandAction(commands){

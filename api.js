@@ -138,7 +138,7 @@ async function RunAPIMethods(ArgsData,request,response){
 
 
 				let txids = {};
-				let tags = TRANSACTION.GetTags();
+				let tags = await TRANSACTION.GetTags();
 				for (let index in tags){
 					let tag = tags[index];
 					let tagtxs = await TargetAccount.GetFormTxList(undefined,tag,LessIndex,LessTime,BoolNeedApproved);
@@ -243,7 +243,7 @@ async function RunAPIMethods(ArgsData,request,response){
 				}
 
 
-				let TargetTransaction = new TRANSACTION.GetTx(txid);
+				let TargetTransaction = await TRANSACTION.GetTx(txid);
 				let rawtx = await TargetTransaction.GetRawTx();
 				let objtx = await TargetTransaction.GetObjTx();
 

@@ -149,7 +149,7 @@ exports.RunExchangeScan = async function(){
 
 
 					//PayTxidの内容確認
-					let TX = TRANSACTION.GetTx(ExchangeOrder["PayTxid"]);
+					let TX = await TRANSACTION.GetTx(ExchangeOrder["PayTxid"]);
 					let objtx = await TX.GetObjTx();
 					//送金先が違う
 					if (objtx["toaddress"] != ((await MyTAKAACCOUNT.GetKeys())["address"])){

@@ -9,7 +9,7 @@ const FS = require('fs');
 const CP = require('child_process');
 const CPULEN = require('os').cpus().length;
 const HTTP = require('http');
-const SYNCREQUEST = require('sync-request');
+const THENREQUEST = require('then-request');
 
 const TRANSACTIONTOOLS_TAGREWARD = require('./TransactionTools/tagreward');
 const TRANSACTIONTOOLS_DATABASE = require('./TransactionTools/database.js');
@@ -290,7 +290,7 @@ exports.Transaction = class{
 
 
 			//すでにtxidが存在する
-			let TX = exports.GetTx(await this.GetTxid(rawtx));
+			let TX = await exports.GetTx(await this.GetTxid(rawtx));
 			if (TX){
 				return 0;
 			}
@@ -721,7 +721,7 @@ exports.Transaction = class{
 				return 0;
 			}
 			if (NoSamePretxlist.length > 0){
-				let lasttx = exports.GetTx(NoSamePretxlist.slice(-1)[0]);
+				let lasttx = await exports.GetTx(NoSamePretxlist.slice(-1)[0]);
 				if (objtx["time"] <= (await lasttx.GetObjTx())["time"]){
 					return 0;
 				}
@@ -758,7 +758,7 @@ exports.Transaction = class{
 					let PreTxidSameIndex = pretxlist.slice(-1)[0];
 					let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
 
-					let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
+					let PRETXSAMEINDEX = await exports.GetTx(PreTxidSameIndex);
 					let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
 
 					let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
@@ -826,7 +826,7 @@ exports.Transaction = class{
 					let PreTxidSameIndex = ToPretxlist.slice(-1)[0];
 					let NumPreTxidSameIndex = BigInt("0x"+PreTxidSameIndex);
 
-					let PRETXSAMEINDEX = exports.GetTx(PreTxidSameIndex);
+					let PRETXSAMEINDEX = await exports.GetTx(PreTxidSameIndex);
 					let PreTxSameIndexObjTx = await PRETXSAMEINDEX.GetObjTx();
 
 					let PreTxSameIndexSenderAccount = new ACCOUNT.account(PreTxSameIndexObjTx["pubkey"]);
@@ -940,7 +940,7 @@ exports.Transaction = class{
 				
 				let lasttx = false;
 				if (txids.length > 0){
-					lasttx  = exports.GetTx(txids.slice(-1)[0]);
+					lasttx  = await exports.GetTx(txids.slice(-1)[0]);
 				}
 				lasttxtime = time - 60*10;
 				if (lasttx){
@@ -995,15 +995,15 @@ exports.Transaction = class{
 						};
 
 						//リクエスト送信
-						let res = SYNCREQUEST(
+						let res = await (THENREQUEST(
 							'POST',
 							`http://${CONFIG.Transaction["address"]}:${CONFIG.Transaction["port"]}`, 
 							{
 								headers: headers,
 								json: {"function":"GetNonce","args":args},
 							}
-						);
-						return mresolve(parseInt( JSON.parse(res.getBody('utf8')) ));
+						).getBody('utf8'));
+						return mresolve(parseInt( JSON.parse(res) ));
 					}else{
 						let ProcessCount = navigator.hardwareConcurrency;
 						if (TimeoutToNonceScan == -1){
@@ -1083,7 +1083,7 @@ exports.Transaction = class{
 		/* txが確認されたかの確認 */
 		let timecount = 0;
 		while (true){
-			let TX = exports.GetTx(txid);
+			let TX = await exports.GetTx(txid);
 
 			if (TX){
 				return txid;
@@ -1108,14 +1108,14 @@ exports.Transaction = class{
 
 
 
-exports.GetAllTxids = function(){
+exports.GetAllTxids = async function(){
 	let txids = await DATABASE.get("TransactionIdsPerAll","live");
 
 	return txids;
 }
 
 
-exports.GetTx = function(txid){
+exports.GetTx = async function(txid){
 	try{
 		let rawtx = await DATABASE.get("ConfirmedTransactions",txid);
 		if (rawtx.length <= 0){
@@ -1148,7 +1148,7 @@ exports.GetRawTxToDirect = async function(txid){
 
 
 
-exports.GetTags = function(){
+exports.GetTags = async function(){
 	let tags = await DATABASE.get("TransactionIdsPerTag");
 
 	//空白は排除
@@ -1171,7 +1171,7 @@ exports.GetTagTxids = async function(tag,LessTime=0){
 		for (let index in txids){
 			let txid = txids[index];
 
-			let TX = exports.GetTx(txid);
+			let TX = await exports.GetTx(txid);
 			let TxTime = (await TX.GetObjTx())["time"];
 
 			if (TxTime < LessTime){
@@ -1261,7 +1261,7 @@ exports.GetTagOrderTx = async function(tag){
 		if (txids.length <= 0){
 			return false;
 		}
-		let TX = exports.GetTx(txids[0]);
+		let TX = await exports.GetTx(txids[0]);
 		return TX;
 	}catch(e){
 		MAIN.note(2,"GetTagOrderTx",e);
@@ -1277,7 +1277,7 @@ exports.GetTagPermitAddresss = async function(tag){
 		for (let index in txids){
 			let txid = txids[index];
 
-			let TX = exports.GetTx(txid);
+			let TX = await exports.GetTx(txid);
 			let objtx = await TX.GetObjTx();
 
 			let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
@@ -1560,13 +1560,13 @@ exports.RunCommit = async function(){
 							if (txbool == 2){
 								let SenderAccountTxids = await TargetTransaction.TargetAccount.GetFormTxList(undefined,objtx["tag"]);
 								let ResetTxid = SenderAccountTxids.slice(-1)[0];
-								let RESETTX = exports.GetTx(ResetTxid);
+								let RESETTX = await exports.GetTx(ResetTxid);
 								await reset(RESETTX);
 							}
 							if (txbool == 3){
 								let ToAccountTxids = await ToTargetAccount.GetFormTxList(undefined,objtx["tag"]);
 								let ResetTxid = ToAccountTxids.slice(-1)[0];
-								let RESETTX = exports.GetTx(ResetTxid);
+								let RESETTX = await exports.GetTx(ResetTxid);
 								await reset(RESETTX);
 							}
 							if (txbool == 0){

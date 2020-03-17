@@ -300,7 +300,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs,Add
 	for (let index in tagtxids){
 		let tagtxid = tagtxids[index];
 
-		let tagtx = TRANSACTION.GetTx(tagtxid);
+		let tagtx = await TRANSACTION.GetTx(tagtxid);
 		let objtagtx = await tagtx.GetObjTx();
 
 		if (objtagtx["type"] == 112){
@@ -320,7 +320,7 @@ exports.RunCode = async function(TargetAccount,tag,FunctionName,FunctionArgs,Add
 	for (let index in tagtxids){
 		let tagtxid = tagtxids[index];
 
-		let tagtx = TRANSACTION.GetTx(tagtxid);
+		let tagtx = await TRANSACTION.GetTx(tagtxid);
 		let objtagtx = await tagtx.GetObjTx();
 
 		if (objtagtx["type"] == 111){

@@ -130,7 +130,7 @@ exports.account = class{
 
 		if (BoolNeedApproved && result.length > 0){
 			let lasttxid = result.slice(-1);
-			let LASTTX = TRANSACTION.GetTx(lasttxid);
+			let LASTTX = await TRANSACTION.GetTx(lasttxid);
 			let objtx = await LASTTX.GetObjTx();
 
 			let SenderAccount = new exports.account(objtx["pubkey"]);
@@ -207,7 +207,7 @@ exports.account = class{
 
 			let txid = txlist[index];
 
-			let TX = TRANSACTION.GetTx(txid);
+			let TX = await TRANSACTION.GetTx(txid);
 			let objtx = await TX.GetObjTx();
 
 			let SenderKeys = await this.GetKeys(objtx["pubkey"]);
@@ -271,7 +271,7 @@ exports.account = class{
 				continue;
 			}
 
-			let TX = TRANSACTION.GetTx(txid);
+			let TX = await TRANSACTION.GetTx(txid);
 			let objtx = await TX.GetObjTx();
 
 			let SenderKeys = await this.GetKeys(objtx["pubkey"]);
