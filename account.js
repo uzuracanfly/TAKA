@@ -106,7 +106,7 @@ exports.account = class{
 			tag = "pay"
 		}
 
-		let TransactionIdsPerAccountAndTag = DATABASE.get("TransactionIdsPerAccountAndTag",address+"_"+tag);
+		let TransactionIdsPerAccountAndTag = await DATABASE.get("TransactionIdsPerAccountAndTag",address+"_"+tag);
 		if (LessTime){
 			LessIndex = await TRANSACTION.GetLessIndexFromLessTime(address,tag,LessTime);
 			LessTime = 0;
@@ -159,7 +159,7 @@ exports.account = class{
 			tag = "pay"
 		}
 
-		let TransactionIdsPerAccountAndTag = DATABASE.get("TransactionIdsPerSenderAndTag",address+"_"+tag);
+		let TransactionIdsPerAccountAndTag = await DATABASE.get("TransactionIdsPerSenderAndTag",address+"_"+tag);
 
 		return TransactionIdsPerAccountAndTag;
 	};
@@ -182,7 +182,7 @@ exports.account = class{
 		/* indexの残高のキャッシュがとられている */
 		let MaxCacheIndex = 0;
 		let BalanceWithMaxCacheIndex = 0;
-		let datas = DATABASE.get("BalancePerAddress",address);
+		let datas = await DATABASE.get("BalancePerAddress",address);
 		for (let index in datas){
 			let data = datas[index];
 
@@ -242,7 +242,7 @@ exports.account = class{
 		/* indexの残高のキャッシュがとられている */
 		let MaxCacheIndex = 0;
 		let AmountWithMaxCacheIndex = 0;
-		let datas = DATABASE.get("SendAmountToAddressPerAddress",`${address}_${toaddress}`);
+		let datas = await DATABASE.get("SendAmountToAddressPerAddress",`${address}_${toaddress}`);
 		for (let index in datas){
 			let data = datas[index];
 
@@ -258,7 +258,7 @@ exports.account = class{
 
 
 
-		let TxlistPerAccAndToAndTag = DATABASE.get("TransactionIdsPerAccountAndToAccountAndTag",address+"_"+toaddress+"_pay");
+		let TxlistPerAccAndToAndTag = await DATABASE.get("TransactionIdsPerAccountAndToAccountAndTag",address+"_"+toaddress+"_pay");
 		let amount = AmountWithMaxCacheIndex;
 		for (let index in txlist){
 			if (MaxCacheIndex && MaxCacheIndex >= parseInt(index)+1){

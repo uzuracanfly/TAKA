@@ -42,7 +42,7 @@ exports.GetConnectionNodeList = function(){
 
 
 exports.GetNodeList = function(){
-	let nodelist = DATABASE.get("nodelist");
+	let nodelist = await DATABASE.get("nodelist");
 	if (nodelist.length == 0){
 		for (let index in CONFIG.broadcast["seed"]){
 			let address = CONFIG.broadcast["seed"][index];
@@ -55,7 +55,7 @@ exports.GetNodeList = function(){
 }
 
 exports.GetNode = function(address){
-	let nodes = DATABASE.get("nodelist",address);
+	let nodes = await DATABASE.get("nodelist",address);
 
 	if (nodes.length == 0){
 		return false;
@@ -86,7 +86,7 @@ exports.SetNode = function(address,type,state){
 	MAIN.note(1,"SetNode",address+" state:"+state);
 
 	let data = {"time":Math.floor(Date.now()/1000),"type":type,"state":state};
-	DATABASE.set("nodelist",address,data);
+	await DATABASE.set("nodelist",address,data);
 
 	return 1;
 }

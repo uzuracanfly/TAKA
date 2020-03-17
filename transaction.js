@@ -1073,7 +1073,7 @@ exports.Transaction = class{
 		rawtx = await this.GetRawTx(TargetAccount,objtx);
 		let txid = await this.GetTxid(rawtx);
 
-		DATABASE.add("UnconfirmedTransactions",objtx["tag"],rawtx);
+		await DATABASE.add("UnconfirmedTransactions",objtx["tag"],rawtx);
 
 		if (!BoolUntilConfirmation){
 			return txid;
@@ -1109,7 +1109,7 @@ exports.Transaction = class{
 
 
 exports.GetAllTxids = function(){
-	let txids = DATABASE.get("TransactionIdsPerAll","live");
+	let txids = await DATABASE.get("TransactionIdsPerAll","live");
 
 	return txids;
 }
@@ -1117,7 +1117,7 @@ exports.GetAllTxids = function(){
 
 exports.GetTx = function(txid){
 	try{
-		let rawtx = DATABASE.get("ConfirmedTransactions",txid);
+		let rawtx = await DATABASE.get("ConfirmedTransactions",txid);
 		if (rawtx.length <= 0){
 			return false;
 		}
@@ -1134,7 +1134,7 @@ exports.GetTx = function(txid){
 
 exports.GetRawTxToDirect = async function(txid){
 	try{
-		let rawtxs = DATABASE.get("ConfirmedTransactions",txid);
+		let rawtxs = await DATABASE.get("ConfirmedTransactions",txid);
 		if (rawtxs.length <= 0){
 			return false;
 		}
@@ -1149,7 +1149,7 @@ exports.GetRawTxToDirect = async function(txid){
 
 
 exports.GetTags = function(){
-	let tags = DATABASE.get("TransactionIdsPerTag");
+	let tags = await DATABASE.get("TransactionIdsPerTag");
 
 	//空白は排除
 	let result = tags.filter(function(vars) {
@@ -1164,7 +1164,7 @@ exports.GetTagTxids = async function(tag,LessTime=0){
 		return [];
 	}
 
-	let txids = DATABASE.get("TransactionIdsPerTag",tag);
+	let txids = await DATABASE.get("TransactionIdsPerTag",tag);
 
 	let result = [];
 	if (LessTime){
@@ -1187,7 +1187,7 @@ exports.GetTagTxids = async function(tag,LessTime=0){
 
 exports.GetLessIndexFromLessTime = async function(address,tag,LessTime){
 	try{
-		let TimeRaIndexs = DATABASE.get("TransactionTimeRaIndexPerAccountAndTag",address+"_"+tag);
+		let TimeRaIndexs = await DATABASE.get("TransactionTimeRaIndexPerAccountAndTag",address+"_"+tag);
 		if (TimeRaIndexs.length <= 0){
 			return 0;
 		}
@@ -1257,7 +1257,7 @@ exports.SendPayTransaction = async function(privkey,toaddress,amount){
 
 exports.GetTagOrderTx = async function(tag){
 	try{
-		let txids = DATABASE.get("TagOrderTransactionIdPerTag",tag);
+		let txids = await DATABASE.get("TagOrderTransactionIdPerTag",tag);
 		if (txids.length <= 0){
 			return false;
 		}
@@ -1272,7 +1272,7 @@ exports.GetTagOrderTx = async function(tag){
 
 exports.GetTagPermitAddresss = async function(tag){
 	try{
-		let txids = DATABASE.get("TagaddpermitTransactionIdPerTag",tag);
+		let txids = await DATABASE.get("TagaddpermitTransactionIdPerTag",tag);
 		let PermitAddresss = [];
 		for (let index in txids){
 			let txid = txids[index];
@@ -1298,11 +1298,11 @@ exports.GetTagPermitAddresss = async function(tag){
 exports.GetUnconfirmedTransactions = async function(){
 	rawtxs = [];
 
-	let tags = DATABASE.get("UnconfirmedTransactions");
+	let tags = await DATABASE.get("UnconfirmedTransactions");
 	for (let index in tags){
 		let tag = tags[index];
 
-		Array.prototype.push.apply(rawtxs, DATABASE.get("UnconfirmedTransactions",tag));
+		Array.prototype.push.apply(rawtxs, await DATABASE.get("UnconfirmedTransactions",tag));
 	};
 
 	return rawtxs;
@@ -1312,7 +1312,7 @@ exports.GetUnconfirmedTransactions = async function(){
 
 exports.GetImportTags = async function(){
 	let ImportTags = [];
-	let DatabaseImportTags = DATABASE.get("ImportTags","live");
+	let DatabaseImportTags = await DATABASE.get("ImportTags","live");
 
 	Array.prototype.push.apply(ImportTags, DatabaseImportTags);
 	Array.prototype.push.apply(ImportTags, CONFIG.ImportTags);
@@ -1344,14 +1344,14 @@ exports.SetImportTags = async function(type,tag){
 		if (index > -1){
 			return 0;
 		}
-		DATABASE.add("ImportTags","live",tag);
+		await DATABASE.add("ImportTags","live",tag);
 	}else if (type == "remove"){
 		let ImportTags = await exports.GetImportTags();
 		let index = ImportTags.indexOf(tag);
 		if (index == -1){
 			return 0;
 		}
-		DATABASE.remove("ImportTags","live",index);
+		await DATABASE.remove("ImportTags","live",index);
 	};
 	return 1;
 };
@@ -1391,45 +1391,45 @@ exports.RunCommit = async function(){
 		let rawtx = await TargetTransaction.GetRawTx();
 		let txid = await TargetTransaction.GetTxid();
 
-		DATABASE.add("TransactionIdsPerTag",objtx["tag"],txid);
-		DATABASE.add("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],txid);
-		DATABASE.add("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],txid);
-		DATABASE.add("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],txid);
-		DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],txid);
-		DATABASE.add("TransactionIdsPerAccount",objtx["toaddress"],txid);
-		DATABASE.add("TransactionIdsPerAccountAndToAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["toaddress"]+"_"+objtx["tag"],txid);
-		DATABASE.add("TransactionIdsPerAll","live",txid);
+		await DATABASE.add("TransactionIdsPerTag",objtx["tag"],txid);
+		await DATABASE.add("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],txid);
+		await DATABASE.add("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],txid);
+		await DATABASE.add("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],txid);
+		await DATABASE.add("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],txid);
+		await DATABASE.add("TransactionIdsPerAccount",objtx["toaddress"],txid);
+		await DATABASE.add("TransactionIdsPerAccountAndToAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["toaddress"]+"_"+objtx["tag"],txid);
+		await DATABASE.add("TransactionIdsPerAll","live",txid);
 
 		//indexと時間の関連付け
 		let data = {"time":objtx["time"],"index":objtx["index"],"txid":txid};
-		DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],data);
+		await DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],data);
 		data = {"time":objtx["time"],"index":objtx["ToIndex"],"txid":txid};
-		DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],data);
+		await DATABASE.add("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],data);
 
 		if (objtx["type"] == 12){
 			let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
 			let TagorderObjData = Tagorder.GetObjData();
-			DATABASE.add("TagOrderTransactionIdPerTag",TagorderObjData["tag"],txid);
+			await DATABASE.add("TagOrderTransactionIdPerTag",TagorderObjData["tag"],txid);
 		}
 		if (objtx["type"] == 13){
 			let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
 			let TagaddpermitObjData = Tagaddpermit.GetObjData();
-			DATABASE.add("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],txid);
+			await DATABASE.add("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],txid);
 		}
 
-		DATABASE.add("ConfirmedTransactions",txid,rawtx);
+		await DATABASE.add("ConfirmedTransactions",txid,rawtx);
 
 		//payの場合残高をキャッシュ
 		if (objtx["type"] == 1){
 			let data = {"index":objtx["index"],"amount":(await TargetTransaction.TargetAccount.GetSendAmountToAddress(undefined,objtx["toaddress"]))};
-			DATABASE.add("SendAmountToAddressPerAddress",`${(await TargetTransaction.TargetAccount.GetKeys())["address"]}_${objtx["toaddress"]}`,data);
+			await DATABASE.add("SendAmountToAddressPerAddress",`${(await TargetTransaction.TargetAccount.GetKeys())["address"]}_${objtx["toaddress"]}`,data);
 
 			data = {"index":objtx["index"],"balance":(await TargetTransaction.TargetAccount.GetBalance())};
-			DATABASE.add("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],data);
+			await DATABASE.add("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],data);
 
 			let ToTargetAccount = new ACCOUNT.account(objtx["toaddress"]);
 			data = {"index":objtx["ToIndex"],"balance":(await ToTargetAccount.GetBalance())};
-			DATABASE.add("BalancePerAddress",objtx["toaddress"],data);
+			await DATABASE.add("BalancePerAddress",objtx["toaddress"],data);
 		};
 
 
@@ -1441,41 +1441,41 @@ exports.RunCommit = async function(){
 		let rawtx = await TargetTransaction.GetRawTx();
 		let txid = await TargetTransaction.GetTxid();
 
-		DATABASE.remove("TransactionIdsPerTag",objtx["tag"],-1,txid);
-		DATABASE.remove("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,txid);
-		DATABASE.remove("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,txid);
-		DATABASE.remove("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,txid);
-		DATABASE.remove("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],-1,txid);
-		DATABASE.remove("TransactionIdsPerAccount",objtx["toaddress"],-1,txid);
-		DATABASE.remove("TransactionIdsPerAccountAndToAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["toaddress"]+"_"+objtx["tag"],-1,txid);
-		DATABASE.remove("TransactionIdsPerAll","live",-1,txid);
+		await DATABASE.remove("TransactionIdsPerTag",objtx["tag"],-1,txid);
+		await DATABASE.remove("TransactionIdsPerSenderAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,txid);
+		await DATABASE.remove("TransactionIdsPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,txid);
+		await DATABASE.remove("TransactionIdsPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,txid);
+		await DATABASE.remove("TransactionIdsPerAccount",(await TargetTransaction.TargetAccount.GetKeys())["address"],-1,txid);
+		await DATABASE.remove("TransactionIdsPerAccount",objtx["toaddress"],-1,txid);
+		await DATABASE.remove("TransactionIdsPerAccountAndToAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["toaddress"]+"_"+objtx["tag"],-1,txid);
+		await DATABASE.remove("TransactionIdsPerAll","live",-1,txid);
 
 		//indexと時間の関連付け
 		let data = {"time":objtx["time"],"index":objtx["index"],"txid":txid};
-		DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,data);
+		await DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",(await TargetTransaction.TargetAccount.GetKeys())["address"]+"_"+objtx["tag"],-1,data);
 		data = {"time":objtx["time"],"index":objtx["ToIndex"],"txid":txid};
-		DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,data);
+		await DATABASE.remove("TransactionTimeRaIndexPerAccountAndTag",objtx["toaddress"]+"_"+objtx["tag"],-1,data);
 
 		if (objtx["type"] == 12){
 			let Tagorder = new TRANSACTIONTOOLS_TAGORDER.TagOrderData(objtx["data"]);
 			let TagorderObjData = Tagorder.GetObjData();
-			DATABASE.remove("TagOrderTransactionIdPerTag",TagorderObjData["tag"],-1,txid);
+			await DATABASE.remove("TagOrderTransactionIdPerTag",TagorderObjData["tag"],-1,txid);
 		}
 		if (objtx["type"] == 13){
 			let Tagaddpermit = new TRANSACTIONTOOLS_TAGADDPERMIT.TagAddPermitData(objtx["data"]);
 			let TagaddpermitObjData = Tagaddpermit.GetObjData();
-			DATABASE.remove("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],-1,txid);
+			await DATABASE.remove("TagaddpermitTransactionIdPerTag",TagaddpermitObjData["tag"],-1,txid);
 		}
 
-		DATABASE.delete("ConfirmedTransactions",txid);
+		await DATABASE.delete("ConfirmedTransactions",txid);
 
 		//payの場合残高をキャッシュ
 		if (objtx["type"] == 1){
 			data = {"index":objtx["index"],"amount":(await TargetTransaction.TargetAccount.GetSendAmountToAddress(undefined,objtx["toaddress"],objtx["index"]))};
-			DATABASE.remove("SendAmountToAddressPerAddress",`${(await TargetTransaction.TargetAccount.GetKeys())["address"]}_${objtx["toaddress"]}`,-1,data);
+			await DATABASE.remove("SendAmountToAddressPerAddress",`${(await TargetTransaction.TargetAccount.GetKeys())["address"]}_${objtx["toaddress"]}`,-1,data);
 
-			DATABASE.remove("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],objtx["index"]-1);
-			DATABASE.remove("BalancePerAddress",objtx["toaddress"],objtx["ToIndex"]-1);
+			await DATABASE.remove("BalancePerAddress",(await TargetTransaction.TargetAccount.GetKeys())["address"],objtx["index"]-1);
+			await DATABASE.remove("BalancePerAddress",objtx["toaddress"],objtx["ToIndex"]-1);
 		};
 
 
@@ -1505,14 +1505,14 @@ exports.RunCommit = async function(){
 
 
 	//シード適用
-	let ConfirmedTransactions = DATABASE.get("ConfirmedTransactions");
+	let ConfirmedTransactions = await DATABASE.get("ConfirmedTransactions");
 	if (ConfirmedTransactions.length==0){
 		for (let index in CONFIG.genesistxs){
 			let rawtx = CONFIG.genesistxs[index];
 
 			let SeedTransaction = new exports.Transaction(rawtx);
 
-			DATABASE.add("UnconfirmedTransactions",(await SeedTransaction.GetObjTx())["tag"],rawtx);
+			await DATABASE.add("UnconfirmedTransactions",(await SeedTransaction.GetObjTx())["tag"],rawtx);
 		}
 	}
 
@@ -1520,7 +1520,7 @@ exports.RunCommit = async function(){
 	while (true){
 		try{
 
-			let UnconfirmedTransactionsTags = DATABASE.get("UnconfirmedTransactions");
+			let UnconfirmedTransactionsTags = await DATABASE.get("UnconfirmedTransactions");
 			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(exports.TagCompare);
 			for (let index in UnconfirmedTransactionsTags){
 				let tag = UnconfirmedTransactionsTags[index];
@@ -1532,7 +1532,7 @@ exports.RunCommit = async function(){
 					continue;
 				};
 
-				let UnconfirmedTransactions = DATABASE.get("UnconfirmedTransactions",tag);
+				let UnconfirmedTransactions = await DATABASE.get("UnconfirmedTransactions",tag);
 
 				//timeが古い順並び替え
 				UnconfirmedTransactions = UnconfirmedTransactions.sort(await RawTxOldCompare);
@@ -1542,7 +1542,7 @@ exports.RunCommit = async function(){
 					try{
 						let rawtx = UnconfirmedTransactions[mindex];
 
-						DATABASE.remove("UnconfirmedTransactions",tag,undefined,rawtx);
+						await DATABASE.remove("UnconfirmedTransactions",tag,undefined,rawtx);
 
 						MAIN.note(0,"transaction_RunCommit_commit","[catch transaction] "+rawtx);
 

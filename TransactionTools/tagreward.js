@@ -140,7 +140,7 @@ exports.SendTagrewardTransaction = async function(privkey,tag,amount){
 
 exports.GetMiningTags = async function(){
 	let MiningTags = [];
-	let DatabaseMiningTags = DATABASE.get("MiningTags","live");
+	let DatabaseMiningTags = await DATABASE.get("MiningTags","live");
 
 	Array.prototype.push.apply(MiningTags, DatabaseMiningTags);
 	Array.prototype.push.apply(MiningTags, CONFIG.Tagreward["MiningTags"]);
@@ -155,14 +155,14 @@ exports.SetMiningTags = async function(type,tag){
 		if (index > -1){
 			return 0;
 		}
-		DATABASE.add("MiningTags","live",tag);
+		await DATABASE.add("MiningTags","live",tag);
 	}else if (type == "remove"){
 		let MiningTags = await exports.GetMiningTags();
 		let index = MiningTags.indexOf(tag);
 		if (index == -1){
 			return 0;
 		}
-		DATABASE.remove("MiningTags","live",index);
+		await DATABASE.remove("MiningTags","live",index);
 	};
 	return 1;
 }
@@ -239,9 +239,9 @@ exports.RunMining = async function(){
 					let TagRewardCheetah = {"tag":TagRewardObjData["tag"],"amount":await PlanRewardAccount.GetBalance(),"time":TagRewardObjTx["time"],"TagRewardTxid":txid};
 
 
-					let TagRewardCheetahs = DATABASE.get("TagRewardCheetah",TagRewardObjData["tag"]);
+					let TagRewardCheetahs = await DATABASE.get("TagRewardCheetah",TagRewardObjData["tag"]);
 					if (TagRewardCheetahs.indexOf(TagRewardCheetah) == -1){
-						DATABASE.add("TagRewardCheetah",TagRewardObjData["tag"],TagRewardCheetah);
+						await DATABASE.add("TagRewardCheetah",TagRewardObjData["tag"],TagRewardCheetah);
 					}
 				}
 
@@ -283,7 +283,7 @@ exports.RunMining = async function(){
 
 			//秘密鍵取得をログに保存
 			let TagMiningResult = {"tag":tag,"amount":sendamount,"time":Math.floor(Date.now()/1000),"RewardSentTxid":""};
-			DATABASE.add("TagMiningResult_FoundPrivkey",tag,TagMiningResult);
+			await DATABASE.add("TagMiningResult_FoundPrivkey",tag,TagMiningResult);
 
 			if (sendamount > 0){
 				let result = await TRANSACTION.SendPayTransaction(RewardPrivkey,(await CollectAccount.GetKeys())["address"],sendamount);
@@ -293,7 +293,7 @@ exports.RunMining = async function(){
 
 					//秘密鍵から残高を取得をログに保存
 					let TagMiningResult = {"tag":tag,"amount":sendamount,"time":Math.floor(Date.now()/1000),"RewardSentTxid":result};
-					DATABASE.add("TagMiningResult_hooray",tag,TagMiningResult);
+					await DATABASE.add("TagMiningResult_hooray",tag,TagMiningResult);
 				}
 			}
 		}
@@ -367,7 +367,7 @@ exports.RunControlTag = async function(){
 
 
 				//不正によってかさましされた数量
-				let TagRewardCheetahs = DATABASE.get("TagRewardCheetah",tag);
+				let TagRewardCheetahs = await DATABASE.get("TagRewardCheetah",tag);
 				let CheetahAmountPerYear = 0;
 				for (let index in TagRewardCheetahs){
 					let TagRewardCheetah = TagRewardCheetahs[index];
@@ -387,7 +387,7 @@ exports.RunControlTag = async function(){
 
 
 				/* 過去に追加された過去がある */
-				RunControlTagAddTagLogs = DATABASE.get("RunControlTagAddTagLog",tag);
+				RunControlTagAddTagLogs = await DATABASE.get("RunControlTagAddTagLog",tag);
 				if (RunControlTagAddTagLogs.length > 0){
 					continue;
 				};
@@ -396,7 +396,7 @@ exports.RunControlTag = async function(){
 
 
 				let RunControlTagAddTagLog = {"tag":tag,"time":Math.floor(Date.now()/1000)};
-				DATABASE.set("RunControlTagAddTagLog",tag,RunControlTagAddTagLog);
+				await DATABASE.set("RunControlTagAddTagLog",tag,RunControlTagAddTagLog);
 
 
 
@@ -453,7 +453,7 @@ exports.RunControlTag = async function(){
 
 
 				//不正によってかさましされた数量
-				let TagRewardCheetahs = DATABASE.get("TagRewardCheetah",tag);
+				let TagRewardCheetahs = await DATABASE.get("TagRewardCheetah",tag);
 				let CheetahAmountPerYear = 0;
 				for (let index in TagRewardCheetahs){
 					let TagRewardCheetah = TagRewardCheetahs[index];

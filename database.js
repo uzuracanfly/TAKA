@@ -1,4 +1,4 @@
-const SYNCREQUEST = require('sync-request');
+const THENREQUEST = require('then-request');
 const HTTP = require('http');
 const FS = require('fs');
 const CRYPTO = require('crypto');
@@ -17,13 +17,13 @@ exports.ChangeMemDatabase = class{
 	};
 
 
-	SendPostbyjson(url,paras){
+	async SendPostbyjson(url,paras){
 		let headers = {
 			'Content-Type':'application/json'
 		};
 
 		//リクエスト送信
-		let res = SYNCREQUEST(
+		let res = await THENREQUEST(
 			'POST',
 			url, 
 			{
@@ -35,38 +35,38 @@ exports.ChangeMemDatabase = class{
 	};
 
 
-	add(table,index,data){	
-		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"add","args":{"database":this.database,"table":table,"index":index,"data":data}});
+	async add(table,index,data){	
+		let result = await this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"add","args":{"database":this.database,"table":table,"index":index,"data":data}});
 		return result;
 	}
 
 
-	set(table,index,data){
-		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"set","args":{"database":this.database,"table":table,"index":index,"data":data}});
+	async set(table,index,data){
+		let result = await this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"set","args":{"database":this.database,"table":table,"index":index,"data":data}});
 		return result;
 	}
 
 
-	remove(table,index,removeindex=-1,removevalue=null){
-		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"remove","args":{"database":this.database,"table":table,"index":index,"removeindex":parseInt(removeindex),"removevalue":removevalue}});
+	async remove(table,index,removeindex=-1,removevalue=null){
+		let result = await this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"remove","args":{"database":this.database,"table":table,"index":index,"removeindex":parseInt(removeindex),"removevalue":removevalue}});
 		return result;
 	}
 
 
-	delete(table,index){
-		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"delete","args":{"database":this.database,"table":table,"index":index}});
+	async delete(table,index){
+		let result = await this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"delete","args":{"database":this.database,"table":table,"index":index}});
 		return result;
 	}
 
 
-	get(table,index=""){
-		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"get","args":{"database":this.database,"table":table,"index":index}});
+	async get(table,index=""){
+		let result = await this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"get","args":{"database":this.database,"table":table,"index":index}});
 		return result;
 	}
 
 
-	getindexs(table){
-		let result = this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"getindexs","args":{"database":this.database,"table":table}});
+	async getindexs(table){
+		let result = await this.SendPostbyjson("http://"+this.address+":"+this.port,{"function":"getindexs","args":{"database":this.database,"table":table}});
 		return result;
 	}
 };

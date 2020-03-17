@@ -1,7 +1,7 @@
-let FS = require('fs');
-let ARCHIVER = require('archiver');
-const REQUEST = require('sync-request');
-var UNZIP = require('unzip2');
+const FS = require('fs');
+const ARCHIVER = require('archiver');
+const THENREQUEST = require('then-request');
+const UNZIP = require('unzip2');
 
 
 exports.RunSaveDataBase = async function(){
@@ -67,7 +67,7 @@ exports.DownloadDataBase = async function(database){
 			};
 
 			//リクエスト送信
-			let res = REQUEST(
+			let res = await THENREQUEST(
 				'GET',
 				`https://neko.taka.site/bootstrap`, 
 				{

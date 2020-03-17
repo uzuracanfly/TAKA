@@ -29,11 +29,11 @@ exports.exit = async function(FunctionList){
 
 
 exports.RunConfirmExit = async function(FunctionList){
-	DATABASE.set("exitorder","live",[]);
-	let ExitorderList = DATABASE.get("exitorder","live");
+	await DATABASE.set("exitorder","live",[]);
+	let ExitorderList = await DATABASE.get("exitorder","live");
 	while (true){
 		try{
-			ExitorderList = DATABASE.get("exitorder","live");
+			ExitorderList = await DATABASE.get("exitorder","live");
 			if (ExitorderList.length > 0){
 				await exports.exit(FunctionList);
 			}
@@ -51,7 +51,7 @@ exports.RunConfirmExit = async function(FunctionList){
 
 
 exports.SetExit = async function(){
-	DATABASE.set("exitorder","live",["true"]);
+	await DATABASE.set("exitorder","live",["true"]);
 
 	return true;
 }

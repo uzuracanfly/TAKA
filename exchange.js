@@ -12,7 +12,7 @@ exports.SetExchangeOrder = async function(type,PayTxid,ReceiverAddress,amount){
 	try{
 		amount = parseInt(amount);
 
-		DATABASE.add("ExchangeOrders","live",{"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount});
+		await DATABASE.add("ExchangeOrders","live",{"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount});
 		return true;
 	}catch(e){
 		MAIN.note(2,"SetExchangeOrder",e);
@@ -29,7 +29,7 @@ exports.RunExchangeScan = async function(){
 	
 	while (true){
 		try{
-			let ExchangeOrders = DATABASE.get("ExchangeOrders","live");
+			let ExchangeOrders = await DATABASE.get("ExchangeOrders","live");
 			for (let index in ExchangeOrders){
 				let ExchangeOrder = ExchangeOrders[index];
 
@@ -52,7 +52,7 @@ exports.RunExchangeScan = async function(){
 				*/
 				if (ExchangeOrder["type"] == "buy"){
 					let bool = true;
-					let ExchangeUsings = DATABASE.get("ExchangeUsings","live");
+					let ExchangeUsings = await DATABASE.get("ExchangeUsings","live");
 					for (let mindex in ExchangeUsings){
 						let ExchangeUsing = ExchangeUsings[mindex];
 
@@ -64,7 +64,7 @@ exports.RunExchangeScan = async function(){
 					}
 					//ExchangeOrdersの要素削除して一回走査を終了
 					if (!bool){
-						DATABASE.remove("ExchangeOrders","live",index);
+						await DATABASE.remove("ExchangeOrders","live",index);
 						break;
 					}
 
@@ -78,7 +78,7 @@ exports.RunExchangeScan = async function(){
 					};
 					//コントラクト違う
 					if ((TxData["to"]).toLowerCase() != (TAKAContractAddress).toLowerCase()){
-						DATABASE.remove("ExchangeOrders","live",index);
+						await DATABASE.remove("ExchangeOrders","live",index);
 						break;
 					};
 					let log = TxData["logs"][0];
@@ -89,12 +89,12 @@ exports.RunExchangeScan = async function(){
 					TargetAddress = await MyETAKACOIND.FormKey(TargetAddress,true);
 					TargetAddress = TargetAddress.toLowerCase();
 					if ((log["topics"]).indexOf(TargetAddress) == -1){
-						DATABASE.remove("ExchangeOrders","live",index);
+						await DATABASE.remove("ExchangeOrders","live",index);
 						break;
 					};
 					//数量が違う
 					if (parseInt(log["data"],16) != parseInt(ExchangeOrder["amount"])){
-						DATABASE.remove("ExchangeOrders","live",index);
+						await DATABASE.remove("ExchangeOrders","live",index);
 						break;
 					};
 
@@ -114,10 +114,10 @@ exports.RunExchangeScan = async function(){
 						continue;
 					}
 
-					DATABASE.add("ExchangeUsings","live",{"type":"buy","PayTxid":ExchangeOrder["PayTxid"],"ResultTxid":ProductTxid});
+					await DATABASE.add("ExchangeUsings","live",{"type":"buy","PayTxid":ExchangeOrder["PayTxid"],"ResultTxid":ProductTxid});
 					MAIN.note(1,"RunExchangeScan","EXCHANGE "+ExchangeOrder["amount"]+"ETAKA => "+ExchangeOrder["amount"]+"TAKA");
 
-					DATABASE.remove("ExchangeOrders","live",index);
+					await DATABASE.remove("ExchangeOrders","live",index);
 					break;
 				};
 
@@ -130,7 +130,7 @@ exports.RunExchangeScan = async function(){
 				*/
 				if (ExchangeOrder["type"] == "sell"){
 					let bool = true;
-					let ExchangeUsings = DATABASE.get("ExchangeUsings","live");
+					let ExchangeUsings = await DATABASE.get("ExchangeUsings","live");
 					for (let mindex in ExchangeUsings){
 						let ExchangeUsing = ExchangeUsings[mindex];
 
@@ -142,7 +142,7 @@ exports.RunExchangeScan = async function(){
 					}
 					//ExchangeOrdersの要素削除して一回走査を終了
 					if (!bool){
-						DATABASE.remove("ExchangeOrders","live",index);
+						await DATABASE.remove("ExchangeOrders","live",index);
 						break;
 					}
 
@@ -153,12 +153,12 @@ exports.RunExchangeScan = async function(){
 					let objtx = await TX.GetObjTx();
 					//送金先が違う
 					if (objtx["toaddress"] != ((await MyTAKAACCOUNT.GetKeys())["address"])){
-						DATABASE.remove("ExchangeOrders","live",index);
+						await DATABASE.remove("ExchangeOrders","live",index);
 						break;
 					}
 					//数量が違う
 					if (parseInt(objtx["amount"]) != parseInt(ExchangeOrder["amount"])){
-						DATABASE.remove("ExchangeOrders","live",index);
+						await DATABASE.remove("ExchangeOrders","live",index);
 						break;
 					};
 
@@ -179,10 +179,10 @@ exports.RunExchangeScan = async function(){
 						continue;
 					}
 
-					DATABASE.add("ExchangeUsings","live",{"type":"sell","PayTxid":ExchangeOrder["PayTxid"],"ResultTxid":ProductTxid});
+					await DATABASE.add("ExchangeUsings","live",{"type":"sell","PayTxid":ExchangeOrder["PayTxid"],"ResultTxid":ProductTxid});
 					MAIN.note(1,"RunExchangeScan","EXCHANGE "+ExchangeOrder["amount"]+"TAKA => "+ExchangeOrder["amount"]+"ETAKA");
 
-					DATABASE.remove("ExchangeOrders","live",index);
+					await DATABASE.remove("ExchangeOrders","live",index);
 					break;
 				};
 			};

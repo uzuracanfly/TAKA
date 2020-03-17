@@ -1,4 +1,4 @@
-const REQUEST = require('sync-request');
+const THENREQUEST = require('then-request');
 
 const CONFIG = require('./config.js');
 const MAIN = require('./main.js');
@@ -11,7 +11,7 @@ function SendPostbyjson(url,paras){
 	};
 
 	//リクエスト送信
-	let res = REQUEST(
+	let res = await THENREQUEST(
 		'POST',
 		url, 
 		{
