@@ -82,76 +82,92 @@ exports.RunCommit = async function(){
 	let transactions = [];
 
 	HTTP.createServer(async function(request, response) {
-		response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
+		try{
+			response.writeHead(200, {'Content-Type': 'application/json; charset=utf-8'});
 
-		if(request.method === 'POST') {
-			let postData = "";
-			request.on('data', async function(chunk) {
-				postData += chunk;
-			}).on('end', async function() {
-				postData = JSON.parse(postData);
+			if(request.method === 'POST') {
+				let postData = "";
+				request.on('data', async function(chunk) {
+					postData += chunk;
+				}).on('end', async function() {
+					try{
+						postData = JSON.parse(postData);
 
-				if(postData["function"] == "set"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-					let data = postData["args"]["data"];
+						if(postData["function"] == "set"){
+							let database = postData["args"]["database"];
+							let table = postData["args"]["table"];
+							let index = postData["args"]["index"];
+							let data = postData["args"]["data"];
 
-					let result = [];
-					if (data instanceof Array){
-						result = data;
-					}else{
-						result = [data];
+							let result = [];
+							if (data instanceof Array){
+								result = data;
+							}else{
+								result = [data];
+							}
+
+							transactions.push({"function":"set","args":{"database":database,"table":table,"index":index,"data":result},"request":request,"response":response});
+
+						};
+						if(postData["function"] == "add"){
+							let database = postData["args"]["database"];
+							let table = postData["args"]["table"];
+							let index = postData["args"]["index"];
+							let data = postData["args"]["data"];
+
+							transactions.push({"function":"add","args":{"database":database,"table":table,"index":index,"data":data},"request":request,"response":response});
+
+						};
+						if(postData["function"] == "remove"){
+							let database = postData["args"]["database"];
+							let table = postData["args"]["table"];
+							let index = postData["args"]["index"];
+
+							let removeindex = -1;
+							if ("removeindex" in postData["args"]){
+								removeindex = parseInt(postData["args"]["removeindex"]);
+							};
+							let removevalue = null;
+							if ("removevalue" in postData["args"]){
+								removevalue = postData["args"]["removevalue"];
+							};
+							
+
+							transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index,"removeindex":removeindex,"removevalue":removevalue},"request":request,"response":response});
+
+						};
+						if(postData["function"] == "delete"){
+							let database = postData["args"]["database"];
+							let table = postData["args"]["table"];
+							let index = postData["args"]["index"];
+
+							transactions.push({"function":"delete","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
+
+						};
+						if(postData["function"] == "get"){
+							let database = postData["args"]["database"];
+							let table = postData["args"]["table"];
+							let index = postData["args"]["index"];
+							
+							transactions.push({"function":"load","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
+
+						};
+					}catch(e){
+						console.log(e);
+
+						response.writeHead(400, {'Content-Type': 'application/json; charset=utf-8'});
+						response.write(JSON.stringify(false));
+						response.end();
 					}
+				});
+			};
+		}catch(e){
+			console.log(e);
 
-					transactions.push({"function":"set","args":{"database":database,"table":table,"index":index,"data":result},"request":request,"response":response});
-
-				};
-				if(postData["function"] == "add"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-					let data = postData["args"]["data"];
-
-					transactions.push({"function":"add","args":{"database":database,"table":table,"index":index,"data":data},"request":request,"response":response});
-
-				};
-				if(postData["function"] == "remove"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-
-					let removeindex = -1;
-					if ("removeindex" in postData["args"]){
-						removeindex = parseInt(postData["args"]["removeindex"]);
-					};
-					let removevalue = null;
-					if ("removevalue" in postData["args"]){
-						removevalue = postData["args"]["removevalue"];
-					};
-					
-
-					transactions.push({"function":"remove","args":{"database":database,"table":table,"index":index,"removeindex":removeindex,"removevalue":removevalue},"request":request,"response":response});
-
-				};
-				if(postData["function"] == "delete"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-
-					transactions.push({"function":"delete","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
-
-				};
-				if(postData["function"] == "get"){
-					let database = postData["args"]["database"];
-					let table = postData["args"]["table"];
-					let index = postData["args"]["index"];
-					
-					transactions.push({"function":"load","args":{"database":database,"table":table,"index":index},"request":request,"response":response});
-
-				};
-			});
-		};
+			response.writeHead(400, {'Content-Type': 'application/json; charset=utf-8'});
+			response.write(JSON.stringify(false));
+			response.end();
+		}
 
 	}).listen(CONFIG.database["port"], CONFIG.database["address"]);
 
