@@ -371,9 +371,9 @@ exports.SetServer = async function(){
 
 	const options = {
 		serveClient: false,
-		pingInterval: 10000,
-		pingTimeout: 5000,
-		cookie: false
+		pingTimeout: 120000,
+		pingInterval: 60000
+		// transports: ['polling']
 	}
 
 
