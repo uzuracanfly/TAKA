@@ -213,14 +213,6 @@ function CommandAction(commands){
 			let amount = commands[4];
 			
 			result = SendPostbyjson(`http://127.0.0.1:${CONFIG.API["port"]}/api`,{"function":"exchange","args":{"type":type,"PayTxid":PayTxid,"ReceiverAddress":ReceiverAddress,"amount":amount}});
-
-
-
-
-
-
-		}else if (commands[0] == "exit"){
-			result = EXIT.SetExit();
 		}
 
 

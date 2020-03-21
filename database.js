@@ -427,7 +427,6 @@ exports.RunCommit = async function(){
 		}catch(e){
 			console.log(e);
 		}finally{
-			await global.RunStop();
 			await sleep(0.001);
 		}
 	};

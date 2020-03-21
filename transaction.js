@@ -1,4 +1,5 @@
 const MAIN = require('./main.js');
+const EXIT = require('./exit.js');
 const CRYPTO = require('./crypto.js');
 const ACCOUNT = require('./account.js');
 const HASHS = require('./hashs.js');
@@ -1586,7 +1587,7 @@ exports.RunCommit = async function(){
 			MAIN.note(2,"transaction_RunCommit",e);
 
 		}finally{
-			await global.RunStop();
+			await EXIT.RunStop();
 			await MAIN.sleep(1);
 		}
 	}

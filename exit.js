@@ -8,50 +8,29 @@ const DATABASE = new (require('./database.js')).ChangeMemDatabase(CONFIG.databas
 
 
 
-exports.exit = async function(FunctionList){
-	for (let index in FunctionList){
-		try{
-			let FunctionData = FunctionList[index];
-			if (FunctionData["BoolKill"]){
-				(FunctionData["child"]).send({"action":"kill","args":{}});
-			}else{
-				(FunctionData["child"]).send({"action":"exit","args":{"WaitTime":FunctionData["WaitTime"]}});
-			}
-		}catch(e){
-			continue;
-		}
+exports.OrderStop = async function(ProcessName){
+	await DATABASE.set("OrderStop",ProcessName,[{"TimeStamp":await MAIN.GetTime(),"ProcessName":ProcessName}]);
+	return 1;
+}
+
+
+
+
+
+exports.RunStop = async function(){
+	let ProcessName = process.title;
+
+
+	let OrderStopList = await DATABASE.get("OrderStop",ProcessName);
+
+	OrderStopList = await DATABASE.get("OrderStop",ProcessName);
+	if (OrderStopList.length == 0){
+		return false;
 	}
+
+	await DATABASE.set("OrderStop",ProcessName,[]);
+
 	process.exit(1);
-}
-
-
-
-
-
-exports.RunConfirmExit = async function(FunctionList){
-	await DATABASE.set("exitorder","live",[]);
-	let ExitorderList = await DATABASE.get("exitorder","live");
-	while (true){
-		try{
-			ExitorderList = await DATABASE.get("exitorder","live");
-			if (ExitorderList.length > 0){
-				await exports.exit(FunctionList);
-			}
-
-		}catch(e){
-			MAIN.note(2,"exit_RunConfirmExit",e);
-		}finally{
-			await MAIN.sleep(1);
-		}
-	}
-}
-
-
-
-
-
-exports.SetExit = async function(){
-	await DATABASE.set("exitorder","live",["true"]);
 
 	return true;
 }
