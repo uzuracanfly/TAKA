@@ -333,6 +333,7 @@ exports.RunCommit = async function(){
 					return [];
 				} else {
 					console.log(e);
+					throw e;
 				}
 			};
 

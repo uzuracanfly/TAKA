@@ -22,8 +22,6 @@ exports.RunStop = async function(){
 
 
 	let OrderStopList = await DATABASE.get("OrderStop",ProcessName);
-
-	OrderStopList = await DATABASE.get("OrderStop",ProcessName);
 	if (OrderStopList.length == 0){
 		return false;
 	}
