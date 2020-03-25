@@ -383,6 +383,8 @@ exports.RunCommit = async function(){
 			if (transactions.length > 0){
 				let transaction = transactions[0];
 
+				transactions.shift();
+
 				if (transaction["function"] == "set"){
 					await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
 
@@ -422,8 +424,6 @@ exports.RunCommit = async function(){
 					(transaction["response"]).write(JSON.stringify(result));
 					(transaction["response"]).end();
 				}
-
-				transactions.shift();
 			};
 		}catch(e){
 			console.log(e);
