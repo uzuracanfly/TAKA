@@ -433,6 +433,3 @@ exports.RunCommit = async function(){
 	};
 
 };
-
-
-exports.RunCommit();

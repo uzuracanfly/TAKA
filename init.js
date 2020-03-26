@@ -133,7 +133,20 @@ const EXIT = require('./exit.js');
 
 
 
-	if (process.argv[2] == "start"){
+	if (process.argv[2] == "setup"){
+		(async () => {
+			CP.exec(`pkill -9 DRC`);
+
+			let child = CP.fork(`initcode.js`);
+			child.send({"action":"run","args":{"code":"let Database = require('./database.js');Database.RunCommit()","ProcessName":"DRC"}});
+			child.on('error', (e) => {
+				console.log(`[ERROR]`);
+				console.log(e);
+			});
+			
+			process.exit(1);
+		})();
+	}else if (process.argv[2] == "start"){
 		for (let index in FunctionList) {
 			let FunctionData = FunctionList[index];
 
