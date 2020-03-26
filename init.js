@@ -101,7 +101,7 @@ const EXIT = require('./exit.js');
 
 
 	let FunctionList = [
-		{"name":"DatabaseRunCommit","ProcessName":"DRC","function":"let Database = require('./database.js');Database.RunCommit()","time":0,"child":null,"BoolKill":true,"WaitTime":15},
+		//{"name":"DatabaseRunCommit","ProcessName":"DRC","function":"let Database = require('./database.js');Database.RunCommit()","time":0,"child":null,"BoolKill":true,"WaitTime":15},
 		{"name":"TransactionRunGetNonce","ProcessName":"TRG","function":"let Transaction = require('./transaction.js');Transaction.RunGetNonce()","time":0,"child":null,"BoolKill":true,"WaitTime":0},
 		{"name":"TransactionRunCommit","ProcessName":"TRC","function":"let Transaction = require('./transaction.js');Transaction.RunCommit()","time":1,"child":null,"BoolKill":false,"WaitTime":0},
 		{"name":"BroadcastSetServer","ProcessName":"BCS","function":"let Broadcast = require('./broadcast.js');Broadcast.SetServer()","time":2,"child":null,"BoolKill":true,"WaitTime":0},
