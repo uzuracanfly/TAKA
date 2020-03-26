@@ -112,8 +112,6 @@ exports.SetNode = async function(address,type,state){
 let BroadcastTransactions = {};
 let BroadcastNodeList = {};
 
-let CursorIndexPerAddress = {};
-
 async function SetActionEvents(socket,address){
 
 
@@ -144,14 +142,41 @@ async function SetActionEvents(socket,address){
 	/*
 		選出して生のトランザクションをお届け
 
-		parameter : {"CursorIndex":0,"count":count}
-		response : {"rawtxs":[rawtxs],"NextCursorIndex":0}
+		parameter : {"ConfirmedTxidsPerTag":[ConfirmedTxidsPerTag],"count":count,"NeedTags":[]}
+		response : [rawtxs]
 	*/
 	socket.on('GetTransactions', async function (data) {
 		try{
 			let rawtxs = [];
 
+			let tags = await TRANSACTION.GetTags();
+			tags = tags.sort(TRANSACTION.TagCompare);
+			for (let index in tags){
+				let tag = tags[index];
 
+				if (rawtxs.length >= data["count"]){
+					break;
+				}
+				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(tag) == -1){
+					continue;
+				}
+
+				let txids = await TRANSACTION.GetTagTxids(tag);
+				for (let index in txids){
+					let txid = txids[index];
+
+					if (rawtxs.length >= data["count"]){
+						break;
+					}
+					if (tag in data["ConfirmedTxidsPerTag"] && (data["ConfirmedTxidsPerTag"][tag]).indexOf(txid) != -1){
+						continue;
+					}
+
+					let rawtx = await TRANSACTION.GetRawTxToDirect(txid);
+
+					rawtxs.push(rawtx);
+				}
+			}
 			let UnconfirmedTransactions = await TRANSACTION.GetUnconfirmedTransactions();
 			for (let index in UnconfirmedTransactions){
 				let rawtx = UnconfirmedTransactions[index];
@@ -164,6 +189,13 @@ async function SetActionEvents(socket,address){
 				let txid = await TargetTransaction.GetTxid();
 				let objtx = await TargetTransaction.GetObjTx();
 
+				if (objtx["tag"] in data["ConfirmedTxidsPerTag"] && (data["ConfirmedTxidsPerTag"][objtx["tag"]]).indexOf(txid) != -1){
+					continue;
+				}
+				if ((data["NeedTags"]).length > 0 && (data["NeedTags"]).indexOf(objtx["tag"]) == -1){
+					continue;
+				}
+
 				//1分経っていまだに未承認のトランザクションは受け入れない
 				if (objtx["time"]+60*1 < Math.floor(Date.now()/1000)){
 					continue;
@@ -173,35 +205,15 @@ async function SetActionEvents(socket,address){
 				rawtxs.push(rawtx);
 			}
 
-			let txids = await TRANSACTION.GetAllTxids();
-			let NextCursorIndex = 0;
-			for (let index in txids){
-				let txid = txids[index];
-
-				if (index < data["CursorIndex"]){
-					continue;
-				}
-
-				if (rawtxs.length >= data["count"]){
-					NextCursorIndex = index;
-					break;
-				}
-
-				let rawtx = await TRANSACTION.GetRawTxToDirect(txid);
-
-				rawtxs.push(rawtx);
-			}
-
-			socket.emit('GetTransactions_return', {"rawtxs":rawtxs,"NextCursorIndex":NextCursorIndex});
+			socket.emit('GetTransactions_return', rawtxs);
 		}catch(e){
 			MAIN.note(2,"SetActionEvents_GetTransactions",e);
 		};
 	});
 
-	socket.on('GetTransactions_return', async function (data) {
+	socket.on('GetTransactions_return', async function (rawtxs) {
 		try{
-			CursorIndexPerAddress[address] = data["NextCursorIndex"];
-			BroadcastTransactions[address] = data["rawtxs"];
+			BroadcastTransactions[address] = rawtxs;
 		}catch(e){
 			MAIN.note(2,"SetActionEvents_GetTransactions_return",e);
 		};
@@ -249,12 +261,7 @@ async function RuningGetTransactions(socket,address){
 		if (address in BroadcastTransactions){
 			delete BroadcastTransactions[address];
 		};
-
-		let CursorIndex = 0;
-		if (address in CursorIndexPerAddress){
-			CursorIndex = CursorIndexPerAddress[address];
-		}
-		socket.emit('GetTransactions',{"CursorIndex":CursorIndex,"count":1000});
+		socket.emit('GetTransactions',{"ConfirmedTxidsPerTag":ConfirmedTxidsPerTag,"count":5,"NeedTags":(await TRANSACTION.GetImportTags())});
 
 
 
