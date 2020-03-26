@@ -254,7 +254,7 @@ async function RuningGetTransactions(socket,address){
 		if (address in CursorIndexPerAddress){
 			CursorIndex = CursorIndexPerAddress[address];
 		}
-		socket.emit('GetTransactions',{"CursorIndex":CursorIndex,"count":5});
+		socket.emit('GetTransactions',{"CursorIndex":CursorIndex,"count":1000});
 
 
 
