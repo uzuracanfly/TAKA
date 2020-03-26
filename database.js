@@ -358,7 +358,7 @@ exports.RunCommit = async function(){
 				FS.mkdir("database/"+database+"/", function (err) {
 					FS.mkdir("database/"+database+"/"+table+"/", function (err) {
 
-						FS.writeFile("database/"+database+"/"+table+"/"+index+".json", data, "hex", (error) => {
+						FS.writeFile("database/"+database+"/"+table+"/"+index+".json", data, "hex", (e) => {
 							if (e) {
 								return reject(e);
 							}
