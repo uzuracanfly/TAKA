@@ -394,46 +394,44 @@ exports.RunCommit = async function(){
 		try{
 			if (transactions.length > 0){
 				try{
-					let transaction = transactions[0];
+					if (transactions[0]["function"] == "set"){
+						await save(transactions[0]["args"]["database"],transactions[0]["args"]["table"],transactions[0]["args"]["index"],transactions[0]["args"]["data"]);
 
-					if (transaction["function"] == "set"){
-						await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
-
-						(transaction["response"]).write(JSON.stringify(true));
-						(transaction["response"]).end();
+						(transactions[0]["response"]).write(JSON.stringify(true));
+						(transactions[0]["response"]).end();
 					};
-					if (transaction["function"] == "add"){
-						let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-						data.push(transaction["args"]["data"]);
-						await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+					if (transactions[0]["function"] == "add"){
+						let data = await load(transactions[0]["args"]["database"],transactions[0]["args"]["table"],transactions[0]["args"]["index"]);
+						data.push(transactions[0]["args"]["data"]);
+						await save(transactions[0]["args"]["database"],transactions[0]["args"]["table"],transactions[0]["args"]["index"],data);
 
-						(transaction["response"]).write(JSON.stringify(true));
-						(transaction["response"]).end();
+						(transactions[0]["response"]).write(JSON.stringify(true));
+						(transactions[0]["response"]).end();
 					};
-					if (transaction["function"] == "remove"){
-						let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-						if (transaction["args"]["removeindex"] != -1){
-							data.splice(transaction["args"]["removeindex"], 1);
+					if (transactions[0]["function"] == "remove"){
+						let data = await load(transactions[0]["args"]["database"],transactions[0]["args"]["table"],transactions[0]["args"]["index"]);
+						if (transactions[0]["args"]["removeindex"] != -1){
+							data.splice(transactions[0]["args"]["removeindex"], 1);
 						};
-						if (transaction["args"]["removevalue"] != null){
-							data = data.filter(n => n !== transaction["args"]["removevalue"]);
+						if (transactions[0]["args"]["removevalue"] != null){
+							data = data.filter(n => n !== transactions[0]["args"]["removevalue"]);
 						};
-						await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+						await save(transactions[0]["args"]["database"],transactions[0]["args"]["table"],transactions[0]["args"]["index"],data);
 
-						(transaction["response"]).write(JSON.stringify(true));
-						(transaction["response"]).end();
+						(transactions[0]["response"]).write(JSON.stringify(true));
+						(transactions[0]["response"]).end();
 					};
-					if (transaction["function"] == "delete"){
-						await Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+					if (transactions[0]["function"] == "delete"){
+						await Delete(transactions[0]["args"]["database"],transactions[0]["args"]["table"],transactions[0]["args"]["index"]);
 
-						(transaction["response"]).write(JSON.stringify(true));
-						(transaction["response"]).end();
+						(transactions[0]["response"]).write(JSON.stringify(true));
+						(transactions[0]["response"]).end();
 					};
-					if (transaction["function"] == "load"){
-						let result = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+					if (transactions[0]["function"] == "load"){
+						let result = await load(transactions[0]["args"]["database"],transactions[0]["args"]["table"],transactions[0]["args"]["index"]);
 
-						(transaction["response"]).write(JSON.stringify(result));
-						(transaction["response"]).end();
+						(transactions[0]["response"]).write(JSON.stringify(result));
+						(transactions[0]["response"]).end();
 					}
 				}catch(e){
 					console.log(e);
