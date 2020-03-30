@@ -393,49 +393,53 @@ exports.RunCommit = async function(){
 	while (true){
 		try{
 			if (transactions.length > 0){
-				let transaction = transactions[0];
+				try{
+					let transaction = transactions[0];
 
-				if (transaction["function"] == "set"){
-					await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
+					if (transaction["function"] == "set"){
+						await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],transaction["args"]["data"]);
 
-					(transaction["response"]).write(JSON.stringify(true));
-					(transaction["response"]).end();
-				};
-				if (transaction["function"] == "add"){
-					let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-					data.push(transaction["args"]["data"]);
-					await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
-
-					(transaction["response"]).write(JSON.stringify(true));
-					(transaction["response"]).end();
-				};
-				if (transaction["function"] == "remove"){
-					let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-					if (transaction["args"]["removeindex"] != -1){
-						data.splice(transaction["args"]["removeindex"], 1);
+						(transaction["response"]).write(JSON.stringify(true));
+						(transaction["response"]).end();
 					};
-					if (transaction["args"]["removevalue"] != null){
-						data = data.filter(n => n !== transaction["args"]["removevalue"]);
+					if (transaction["function"] == "add"){
+						let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+						data.push(transaction["args"]["data"]);
+						await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+
+						(transaction["response"]).write(JSON.stringify(true));
+						(transaction["response"]).end();
 					};
-					await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
+					if (transaction["function"] == "remove"){
+						let data = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+						if (transaction["args"]["removeindex"] != -1){
+							data.splice(transaction["args"]["removeindex"], 1);
+						};
+						if (transaction["args"]["removevalue"] != null){
+							data = data.filter(n => n !== transaction["args"]["removevalue"]);
+						};
+						await save(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"],data);
 
-					(transaction["response"]).write(JSON.stringify(true));
-					(transaction["response"]).end();
+						(transaction["response"]).write(JSON.stringify(true));
+						(transaction["response"]).end();
+					};
+					if (transaction["function"] == "delete"){
+						await Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+
+						(transaction["response"]).write(JSON.stringify(true));
+						(transaction["response"]).end();
+					};
+					if (transaction["function"] == "load"){
+						let result = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
+
+						(transaction["response"]).write(JSON.stringify(result));
+						(transaction["response"]).end();
+					}
+				}catch(e){
+					console.log(e);
+				}finally{
+					transactions.shift();
 				};
-				if (transaction["function"] == "delete"){
-					await Delete(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-
-					(transaction["response"]).write(JSON.stringify(true));
-					(transaction["response"]).end();
-				};
-				if (transaction["function"] == "load"){
-					let result = await load(transaction["args"]["database"],transaction["args"]["table"],transaction["args"]["index"]);
-
-					(transaction["response"]).write(JSON.stringify(result));
-					(transaction["response"]).end();
-				}
-
-				transactions.shift();
 			};
 		}catch(e){
 			console.log(e);
