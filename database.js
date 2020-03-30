@@ -29,6 +29,7 @@ exports.ChangeMemDatabase = class{
 			{
 				headers: headers,
 				json: paras,
+				timeout: 5000,
 			}
 		).getBody('utf8'));
 		return JSON.parse(res);
@@ -158,6 +159,8 @@ exports.RunCommit = async function(){
 						response.writeHead(400, {'Content-Type': 'application/json; charset=utf-8'});
 						response.write(JSON.stringify(false));
 						response.end();
+					}finally{
+						delete postData;
 					}
 				});
 			};
@@ -295,7 +298,8 @@ exports.RunCommit = async function(){
 
 
 	async function load(database,table,index=""){
-		while (true){
+		let LoopCount = 0;
+		while (LoopCount < 5){
 			try {
 				if (!index){
 					let result = [];
@@ -335,9 +339,10 @@ exports.RunCommit = async function(){
 					console.log(e);
 					throw e;
 				}
-			};
-
-			await sleep(1);
+			}finally{
+				LoopCount = LoopCount + 1;
+				await sleep(1);
+			}
 		};
 	}
 
@@ -424,6 +429,8 @@ exports.RunCommit = async function(){
 					(transaction["response"]).write(JSON.stringify(result));
 					(transaction["response"]).end();
 				}
+
+				delete transaction;
 			};
 		}catch(e){
 			console.log(e);
