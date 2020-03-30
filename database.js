@@ -350,7 +350,7 @@ exports.RunCommit = async function(){
 	async function save(database,table,index,data){
 		async function CreateDir(path){
 			return new Promise(function (resolve, reject) {
-				FS.mkdir(path, function (err) {
+				FS.mkdir(path, function (e) {
 					if (e) {
 						return resolve(false);
 					}
