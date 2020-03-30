@@ -392,7 +392,6 @@ exports.RunCommit = async function(){
 
 	while (true){
 		try{
-			console.log(transactions);
 			if (transactions.length > 0){
 				let transaction = transactions[0];
 
