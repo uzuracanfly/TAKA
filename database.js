@@ -336,12 +336,12 @@ exports.RunCommit = async function(){
 				if (e.code === 'ENOENT') {
 					return [];
 				} else {
-					console.log(e);
+					//console.log(e);
 					throw e;
 				}
 			}finally{
 				LoopCount = LoopCount + 1;
-				await sleep(1);
+				await sleep(0.1);
 			}
 		};
 	}
