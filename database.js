@@ -159,8 +159,6 @@ exports.RunCommit = async function(){
 						response.writeHead(400, {'Content-Type': 'application/json; charset=utf-8'});
 						response.write(JSON.stringify(false));
 						response.end();
-					}finally{
-						delete postData;
 					}
 				});
 			};
@@ -298,8 +296,7 @@ exports.RunCommit = async function(){
 
 
 	async function load(database,table,index=""){
-		let LoopCount = 0;
-		while (LoopCount < 5){
+		while (true){
 			try {
 				if (!index){
 					let result = [];
@@ -336,13 +333,12 @@ exports.RunCommit = async function(){
 				if (e.code === 'ENOENT') {
 					return [];
 				} else {
-					//console.log(e);
+					console.log(e);
 					throw e;
 				}
-			}finally{
-				LoopCount = LoopCount + 1;
-				await sleep(0.1);
-			}
+			};
+
+			await sleep(1);
 		};
 	}
 
@@ -352,28 +348,39 @@ exports.RunCommit = async function(){
 		save data : hex
 	*/
 	async function save(database,table,index,data){
-		return new Promise(function (resolve, reject) {
-			data = ConversionData(data,"");
-
-			if ("key" in CONFIG.database && CONFIG.database["key"]){
-				data = new CRYPTO.common().GetEncryptedData(CONFIG.database["key"],data);
-			};
-
-			FS.mkdir("database/", function (err) {
-				FS.mkdir("database/"+database+"/", function (err) {
-					FS.mkdir("database/"+database+"/"+table+"/", function (err) {
-
-						FS.writeFile("database/"+database+"/"+table+"/"+index+".json", data, "hex", (e) => {
-							if (e) {
-								return reject(e);
-							}
-							return resolve(true);
-						});
-
-					});
+		async function CreateDir(path){
+			return new Promise(function (resolve, reject) {
+				FS.mkdir(path, function (err) {
+					if (e) {
+						return resolve(false);
+					}
+					return resolve(true);
 				});
 			});
-		});
+		}
+		async function CreateFile(path,data,type){
+			return new Promise(function (resolve, reject) {
+				FS.writeFile(path,data,type, (e) => {
+					if (e) {
+						return reject(e);
+					}
+					return resolve(true);
+				});
+			});
+		}
+
+		data = ConversionData(data,"");
+
+		if ("key" in CONFIG.database && CONFIG.database["key"]){
+			data = new CRYPTO.common().GetEncryptedData(CONFIG.database["key"],data);
+		};
+
+		await CreateDir("database/");
+		await CreateDir("database/"+database+"/");
+		await CreateDir("database/"+database+"/"+table+"/");
+		await CreateFile("database/"+database+"/"+table+"/"+index+".json", data, "hex")
+
+		return true;
 	}
 
 
