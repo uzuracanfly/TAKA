@@ -442,6 +442,7 @@ exports.RunCommit = async function(){
 		}catch(e){
 			console.log(e);
 		}finally{
+			console.log(JSON.stringify(transactions).length)
 			await sleep(0.001);
 		}
 	};
