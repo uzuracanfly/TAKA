@@ -1,5 +1,11 @@
 const READLINE = require('readline');
+const FS = require('fs');
 
+
+const out = FS.createWriteStream('info.log');
+const err = FS.createWriteStream('error.log');
+
+const logger = new console.Console(out, err);
 
 exports.note = function(stat,title,text){
 	const CONFIG = require('./config.js');
@@ -22,7 +28,7 @@ exports.note = function(stat,title,text){
 
 
 	if (CONFIG.Note["loglevel"] <= stat){
-		console.log(result);
+		logger.log(result);
 	};
 
 	return result;
