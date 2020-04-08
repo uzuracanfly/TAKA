@@ -1047,7 +1047,12 @@ exports.Transaction = class{
 		if (!rawtx){
 			rawtx=this.rawtx;
 		}
-		
+
+		let rawtxs = await exports.GetUnconfirmedTransactions();
+		if (rawtxs.length > 100){
+			return false;
+		}
+
 		let objtx = await this.GetObjTx(rawtx);
 		if (!objtx["tag"]){
 			return false;
@@ -1055,6 +1060,7 @@ exports.Transaction = class{
 		if ((await exports.GetImportTags()).length>0 && (await exports.GetImportTags()).indexOf(objtx["tag"]) == -1){
 			return false;
 		};
+
 
 		if (BoolStartConfirmation){
 			let txbool = await this.Confirmation(rawtx);
