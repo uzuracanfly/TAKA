@@ -28,6 +28,7 @@ exports.note = function(stat,title,text){
 
 
 	if (CONFIG.Note["loglevel"] <= stat){
+		console.log(result);
 		logger.log(result);
 	};
 

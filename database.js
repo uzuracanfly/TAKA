@@ -29,7 +29,6 @@ exports.ChangeMemDatabase = class{
 			{
 				headers: headers,
 				json: paras,
-				timeout: 5000,
 			}
 		).getBody('utf8'));
 		return JSON.parse(res);
