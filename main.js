@@ -1,5 +1,6 @@
 const READLINE = require('readline');
 const FS = require('fs');
+const UTF8 = require('utf8');
 
 
 const out = FS.createWriteStream('info.log');
@@ -102,3 +103,79 @@ exports.GetRandom = async function(l){
 
 	return r;
 }
+
+
+
+exports.ChangePara = async function(KeyType,value){
+	let ParaTypes = {
+		"MinPrivkey":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"MinLength":4017,"MaxLength":11455},
+		"privkey":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"length":11456},
+		"pubkey":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"length":4016},
+		"address":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"length":40},
+		"tag":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"MaxLength":32767},
+	}
+	/*
+		"id":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"length":null},
+		"AnnounceTitle":{"type":"string","StringFunction":async function(KeyType,value){return value;},"length":null},
+		"AnnounceText":{"type":"string","StringFunction":async function(KeyType,value){return value;},"length":null},
+		"PointAmount":{"type":"number","NumberFunction":async function(KeyType,value){return parseInt(value);}},
+		"ConfirmCord":{"type":"number","NumberFunction":async function(KeyType,value){return parseInt(value);}},
+		"permit":{"type":"number","NumberFunction":async function(KeyType,value){return parseInt(value);}},
+		"MailAddress":{"type":"string","StringFunction":async function(KeyType,value){
+			let regex = /[\w.\-]+@[\w\-]+\.[\w.\-]+/;
+			if(!(regex.test(value))){
+				throw new Error('Bad MailAddress');
+			};
+			return UTF8.encode(value);
+		},"length":null},
+		"privkey":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"length":104},
+		"AccountId":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"length":40},
+		"UsingIds":{"type":"BoolFunction","BoolFunction":async function(KeyType,value){if (value == null){return true;};return (await exports.isObject(value));}},
+	*/
+
+	//console.log(KeyType,value);
+
+
+	if (KeyType in ParaTypes){
+		let ParaType = ParaTypes[KeyType];
+
+		if (ParaType["type"] == "string"){
+			value = value.toString();
+			value = await ParaType["StringFunction"](KeyType,value);
+
+			if ("length" in ParaType && ParaType["length"]){
+				if (value.length != ParaType["length"]){
+					throw new Error(`Bad length is ${value} of ${KeyType} type`);
+				}
+			}
+			if ("MinLength" in ParaType && ParaType["MinLength"]){
+				if (value.length < ParaType["MinLength"]){
+					throw new Error(`Bad MinLength is ${value} of ${KeyType} type`);
+				}
+			}
+			if ("MaxLength" in ParaType && ParaType["MaxLength"]){
+				if (value.length > ParaType["MaxLength"]){
+					throw new Error(`Bad MaxLength is ${value} of ${KeyType} type`);
+				}
+			}
+			/*
+			if ((value.toLowerCase()).indexOf("=") != -1){
+				throw new Error('Bad value');
+			}
+			if ((value.toLowerCase()).indexOf("like") != -1){
+				throw new Error('Bad value');
+			}
+			*/
+		}else if(ParaType["type"] == "number"){
+			value = await ParaType["NumberFunction"](KeyType,value);
+		}else if(ParaType["type"] == "BoolFunction"){
+			if (!(await ParaType["BoolFunction"](KeyType,value))){
+				throw new Error('Bad type');
+			}
+		}
+	}
+
+
+
+	return value;
+};

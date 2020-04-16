@@ -106,6 +106,14 @@ exports.account = class{
 			tag = "pay"
 		}
 
+
+		address = await MAIN.ChangePara("address",address);
+		tag = await MAIN.ChangePara("tag",tag);
+		LessIndex = await MAIN.ChangePara("LessIndex",LessIndex);
+		LessTime = await MAIN.ChangePara("LessTime",LessTime);
+		BoolNeedApproved = await MAIN.ChangePara("BoolNeedApproved",BoolNeedApproved);
+
+
 		let TransactionIdsPerAccountAndTag = await DATABASE.get("TransactionIdsPerAccountAndTag",address+"_"+tag);
 		if (LessTime){
 			LessIndex = await TRANSACTION.GetLessIndexFromLessTime(address,tag,LessTime);
@@ -159,6 +167,9 @@ exports.account = class{
 			tag = "pay"
 		}
 
+		address = await MAIN.ChangePara("address",address);
+		tag = await MAIN.ChangePara("tag",tag);
+
 		let TransactionIdsPerAccountAndTag = await DATABASE.get("TransactionIdsPerSenderAndTag",address+"_"+tag);
 
 		return TransactionIdsPerAccountAndTag;
@@ -170,6 +181,11 @@ exports.account = class{
 		if (!address){
 			address = (await this.GetKeys())["address"];
 		}
+
+		address = await MAIN.ChangePara("address",address);
+		LessIndex = await MAIN.ChangePara("LessIndex",LessIndex);
+		LessTime = await MAIN.ChangePara("LessTime",LessTime);
+		BoolNeedApproved = await MAIN.ChangePara("BoolNeedApproved",BoolNeedApproved);
 
 		let txlist = await this.GetFormTxList(address,"pay",LessIndex,LessTime,BoolNeedApproved);
 		if (LessTime){
@@ -230,6 +246,12 @@ exports.account = class{
 		if (!address){
 			address = (await this.GetKeys())["address"];
 		}
+
+		address = await MAIN.ChangePara("address",address);
+		toaddress = await MAIN.ChangePara("address",toaddress);
+		LessIndex = await MAIN.ChangePara("LessIndex",LessIndex);
+		LessTime = await MAIN.ChangePara("LessTime",LessTime);
+		BoolNeedApproved = await MAIN.ChangePara("BoolNeedApproved",BoolNeedApproved);
 
 		let txlist = await this.GetFormTxList(address,"pay",LessIndex,LessTime,BoolNeedApproved);
 		if (LessTime){

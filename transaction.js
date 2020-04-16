@@ -87,6 +87,10 @@ exports.Transaction = class{
 			TargetAccount = this.TargetAccount;
 		}
 
+		TargetAccount = await MAIN.ChangePara("TargetAccount",TargetAccount);
+		objtx = await MAIN.ChangePara("objtx",objtx);
+		orgonly = await MAIN.ChangePara("orgonly",orgonly);
+
 
 		let type = objtx["type"].toString(16);
 		let time = Math.floor(objtx["time"]).toString(16);
@@ -188,6 +192,8 @@ exports.Transaction = class{
 			rawtx = this.rawtx;
 		}
 
+		rawtx = await MAIN.ChangePara("rawtx",rawtx);
+
 
 		function cut(len){
 			let cuthex = rawtx.slice(0,len);
@@ -248,6 +254,8 @@ exports.Transaction = class{
 			rawtx=this.rawtx;
 		}
 
+		rawtx = await MAIN.ChangePara("rawtx",rawtx);
+
 		let txid = new HASHS.hashs().sha256d(rawtx);
 		return txid;
 	}
@@ -268,6 +276,8 @@ exports.Transaction = class{
 			if (!rawtx){
 				rawtx=this.rawtx;
 			}
+
+			rawtx = await MAIN.ChangePara("rawtx",rawtx);
 
 
 			let objtx = await this.GetObjTx(rawtx);
@@ -888,6 +898,10 @@ exports.Transaction = class{
 			rawtx=this.rawtx;
 		}
 
+		rawtx = await MAIN.ChangePara("rawtx",rawtx);
+		powtarget = await MAIN.ChangePara("powtarget",powtarget);
+		lasttxtime = await MAIN.ChangePara("lasttxtime",lasttxtime);
+
 		let target = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		let objtx = await this.GetObjTx(rawtx);
 
@@ -975,6 +989,11 @@ exports.Transaction = class{
 		}
 
 
+		rawtx = await MAIN.ChangePara("rawtx",rawtx);
+		target = await MAIN.ChangePara("target",target);
+		TimeoutToNonceScan = await MAIN.ChangePara("TimeoutToNonceScan",TimeoutToNonceScan);
+
+
 		let objtx = await this.GetObjTx(rawtx);
 		if (!target){
 			target = await this.GetPOWTarget(rawtx);
@@ -1047,6 +1066,11 @@ exports.Transaction = class{
 		if (!rawtx){
 			rawtx=this.rawtx;
 		}
+
+		rawtx = await MAIN.ChangePara("rawtx",rawtx);
+		BoolUntilConfirmation = await MAIN.ChangePara("BoolUntilConfirmation",BoolUntilConfirmation);
+		BoolStartConfirmation = await MAIN.ChangePara("BoolStartConfirmation",BoolStartConfirmation);
+		TimeoutToNonceScan = await MAIN.ChangePara("TimeoutToNonceScan",TimeoutToNonceScan);
 
 		let rawtxs = await exports.GetUnconfirmedTransactions();
 		if (rawtxs.length > 100){
@@ -1124,6 +1148,8 @@ exports.GetAllTxids = async function(){
 
 exports.GetTx = async function(txid){
 	try{
+		txid = await MAIN.ChangePara("txid",txid);
+
 		let rawtx = await DATABASE.get("ConfirmedTransactions",txid);
 		if (rawtx.length <= 0){
 			return false;
@@ -1141,6 +1167,8 @@ exports.GetTx = async function(txid){
 
 exports.GetRawTxToDirect = async function(txid){
 	try{
+		txid = await MAIN.ChangePara("txid",txid);
+
 		let rawtxs = await DATABASE.get("ConfirmedTransactions",txid);
 		if (rawtxs.length <= 0){
 			return false;
@@ -1167,6 +1195,8 @@ exports.GetTags = async function(){
 };
 
 exports.GetTagTxids = async function(tag,LessTime=0){
+	tag = await MAIN.ChangePara("tag",tag);
+
 	if (!tag){
 		return [];
 	}
@@ -1194,6 +1224,10 @@ exports.GetTagTxids = async function(tag,LessTime=0){
 
 exports.GetLessIndexFromLessTime = async function(address,tag,LessTime){
 	try{
+		address = await MAIN.ChangePara("address",address);
+		tag = await MAIN.ChangePara("tag",tag);
+		LessTime = await MAIN.ChangePara("LessTime",LessTime);
+
 		let TimeRaIndexs = await DATABASE.get("TransactionTimeRaIndexPerAccountAndTag",address+"_"+tag);
 		if (TimeRaIndexs.length <= 0){
 			return 0;
@@ -1220,6 +1254,18 @@ exports.GetLessIndexFromLessTime = async function(address,tag,LessTime){
 
 
 exports.SendTransaction = async function(privkey,type,tag,toaddress,amount,data,time=Math.floor(Date.now()/1000),BoolUntilConfirmation=undefined,BoolStartConfirmation=undefined,TimeoutToNonceScan=undefined){
+	privkey = await MAIN.ChangePara("privkey",privkey);
+	type = await MAIN.ChangePara("type",type);
+	tag = await MAIN.ChangePara("tag",tag);
+	toaddress = await MAIN.ChangePara("address",toaddress);
+	amount = await MAIN.ChangePara("amount",amount);
+	data = await MAIN.ChangePara("data",data);
+	time = await MAIN.ChangePara("time",time);
+	BoolUntilConfirmation = await MAIN.ChangePara("BoolUntilConfirmation",BoolUntilConfirmation);
+	BoolStartConfirmation = await MAIN.ChangePara("BoolStartConfirmation",BoolStartConfirmation);
+	TimeoutToNonceScan = await MAIN.ChangePara("TimeoutToNonceScan",TimeoutToNonceScan);
+
+
 	type = parseInt(type);
 	amount = parseInt(amount);
 	toaddress = MAIN.GetFillZero(toaddress, 40);
@@ -1257,6 +1303,10 @@ exports.SendTransaction = async function(privkey,type,tag,toaddress,amount,data,
 
 
 exports.SendPayTransaction = async function(privkey,toaddress,amount){
+	privkey = await MAIN.ChangePara("privkey",privkey);
+	toaddress = await MAIN.ChangePara("toaddress",toaddress);
+	amount = await MAIN.ChangePara("amount",amount);
+
 	let result = await exports.SendTransaction(privkey,1,"pay",toaddress,amount,"");
 
 	return result;
@@ -1264,6 +1314,8 @@ exports.SendPayTransaction = async function(privkey,toaddress,amount){
 
 exports.GetTagOrderTx = async function(tag){
 	try{
+		tag = await MAIN.ChangePara("tag",tag);
+
 		let txids = await DATABASE.get("TagOrderTransactionIdPerTag",tag);
 		if (txids.length <= 0){
 			return false;
@@ -1279,6 +1331,8 @@ exports.GetTagOrderTx = async function(tag){
 
 exports.GetTagPermitAddresss = async function(tag){
 	try{
+		tag = await MAIN.ChangePara("tag",tag);
+
 		let txids = await DATABASE.get("TagaddpermitTransactionIdPerTag",tag);
 		let PermitAddresss = [];
 		for (let index in txids){
@@ -1345,6 +1399,9 @@ exports.GetImportTags = async function(){
 
 
 exports.SetImportTags = async function(type,tag){
+	type = await MAIN.ChangePara("type",type);
+	tag = await MAIN.ChangePara("tag",tag);
+
 	if (type == "add"){
 		let ImportTags = await exports.GetImportTags();
 		let index = ImportTags.indexOf(tag);
@@ -1368,7 +1425,10 @@ exports.SetImportTags = async function(type,tag){
 
 
 
-exports.TagCompare = function(TagA, TagB){
+exports.TagCompare = async function(TagA, TagB){
+	TagA = await MAIN.ChangePara("tag",TagA);
+	TagB = await MAIN.ChangePara("tag",TagB);
+
 	if (TagA == "pay"){
 		return -1;
 	}
@@ -1491,6 +1551,9 @@ exports.RunCommit = async function(){
 	}
 
 	async function RawTxOldCompare(RawTxA, RawTxB){
+		RawTxA = await MAIN.ChangePara("rawtx",RawTxA);
+		RawTxB = await MAIN.ChangePara("rawtx",RawTxB);
+
 		let comparison = 0;
 
 		let TargetTransactionA = new exports.Transaction(RawTxA);
@@ -1528,7 +1591,7 @@ exports.RunCommit = async function(){
 		try{
 
 			let UnconfirmedTransactionsTags = await DATABASE.get("UnconfirmedTransactions");
-			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(exports.TagCompare);
+			UnconfirmedTransactionsTags = UnconfirmedTransactionsTags.sort(await exports.TagCompare);
 			for (let index in UnconfirmedTransactionsTags){
 				let tag = UnconfirmedTransactionsTags[index];
 

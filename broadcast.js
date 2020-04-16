@@ -150,7 +150,7 @@ async function SetActionEvents(socket,address){
 			let rawtxs = [];
 
 			let tags = await TRANSACTION.GetTags();
-			tags = tags.sort(TRANSACTION.TagCompare);
+			tags = tags.sort(await TRANSACTION.TagCompare);
 			for (let index in tags){
 				let tag = tags[index];
 
