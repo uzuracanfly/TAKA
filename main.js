@@ -109,7 +109,7 @@ exports.GetRandom = async function(l){
 exports.ChangePara = async function(KeyType,value){
 	let ParaTypes = {
 		"MinPrivkey":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"MinLength":4017,"MaxLength":11455},
-		"privkey":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"length":11456},
+		"privkey":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"MinLength":4017,"MaxLength":11456},
 		"pubkey":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"length":4016},
 		"address":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"length":40},
 		"tag":{"type":"string","StringFunction":async function(KeyType,value){return UTF8.encode(value);},"MaxLength":32767},
